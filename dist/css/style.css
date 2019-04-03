@@ -1,0 +1,86 @@
+body {
+  user-select: none;
+  margin: 10%;
+  font-family: 'Pangolin', cursive;
+  font-size: 30px;
+  background:
+}
+
+.row {
+  display: flex;
+  align-self: center;
+}
+
+.column {
+  flex: 50%;
+  padding: 10px;
+  align-content: center;
+}
+
+#question {
+  font-size: 36px;
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+#code {
+  padding: 10px 10px 10px 10px;
+}
+
+#timer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  text-align: right;
+  font-size: 50px;
+  width: 80px;
+  height: 80px;
+  background: #ffff90;
+  border-radius: 0 0 0 100px;
+  -moz-border-radius: 0 0 0 100px;
+  -webkit-border-radius: 0 0 0 100px;
+}
+
+#submit {
+  position: fixed;
+  font-size: 35px;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #ffff90;
+  text-align: center;
+}
+
+.answer {
+  float:center;
+  width: 60%;
+  height: 80%;
+  background-color: #fffff0;
+  margin: 50px;
+  text-align: center;
+  animation: answerOff  1s forwards;
+}
+
+.answer:hover {
+  animation: answerHover 2s infinite;
+
+  background-color: #ffffc0
+}
+
+@keyframes answerHover {
+  0% {transform: rotate(0deg) scale(1);}
+  25% {transform: rotate(10deg) scale(1.1);}
+  50% {transform: rotate(0deg) scale(1);}
+    75% {transform: rotate(-10deg) scale(1.1);}
+}
+
+@keyframes answerOff {
+  from {transform: rotate(10deg) scale(1.1);}
+  to {transform: rotate(0deg) scale(1);}
+}
+
+@keyframes lowTime {
+  0% {font-size: 50px;}
+  33% {font-size: 60px;}
+  66% {font-size: 50px;}
+}
