@@ -29,8 +29,15 @@
     <h3>Create a game!</h3>
     <h5>
       Room ID: <input type="text" id="roomId" value="yourClass"><br>
-      <button type="button" name="button" onclick="makeGame()">Create Game!</button>
+      <button id="makeGame" type="button" name="button">Create Game!</button>
     </h5>
+  </div>
+
+  <div id="gameManagement" style="display:none;">
+    <h3>Your game <span id="gameName"></span></h3>
+    <h6>Currently in room:</h6>
+    <ul id="playerList"></ul>
+    <button id="startGame" type="button" name="button">Start Game</button>
   </div>
 </body>
 </html>

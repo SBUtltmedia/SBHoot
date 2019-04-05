@@ -7,30 +7,55 @@ var io = require('socket.io')(http);
 var currentRightAnswer;
 let rawdata = fs.readFileSync('questions.json');
 let questions = JSON.parse(rawdata);
-console.log(questions[0]);
 
+var roomList = {};
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
-app.get('/login', function(req, res){
-  res.sendFile(__dirname + '/login.html');
-});
+
 app.get('/instructor', function(req, res){
   res.sendFile(__dirname + '/instructor.html');
 });
 
 
-sendQuestion();
-startQuestion();
-console.log(questions.length);
+// sendQuestion();
+// startQuestion();
+// console.log(questions.length);
 
 io.on('connection', function(socket){
   console.log('a user connected');
 
-  io.on('checkAnswer', (guess)=>{
+  socket.on('checkAnswer', (guess)=>{
     if(guess == currentRightAnswer){
 
+    }
+  })
+
+  socket.on('joinGame', (room, name, callback)=>{
+    if(room in roomList){
+      console.log(room, name);
+      socket.join(room);
+      socket.room = room;
+      //roomList[room] = {'players': []};
+      roomList[room]['players'] += name;
+      callback(false)
+      io.sockets.in(socket.room).emit('newToRoom', name);
+    } else {
+      callback(true)
+    }
+
+    // //Send room info
+  });
+
+  socket.on('makeGame', (room, callback)=>{
+    if(!(room in roomList)){
+      socket.join(room);
+      socket.room = room;
+      roomList[room] = {'players': []};
+      callback(false);
+    } else {
+      callback(true);
     }
   })
 });

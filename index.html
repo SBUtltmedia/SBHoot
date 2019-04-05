@@ -28,10 +28,16 @@
     <p id="greeting"></p>
     <h3>Join a game!</h3>
     <h5>
-      Nickname: <input type="text" name="nickname" value="bill"><br>
-      Room ID: <input type="text" name="" value=""><br>
-      <button type="button" name="button" onclick="">Join Game!</button>
+      Nickname: <input id="nickname" type="text" name="nickname" value="bill"><br>
+      Room ID: <input id="roomId" type="text" name="" value=""><br>
+      <button id="joinGame" type="button" name="button">Join Game!</button><span id="joinGameError"></span>
     </h5>
+  </div>
+
+  <div id="waitingRoom" style="display: none;">
+    <h5>Joined room <id="roomGiven" span></span></h5>
+    <h6>Currently in room:</h6>
+    <ul id="playerList"></ul>
   </div>
 
   <div id="stage" style="display: none;" class="screen">
