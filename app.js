@@ -13,6 +13,13 @@ console.log(questions[0]);
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
 });
+app.get('/login', function(req, res){
+  res.sendFile(__dirname + '/login.html');
+});
+app.get('/instructor', function(req, res){
+  res.sendFile(__dirname + '/instructor.html');
+});
+
 
 sendQuestion();
 startQuestion();
@@ -20,7 +27,14 @@ console.log(questions.length);
 
 io.on('connection', function(socket){
   console.log('a user connected');
+
+  io.on('checkAnswer', (guess)=>{
+    if(guess == currentRightAnswer){
+
+    }
+  })
 });
+
 
 http.listen(8090, function(){
   console.log('listening on *:8090');

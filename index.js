@@ -14,3 +14,14 @@ function newQuestion(myJson) {
   $("#answer_2").text(myJson.answers[2]);
   $("#answer_3").text(myJson.answers[3]);
 }
+
+$(function(){
+  $(".answer").on("click", (evt)=>{
+    socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1]);
+  });
+});
+
+
+function makeGame(){
+  console.log($('#roomId').text());
+}

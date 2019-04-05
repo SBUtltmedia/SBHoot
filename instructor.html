@@ -26,25 +26,11 @@
   <div id="signout" style="display: none;">
     <button id="signout-button">Sign Out</button>
     <p id="greeting"></p>
-    <h3>Join a game!</h3>
+    <h3>Create a game!</h3>
     <h5>
-      Nickname: <input type="text" name="nickname" value="bill"><br>
-      Room ID: <input type="text" name="" value=""><br>
-      <button type="button" name="button" onclick="">Join Game!</button>
+      Room ID: <input type="text" id="roomId" value="yourClass"><br>
+      <button type="button" name="button" onclick="makeGame()">Create Game!</button>
     </h5>
-  </div>
-
-  <div id="stage" style="display: none;" class="screen">
-    <div id="header">
-      <div id="code"></div>
-      <div id="question"></div>
-      <div id="timer"></div>
-    </div>
-    <div id="answer_0" class="answer"></div>
-    <div id="answer_1" class="answer"></div>
-    <div id="answer_2" class="answer"></div>
-    <div id="answer_3" class="answer"></div>
-    <div id="submit"></div>
   </div>
 </body>
 </html>

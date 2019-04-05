@@ -87,6 +87,17 @@ function newQuestion(myJson) {
   $("#answer_3").text(myJson.answers[3]);
 }
 
+$(function(){
+  $(".answer").on("click", (evt)=>{
+    socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1]);
+  });
+});
+
+
+function makeGame(){
+  console.log($('#roomId').text());
+}
+
 
 /***/ })
 /******/ ]);

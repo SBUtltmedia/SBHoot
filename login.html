@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Say hello using the People API</title>
+    <meta charset='utf-8' />
+    <link rel="stylesheet" type="text/css" title="Cool stylesheet" href="dist/css/style.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="dist/Oauth.js"></script>
+    <script async defer src="https://apis.google.com/js/api.js" onload="this.onload=function(){};handleClientLoad()" onreadystatechange="if (this.readyState === 'complete') this.onload()"></script>
+  </head>
+  <body>
+
+    <!--Add buttons to initiate auth sequence and sign out-->
+    <div id="authorize" style="display: none;">
+      <h1 id="mainHeader">Log in to continue:</h1>
+      <button id="authorize-button">Authorize</button>
+    </div>
+
+    <div id="signout" style="display: none;">
+      <button id="signout-button">Sign Out</button>
+      <p id="greeting"></p>
+      <h3>Join a game!</h3>
+      <h5>
+        Nickname: <input type="text" name="nickname" value="bill"><br>
+        Room ID: <input type="text" name="" value=""><br>
+        <button type="button" name="button" onclick="">Join Game!</button>
+      </h5>
+    </div>
+
+
+    <div id="content"></div>
+  </body>
+</html>
