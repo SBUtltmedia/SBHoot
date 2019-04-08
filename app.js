@@ -37,16 +37,20 @@ io.on('connection', function(socket){
       console.log(room, name);
       socket.join(room);
       socket.room = room;
-      //roomList[room] = {'players': []};
       roomList[room]['players'] += name;
       callback(false)
-      io.sockets.in(socket.room).emit('newToRoom', name);
+      io.to(socket.room).emit('roomListUpdate', roomList[room]['players']);
     } else {
       callback(true)
     }
 
     // //Send room info
   });
+
+  socket.on('leaveGame', (name)=> {
+    roomList[socket.room]['players'].splice(roomList[socket.room]['players'].indexOf(name), 1);
+    io.to(socket.room).emit('roomListUpdate', roomList[room]['players']);
+  })
 
   socket.on('makeGame', (room, callback)=>{
     if(!(room in roomList)){

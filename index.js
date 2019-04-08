@@ -1,13 +1,15 @@
 var socket = io();
-// socket.emit('go',foo)
+var name;
+
 socket.on('newQuestion', newQuestion);
 
-socket.on('newToRoom', (person) => {
-  $('#playerList ul').append('<li>' + person + '</li>')
+socket.on('roomListUpdate', (people) => {
+  $('playerList').empty();
+  for(person in people){
+    $('#playerList').append('<li>' + person + '</li>');
+  }
 });
-// function foo(data){
-//   alert(data)
-// }
+
 
 function changeBodyBg() {
   document.body.style.background = random_bg_color();
@@ -27,14 +29,18 @@ $(function() {
   });
   $("#joinGame").on("click", joinGame);
   $("#makeGame").on("click", makeGame);
+  $("#leaveRoom").on("click", leaveRoom);
 });
 
+function leaveRoom() {
+  socket.emit('leaveGame', name);
+}
+
 function makeGame() {
-  console.log($('#roomId').text());
   socket.emit('makeGame', $('#roomId').val(), (error)=>{
     if (!error) {
         $('#gameManagement').css('display', 'block');
-        $('#gameName').text($('#roomId').text());
+        $('#gameName').text($('#roomId').val());
       } else {
         $('#makeGameError').text('Error: Game already exists!');
       }
@@ -42,6 +48,7 @@ function makeGame() {
 }
 
 function joinGame() {
+  name = $('#nickname').val();
   socket.emit('joinGame', $('#roomId').val(), $('#nickname').val(), (isError) => {
     if (!isError) {
       $('#signout').css('display', 'none');
