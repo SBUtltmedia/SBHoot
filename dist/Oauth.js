@@ -20,7 +20,8 @@ var scopes = 'profile';
 
 var authorizeButton = document.getElementById('authorize-button');
 var signoutButton = document.getElementById('signout-button');
-
+var name;
+var email;
 $(function(){
   $('#authorize-button').on("click",handleAuthClick);
   $('#signout-button').on("click", handleSignoutClick);
@@ -73,8 +74,8 @@ function makeApiCall() {
     'personFields': 'names,emailAddresses'
   }).then(function(resp) {
     var p = document.createElement('p');
-    var name = resp.result.names[0].displayName;
-    var email = resp.result.emailAddresses[0].value;
+    name = resp.result.names[0].displayName;
+    email = resp.result.emailAddresses[0].value;
     //p.appendChild(document.createTextNode('Hello, '+name+'!'));
     $('#greeting').text('Hello, '+name+'!');
   });
