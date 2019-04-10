@@ -1,6 +1,6 @@
 var socket = io(`${window.location.hostname}:8090`);
 var nickname;
-socket.on('newQuestion', newQuestion);
+socket.on('sendQuestion', sendQuestion);
 
 
 $(function() {
@@ -11,9 +11,10 @@ $(function() {
   $("#joinGame").on(listeners, joinGame);
   $("#makeGame").on(listeners, makeGame);
   $("#leaveRoom").on(listeners, leaveRoom);
-  $("#startGame").on(listeners, startGame);
-  $("#stopGame").on(listeners, stopGame);
+  $("#openGame").on(listeners, openGame);
+  $("#closeGame").on(listeners, closeGame);
   $("#deleteGame").on(listeners, deleteGame);
+  $("#startGame").on(listeners, startGame);
 });
 
 socket.on('roomListUpdate', (people) => {
@@ -34,7 +35,9 @@ function changeBodyBg() {
   document.body.style.background = random_bg_color();
 }
 
-function newQuestion(myJson) {
+function sendQuestion(myJson) {
+  $('#waitingRoom').css('display', 'none');
+  $('#stage').css('display', 'block');
   $("#question").text(myJson.question);
   $("#answer_0").text(myJson.answers[0]);
   $("#answer_1").text(myJson.answers[1]);
@@ -74,16 +77,18 @@ function joinGame() {
   });
 }
 
-function startGame() {
+function openGame() {
   socket.emit('changeGameState', $('#gameName').text(), 'open');
-  $('#startGame').css('display', 'none');
-  $('#stopGame').css('display', 'block');
+  $('#openGame').css('display', 'none');
+  $('#closeGame').css('display', 'block');
+  $('#startGame').css('display', 'block');
 }
 
-function stopGame() {
+function closeGame() {
   socket.emit('changeGameState', $('#gameName').text(), 'closed');
-  $('#startGame').css('display', 'block');
-  $('#stopGame').css('display', 'none');
+  $('#openGame').css('display', 'block');
+  $('#closeGame').css('display', 'none');
+  $('#startGame').css('display', 'none');
 }
 
 function deleteGame() {
@@ -92,4 +97,8 @@ function deleteGame() {
     $('#gameManagement').css('display', 'none');
     $('#gameCreation').css('display', 'block');
   }
+}
+
+function startGame() {
+  socket.emit('startGame', $('#gameName').text());
 }

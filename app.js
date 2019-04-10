@@ -7,7 +7,7 @@ var io = require('socket.io')(http);
 var currentRightAnswer;
 let rawdata = fs.readFileSync('questions.json');
 let questions = JSON.parse(rawdata);
-
+var questionShuffleList = shuffle(questions.length);
 var roomList = {};
 
 app.get('/', function(req, res){
@@ -28,6 +28,8 @@ io.on('connection', function(socket){
   socket.on('changeGameState', (room, state)=> {changeGameState(socket, room, state)})
 
   socket.on('deleteGame', (room)=>{deleteGame(socket, room);})
+
+  socket.on('startGame', (room)=>{startGame(socket, room)})
     //check Answer
 });
 
@@ -38,18 +40,30 @@ http.listen(8090, function(){
 
 app.use('/dist', express.static('dist'))
 
-function sendQuestion(){
-  if(!questionShuffleList){
-    var questionShuffleList = shuffle(questions.length);
-  }
-  var currentQuestion = questions[questionShuffleList.pop()];
-  currentRightAnswer = currentQuestion.correct;
-  delete currentQuestion.correct;
-  io.emit('newQuestion', currentQuestion);
-}
+// function sendQuestion(){
+//   if(!questionShuffleList){
+//     var questionShuffleList = shuffle(questions.length);
+//   }
+//   var currentQuestion = questions[questionShuffleList.pop()];
+//   currentRightAnswer = currentQuestion.correct;
+//   delete currentQuestion.correct;
+//   io.emit('newQuestion', currentQuestion);
+// }
+//
+// function startQuestion() {
+//   setInterval(sendQuestion, 1000);
+// }
 
-function startQuestion() {
-  setInterval(sendQuestion, 1000);
+function sendQuestion(socket, room) {
+  if(!questionShuffleList){
+      var questionShuffleList = shuffle(questions.length);
+  }
+  var question = questions[questionShuffleList.pop()];
+  roomList[socket.room]['answer'] = question.correct;
+  delete question.correct;
+  roomList[socket.room]['noResponse'] = roomList[socket.room]['players'].length;
+  io.to(socket.room).emit('sendQuestion', question);
+  return question;
 }
 
 function shuffle(length){
@@ -61,6 +75,24 @@ function shuffle(length){
      newArr.push(element[0]);
   }
   return newArr;
+}
+
+function startGame(socket, room) {
+  roomList[socket.room]['roomState'] = 'playing';
+  var question = sendQuestion(socket, room);
+  for(i=0; i < 9; i++){
+    var x = setTimeout(function(){sendQuestion(socket, room);}, 2000);
+    socket.on('checkAnswer', (choice)=>{
+      console.log('Player chose', question.answers[choice]);
+      console.log('Correct answer was', question.answers[roomList[socket.room]['answer']]);
+      //Emit solely back receiving socket
+      roomList[socket.room]['noResponse']--;
+      if(roomList[socket.room]['noResponse'] == 0){
+        clearTimeout(x);
+        sendQuestion(socket, room);
+      }
+    })
+  }
 }
 
 function makeGame(socket, room, email, callback) {
