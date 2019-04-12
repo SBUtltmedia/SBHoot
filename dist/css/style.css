@@ -51,6 +51,14 @@ body {
   text-align: center;
 }
 
+.rightAnswer {
+  background-color: #24e527;
+}
+
+.wrongAnswer {
+  background-color: #e52424;
+}
+
 .answer {
   float:center;
   width: 60%;
@@ -68,15 +76,15 @@ body {
 }
 
 @keyframes answerHover {
-  0% {transform: rotate(0deg) scale(1);}
-  25% {transform: rotate(10deg) scale(1.1);}
-  50% {transform: rotate(0deg) scale(1);}
-    75% {transform: rotate(-10deg) scale(1.1);}
+  0% {transform:  scale(1);}
+  25% {transform:  scale(1.1);}
+  50% {transform:  scale(1);}
+    75% {transform:  scale(1.1);}
 }
 
 @keyframes answerOff {
-  from {transform: rotate(10deg) scale(1.1);}
-  to {transform: rotate(0deg) scale(1);}
+  from {transform: scale(1.1);}
+  to {transform: scale(1);}
 }
 
 @keyframes lowTime {

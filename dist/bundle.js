@@ -72,14 +72,12 @@
 
 var socket = io(`${window.location.hostname}:8090`);
 var nickname;
-socket.on('sendQuestion', sendQuestion);
+var pickedAnswer;
 
-
+//Load button functions w/ page
 $(function() {
   var listeners = "click";
-  $(".answer").on(listeners, (evt) => {
-    socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1]);
-  });
+  $(".answer").on(listeners, (evt) => {checkAnswer(evt);});
   $("#joinGame").on(listeners, joinGame);
   $("#makeGame").on(listeners, makeGame);
   $("#leaveRoom").on(listeners, leaveRoom);
@@ -89,35 +87,19 @@ $(function() {
   $("#startGame").on(listeners, startGame);
 });
 
-socket.on('roomListUpdate', (people) => {
-  $('#playerList').empty();
-  for(person of people){
-    $('#playerList').append('<li>' + person + '</li>');
-  }
-});
 
-socket.on('roomClosed', ()=> {
-  socket.off(socket.room);
-  $('#playerList').empty();
-  $('#signout').css('display', 'block');
-  $('#waitingRoom').css('display', 'none');
-})
+//Socket listeners
+socket.on('roomListUpdate', (people) => {roomListUpdate(people);});
 
-function changeBodyBg() {
-  document.body.style.background = random_bg_color();
+socket.on('sendQuestion', sendQuestion);
+
+socket.on('roomClosed', roomClosed);
+
+//Button functions
+function checkAnswer(evt) {
+  pickedAnswer = evt.currentTarget.id.split('_')[1];
+  socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1]);
 }
-
-function sendQuestion(myJson) {
-  $('#waitingRoom').css('display', 'none');
-  $('#stage').css('display', 'block');
-  $("#question").text(myJson.question);
-  $("#answer_0").text(myJson.answers[0]);
-  $("#answer_1").text(myJson.answers[1]);
-  $("#answer_2").text(myJson.answers[2]);
-  $("#answer_3").text(myJson.answers[3]);
-}
-
-
 
 function leaveRoom() {
   socket.emit('leaveGame', nickname);
@@ -173,6 +155,40 @@ function deleteGame() {
 
 function startGame() {
   socket.emit('startGame', $('#gameName').text());
+}
+
+
+//Socket functions
+function roomListUpdate(people) {
+  $('#playerList').empty();
+  for(person of people){
+    $('#playerList').append('<li>' + person + '</li>');
+  }
+}
+
+function sendQuestion(myJson) {
+  pickedAnswer = -1;
+  //changeBodyBg();
+  $('#waitingRoom').css('display', 'none');
+  $('#stage').css('display', 'block');
+  $("#question").text(myJson.question);
+  $("#answer_0").text(myJson.answers[0]);
+  $("#answer_1").text(myJson.answers[1]);
+  $("#answer_2").text(myJson.answers[2]);
+  $("#answer_3").text(myJson.answers[3]);
+}
+
+function roomClosed() {
+  socket.off(socket.room);
+  $('#playerList').empty();
+  $('#signout').css('display', 'block');
+  $('#waitingRoom').css('display', 'none');
+}
+
+
+//Misc & Helper functions
+function changeBodyBg() {
+  document.body.style.background = random_bg_color();
 }
 
 
