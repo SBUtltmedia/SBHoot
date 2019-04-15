@@ -23,10 +23,14 @@ socket.on('sendQuestion', sendQuestion);
 
 socket.on('roomClosed', roomClosed);
 
+socket.on('sendAnswer', (answer)=>{sendAnswer(answer);})
+
 //Button functions
 function checkAnswer(evt) {
-  pickedAnswer = evt.currentTarget.id.split('_')[1];
-  socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1]);
+  if(pickedAnswer == -1){
+    pickedAnswer = evt.currentTarget.id.split('_')[1];
+    socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1]);
+  }
 }
 
 function leaveRoom() {
@@ -49,7 +53,7 @@ function makeGame() {
 
 function joinGame() {
   nickname = $('#nickname').val();
-  socket.emit('joinGame', $('#roomId').val(), $('#nickname').val(), (isError) => {
+  socket.emit('joinGame', $('#roomId').val(), name, $('#nickname').val(), (isError) => {
     if (!isError) {
       $('#signout').css('display', 'none');
       $('#waitingRoom').css('display', 'block');
@@ -99,6 +103,8 @@ function sendQuestion(myJson) {
   //changeBodyBg();
   $('#waitingRoom').css('display', 'none');
   $('#stage').css('display', 'block');
+  $('.answer').removeClass('rightAnswer');
+  $('.answer').removeClass('wrongAnswer');
   $("#question").text(myJson.question);
   $("#answer_0").text(myJson.answers[0]);
   $("#answer_1").text(myJson.answers[1]);
@@ -113,6 +119,13 @@ function roomClosed() {
   $('#waitingRoom').css('display', 'none');
 }
 
+function sendAnswer(answer) {
+  console.log("I'm here")
+  $('#answer_' + answer).addClass("rightAnswer");
+  if(answer != pickedAnswer){
+    $('#answer_' + pickedAnswer).addClass("wrongAnswer");
+  }
+}
 
 //Misc & Helper functions
 function changeBodyBg() {

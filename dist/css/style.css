@@ -52,11 +52,15 @@ body {
 }
 
 .rightAnswer {
-  background-color: #24e527;
+  background-color: #24e527 !important;
+}
+
+@keyframes rightAnswer {
+
 }
 
 .wrongAnswer {
-  background-color: #e52424;
+  background-color: #e52424 !important;
 }
 
 .answer {
@@ -77,9 +81,7 @@ body {
 
 @keyframes answerHover {
   0% {transform:  scale(1);}
-  25% {transform:  scale(1.1);}
-  50% {transform:  scale(1);}
-    75% {transform:  scale(1.1);}
+  100% {transform:  scale(1.1);}
 }
 
 @keyframes answerOff {
