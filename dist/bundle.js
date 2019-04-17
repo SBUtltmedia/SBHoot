@@ -73,6 +73,8 @@
 var socket = io(`${window.location.hostname}:8090`);
 var nickname;
 var pickedAnswer;
+var questionTime = 0;
+var questionInterval = 0;
 
 //Load button functions w/ page
 $(function() {
@@ -101,7 +103,7 @@ socket.on('sendAnswer', (answer)=>{sendAnswer(answer);})
 function checkAnswer(evt) {
   if(pickedAnswer == -1){
     pickedAnswer = evt.currentTarget.id.split('_')[1];
-    socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1]);
+    socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1], questionTime, name);
   }
 }
 
@@ -151,14 +153,14 @@ function closeGame() {
 
 function deleteGame() {
   if(confirm('Are you sure you want to delete ' + $('#gameName').text() + '?')){
-    socket.emit('deleteGame', $('#gameName').text());
+    socket.emit('deleteGame');
     $('#gameManagement').css('display', 'none');
     $('#gameCreation').css('display', 'block');
   }
 }
 
 function startGame() {
-  socket.emit('startGame', $('#gameName').text());
+  socket.emit('startGame');
 }
 
 
@@ -171,7 +173,11 @@ function roomListUpdate(people) {
 }
 
 function sendQuestion(myJson) {
+  clearInterval(questionInterval);
+  questionTime = 0;
+  questionInterval = setInterval(()=>{questionTime++;}, 1000);
   pickedAnswer = -1;
+
   //changeBodyBg();
   $('#waitingRoom').css('display', 'none');
   $('#stage').css('display', 'block');
@@ -186,13 +192,16 @@ function sendQuestion(myJson) {
 
 function roomClosed() {
   socket.off(socket.room);
+  clearInterval(questionInterval);
   $('#playerList').empty();
   $('#signout').css('display', 'block');
   $('#waitingRoom').css('display', 'none');
 }
 
 function sendAnswer(answer) {
-  console.log("I'm here")
+  //Prevent player from answering after receiving
+  pickedAnswer = -2;
+  
   $('#answer_' + answer).addClass("rightAnswer");
   if(answer != pickedAnswer){
     $('#answer_' + pickedAnswer).addClass("wrongAnswer");

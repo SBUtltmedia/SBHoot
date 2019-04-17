@@ -9,7 +9,7 @@ let rawdata = fs.readFileSync('questions.json');
 let questions = JSON.parse(rawdata);
 var questionShuffleList = shuffle(questions.length);
 var roomList = {};
-var answerTime = 20;
+var answerTime = 10;
 
 app.get('/', function(req, res) {
   res.sendFile(__dirname + '/index.html');
@@ -31,8 +31,8 @@ io.on('connection', function(socket) {
     joinGame(socket, room, name, nickname, callback)
   });
 
-  socket.on('checkAnswer', (choice) => {
-    checkAnswer(socket, choice);
+  socket.on('checkAnswer', (choice, time, name) => {
+    checkAnswer(socket, choice, time, name);
   })
 
   socket.on('leaveGame', (name) => {
@@ -47,37 +47,41 @@ io.on('connection', function(socket) {
     changeGameState(socket, state);
   })
 
-  socket.on('deleteGame', (room) => {
-    deleteGame(socket, room);
+  socket.on('deleteGame', () => {
+    deleteGame(socket);
   })
 
-  socket.on('startGame', (room) => {
+  socket.on('startGame', () => {
     startGame(socket);
   })
 });
 
 function sendQuestion(socket) {
+  //Score remaining & refill noResponse
+  scoreLeftovers(socket);
   //Shuffle list if necessary
   if (!questionShuffleList) {
     var questionShuffleList = shuffle(questions.length);
   }
   //Get next question
-  var question = questions[questionShuffleList.pop()];
+  var questionIndex = questionShuffleList.pop();
+  roomList[socket.room]['questionHistory'].push(questionIndex);
+  var question = questions[questionIndex];
   //Save last answer & set new answer
   var pastAnswer = roomList[socket.room]['answer'];
   roomList[socket.room]['answer'] = question.correct;
   delete question.correct;
   roomList[socket.room]['question'] = question;
-  //Keep track of who still needs to answer
-  roomList[socket.room]['noResponse'] = roomList[socket.room]['players'].length;
-  //Reset timer
-  roomList[socket.room]['timer'] = 0;
+
+
+
   if(roomList[socket.room]['interval'] == 0){//First run
     io.to(socket.room).emit('sendQuestion', question);
   } else {
     io.to(socket.room).emit('sendAnswer', pastAnswer);
     setTimeout(()=>{io.to(socket.room).emit('sendQuestion', question);}, 2000);
   }
+  console.log(roomList[socket.room]);
 }
 
 function shuffle(length) {
@@ -99,7 +103,6 @@ function responsesIn(x, socket){
   x = setInterval(function() {
     sendQuestion(socket);
   }, answerTime * 1000);
-  roomList[socket.room]['noResponse'] = roomList[socket.room]['players'].length;
   return x;
 }
 
@@ -107,8 +110,6 @@ function startGame(socket) {
   roomList[socket.room]['roomState'] = 'playing';
   roomList[socket.room]['interval'] = 0;
   roomList[socket.room]['interval'] = responsesIn(roomList[socket.room]['interval'], socket);
-  //Increment timer every second
-  timer = setInterval(()=>{roomList[socket.room]['timer']++;}, 1000);
 }
 
 function makeGame(socket, room, email, callback) {
@@ -118,7 +119,9 @@ function makeGame(socket, room, email, callback) {
     roomList[room] = {
       'players': [],
       roomState: 'open', //roomStates: open, closed, playing
-      master: email
+      master: email,
+      'questionHistory': [],
+      'noResponse': []
     };
     callback(false);
   } else {
@@ -132,26 +135,38 @@ function joinGame(socket, room, name, nickname, callback) {
     socket.room = room;
 
     roomList[room]['players'].push({'name': name, 'nickname': nickname, 'score': 0, 'history': []});
-    callback(false)
+    callback(false);
     //Don't send sensitive info when not necessary
-    tempArr = [];
-    for(player of roomList[room]['players']){
-      tempArr.push(player['nickname']);
-    }
-    io.to(socket.room).emit('roomListUpdate', tempArr);
+    var nicks = roomList[room]['players'].map(players=>players.nickname);
+    //Send nicknames to waiting rooms
+    io.to(socket.room).emit('roomListUpdate', nicks);
   } else {
     callback(true)
   }
 }
 
-function checkAnswer(socket, choice) {
+function checkAnswer(socket, choice, time, name) {
   var question = roomList[socket.room]['question'];
-  if(roomList[socket.room]['answer'] == choice){
-    console.log('Correct answer scored', getPoints(socket));
+  //find player
+  var player;
+  var people = roomList[socket.room]['players'];
+  for(var i in people){
+    if(people[i]['name'] == name){
+      player = people[i];
+      break;
+    }
   }
   //Store who answered & what
-  roomList[socket.room]['noResponse']--;
-  if (roomList[socket.room]['noResponse'] == 0) {
+  var score = 0;
+  if(roomList[socket.room]['answer'] == choice){
+    score = getPoints(socket, time);
+  }
+  console.log('Player scored', score);
+  player['score'] += score;
+  player['history'].push(parseInt(choice));
+  //Remove answered player
+  roomList[socket.room]['noResponse'].splice(roomList[socket.room]['noResponse'].indexOf(name), 1);
+  if (roomList[socket.room]['noResponse'].length == 0) {
     roomList[socket.room]['interval'] = responsesIn(roomList[socket.room]['interval'], socket);
   }
 }
@@ -166,15 +181,30 @@ function changeGameState(socket, state) {
   roomList[socket.room]['roomState'] = state;
 }
 
-function deleteGame(socket, room) {
+function deleteGame(socket) {
   socket.to(socket.room).emit('roomClosed');
   socket.leave(socket.room);
   delete roomList[socket.room];
 }
 
-function getPoints(socket) {
-  time = roomList[socket.room]['timer'] - 3;
+// Returns the number of points to award a player
+// if they answer the question correctly
+function getPoints(socket, time) {
+  time -= 2;
   if(time < 0)
     time = 0;
-  return Math.ceil(Math.pow((answerTime - time) / answerTime,1.5) * 100);
+  return Math.ceil(Math.pow((answerTime - time) / answerTime,1.7) * 100);
+}
+
+// Adds -1 to the history of every unanswered player
+// & resets the noResponse array
+function scoreLeftovers(socket) {
+  people = roomList[socket.room]['players'];
+
+  for(var i in people){
+    if(roomList[socket.room]['noResponse'].indexOf(people[i].name) > -1){
+      people[i]['history'].push(-1);
+    }
+  }
+  roomList[socket.room]['noResponse'] = roomList[socket.room]['players'].map(players=>players.name);
 }
