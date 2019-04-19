@@ -79,7 +79,7 @@ var questionInterval = 0;
 //Load button functions w/ page
 $(function() {
   var listeners = "click";
-  $(".answer").on(listeners, (evt) => {checkAnswer(evt);});
+  $(".answer").on(listeners, checkAnswer);
   $("#joinGame").on(listeners, joinGame);
   $("#makeGame").on(listeners, makeGame);
   $("#leaveRoom").on(listeners, leaveRoom);
@@ -91,13 +91,13 @@ $(function() {
 
 
 //Socket listeners
-socket.on('roomListUpdate', (people) => {roomListUpdate(people);});
+socket.on('roomListUpdate', roomListUpdate);
 
 socket.on('sendQuestion', sendQuestion);
 
 socket.on('roomClosed', roomClosed);
 
-socket.on('sendAnswer', (answer, points)=>{sendAnswer(answer, points);})
+socket.on('sendAnswer', sendAnswer);
 
 socket.on('sendScoreBoard', sendScoreBoard);
 
@@ -163,7 +163,6 @@ function startGame() {
     sendAlert("Error: cannot start a game with no players");
   }
 }
-
 
 //Socket functions
 function roomListUpdate(people) {

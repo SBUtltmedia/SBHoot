@@ -73,8 +73,6 @@ function sendQuestion(socket) {
   delete question.correct;
   roomList[socket.room]['question'] = question;
 
-
-
   if(roomList[socket.room]['interval'] == 0){//First run
     io.to(socket.room).emit('sendQuestion', question);
   } else {

@@ -70,6 +70,7 @@ body {
   background-color: #fffff0;
   margin: 50px;
   text-align: center;
+  border-radius: 1em;
   animation: answerOff  1s forwards;
 }
 
