@@ -7,6 +7,11 @@
   <title>SBHoot - A Trivia Game</title>
   <link rel="stylesheet" type="text/css" title="Cool stylesheet" href="dist/css/style.css">
   <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
+  <script
+  src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js"
+  integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E="
+  crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.dev.js"></script>
   <script src="dist/bundle.js"></script>
   <link href="https://fonts.googleapis.com/css?family=Pangolin" rel="stylesheet">
@@ -52,6 +57,17 @@
     <div id="answer_2" class="answer"></div>
     <div id="answer_3" class="answer"></div>
     <div id="submit"></div>
+    <span style="left:1%;">Score: <span id="pointCounter"/></span>
+    <br>
+    <div id="topRanked_0" class="topRanked"></div>
+    <div id="topRanked_1" class="topRanked"></div>
+    <div id="topRanked_2" class="topRanked"></div>
+    <div id="topRanked_3" class="topRanked"></div>
+    <div id="topRanked_4" class="topRanked"></div>
+  </div>
+
+  <div id="dialog" title="Error">
+    <p id="dialogText"></p>
   </div>
 </body>
 </html>

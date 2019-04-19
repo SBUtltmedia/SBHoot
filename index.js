@@ -25,70 +25,71 @@ socket.on('sendQuestion', sendQuestion);
 
 socket.on('roomClosed', roomClosed);
 
-socket.on('sendAnswer', (answer)=>{sendAnswer(answer);})
+socket.on('sendAnswer', (answer, points)=>{sendAnswer(answer, points);})
+
+socket.on('sendScoreBoard', sendScoreBoard);
 
 //Button functions
 function checkAnswer(evt) {
   if(pickedAnswer == -1){
     pickedAnswer = evt.currentTarget.id.split('_')[1];
-    socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1], questionTime, name);
+    socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1], questionTime, email);
   }
 }
 
 function leaveRoom() {
-  socket.emit('leaveGame', nickname);
-  $('#signout').css('display', 'block');
-  $('#waitingRoom').css('display', 'none');
+  socket.emit('leaveGame', email);
+  changeDisplay(['#signout'], ['#waitingRoom']);
+}
+
+function joinGame() {
+  nickname = $('#nickname').val();
+  socket.emit('joinGame', $('#roomId').val(), email, name, $('#nickname').val(), (isError) => {
+    if (!isError) {
+      changeDisplay(['#waitingRoom'], ['#signout']);
+    } else {
+      sendAlert('Error: Room is closed or does not exist');
+    }
+  });
 }
 
 function makeGame() {
   socket.emit('makeGame', $('#roomId').val(), email, (error)=>{
     if (!error) {
-        $('#gameManagement').css('display', 'block');
         $('#gameName').text($('#roomId').val());
-        $('#gameCreation').css('display', 'none');
+        changeDisplay(['#gameManagement'], ['#gameCreation']);
       } else {
-        $('#GameError').text('Error: Game already exists!');
+        sendAlert('Error: Game already exists!');
       }
-  });
-}
-
-function joinGame() {
-  nickname = $('#nickname').val();
-  socket.emit('joinGame', $('#roomId').val(), name, $('#nickname').val(), (isError) => {
-    if (!isError) {
-      $('#signout').css('display', 'none');
-      $('#waitingRoom').css('display', 'block');
-    } else {
-      $('#joinGameError').text('\tError: Room is closed or does not exist');
-    }
   });
 }
 
 function openGame() {
   socket.emit('changeGameState', $('#gameName').text(), 'open');
-  $('#openGame').css('display', 'none');
-  $('#closeGame').css('display', 'block');
-  $('#startGame').css('display', 'block');
+  changeDisplay(['#closeGame', '#startGame'], ['#openGame']);
 }
 
 function closeGame() {
   socket.emit('changeGameState', $('#gameName').text(), 'closed');
-  $('#openGame').css('display', 'block');
-  $('#closeGame').css('display', 'none');
-  $('#startGame').css('display', 'none');
+  changeDisplay(['#openGame'], ['#closeGame']);
 }
 
 function deleteGame() {
   if(confirm('Are you sure you want to delete ' + $('#gameName').text() + '?')){
     socket.emit('deleteGame');
-    $('#gameManagement').css('display', 'none');
-    $('#gameCreation').css('display', 'block');
+    $('#playerList').empty();
+    changeDisplay(['#gameCreation'], ['#gameManagement']);
   }
 }
 
 function startGame() {
-  socket.emit('startGame');
+  //Must have at least 1 player to start
+  if($('ul#playerList li').length > 0){
+    socket.emit('startGame');
+    $('#startGame').css('display', 'none');
+  } else {
+    sendAlert("Error: cannot start a game with no players");
+  }
 }
 
 
@@ -100,6 +101,7 @@ function roomListUpdate(people) {
   }
 }
 
+//Client Socket
 function sendQuestion(myJson) {
   clearInterval(questionInterval);
   questionTime = 0;
@@ -107,36 +109,63 @@ function sendQuestion(myJson) {
   pickedAnswer = -1;
 
   //changeBodyBg();
-  $('#waitingRoom').css('display', 'none');
-  $('#stage').css('display', 'block');
-  $('.answer').removeClass('rightAnswer');
-  $('.answer').removeClass('wrongAnswer');
+  changeDisplay(['#stage'], ['#waitingRoom']);
+  $('.answer').removeClass('rightAnswer wrongAnswer');
   $("#question").text(myJson.question);
-  $("#answer_0").text(myJson.answers[0]);
-  $("#answer_1").text(myJson.answers[1]);
-  $("#answer_2").text(myJson.answers[2]);
-  $("#answer_3").text(myJson.answers[3]);
+  for (var i = 0; i < myJson.answers.length; i++) {
+    $("#answer_"+i).text(myJson.answers[i]);
+  }
 }
 
 function roomClosed() {
-  socket.off(socket.room);
   clearInterval(questionInterval);
   $('#playerList').empty();
-  $('#signout').css('display', 'block');
-  $('#waitingRoom').css('display', 'none');
+  changeDisplay(['#signout'], ['#waitingRoom', '#stage']);
+  sendAlert("Your game was terminated by the instructor");
 }
 
-function sendAnswer(answer) {
-  //Prevent player from answering after receiving
-  pickedAnswer = -2;
-  
+function sendAnswer(answer, points) {
+  $('#pointCounter').text(points);
   $('#answer_' + answer).addClass("rightAnswer");
   if(answer != pickedAnswer){
     $('#answer_' + pickedAnswer).addClass("wrongAnswer");
+  }
+  //Prevent player from answering after receiving
+  pickedAnswer = -2;
+}
+
+function sendScoreBoard(players){
+  //Bubblesort
+  for(var i = 0; i < players.length-1; i++) {
+    for (var j = 0; j < players.length-i-1; j++) {
+      if(players[j][1] < players[j+1][1]){
+        var temp = players[j];
+        players[j] = players[j+1];
+        players[j+1] = temp;
+      }
+    }
+  }
+
+  for (var i = 0; i < players.length && i < 5; i++) {
+    $('#topRanked_'+i).text(players[i][0] + "\t\t" + players[i][1]);
   }
 }
 
 //Misc & Helper functions
 function changeBodyBg() {
   document.body.style.background = random_bg_color();
+}
+
+function sendAlert(info){
+  $('#dialogText').text(info);
+  $('#dialog').dialog();
+}
+
+function changeDisplay(show, noShow){
+  for (var i = 0; i < show.length; i++) {
+    $(show[i]).css('display', 'block');
+  }
+  for (var i = 0; i < noShow.length; i++) {
+    $(noShow[i]).css('display', 'none');
+  }
 }

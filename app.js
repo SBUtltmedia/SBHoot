@@ -27,16 +27,16 @@ app.use('/dist', express.static('dist'));
 
 io.on('connection', function(socket) {
 
-  socket.on('joinGame', (room, name, nickname, callback) => {
-    joinGame(socket, room, name, nickname, callback)
+  socket.on('joinGame', (room, email, name, nickname, callback) => {
+    joinGame(socket, room, email, name, nickname, callback)
   });
 
-  socket.on('checkAnswer', (choice, time, name) => {
-    checkAnswer(socket, choice, time, name);
+  socket.on('checkAnswer', (choice, time, email) => {
+    checkAnswer(socket, choice, time, email);
   })
 
-  socket.on('leaveGame', (name) => {
-    leaveGame(socket, name);
+  socket.on('leaveGame', (email) => {
+    leaveGame(socket, email);
   })
 
   socket.on('makeGame', (room, email, callback) => {
@@ -78,10 +78,10 @@ function sendQuestion(socket) {
   if(roomList[socket.room]['interval'] == 0){//First run
     io.to(socket.room).emit('sendQuestion', question);
   } else {
-    io.to(socket.room).emit('sendAnswer', pastAnswer);
+    //io.to(socket.room).emit('sendAnswer', pastAnswer);
+    sendAnswerAndPoints(socket, pastAnswer);
     setTimeout(()=>{io.to(socket.room).emit('sendQuestion', question);}, 2000);
   }
-  console.log(roomList[socket.room]);
 }
 
 function shuffle(length) {
@@ -129,12 +129,18 @@ function makeGame(socket, room, email, callback) {
   }
 }
 
-function joinGame(socket, room, name, nickname, callback) {
+function joinGame(socket, room, email, name, nickname, callback) {
   if (room in roomList && roomList[room]['roomState'] == 'open') {
     socket.join(room);
     socket.room = room;
 
-    roomList[room]['players'].push({'name': name, 'nickname': nickname, 'score': 0, 'history': []});
+    roomList[room]['players'].push(
+      {'name': name,
+      'nickname': nickname,
+      'score': 0,
+      'socketId': socket.id,
+      'email': email + roomList[room]['players'].length,
+      'history': []});
     callback(false);
     //Don't send sensitive info when not necessary
     var nicks = roomList[room]['players'].map(players=>players.nickname);
@@ -145,34 +151,31 @@ function joinGame(socket, room, name, nickname, callback) {
   }
 }
 
-function checkAnswer(socket, choice, time, name) {
+function checkAnswer(socket, choice, time, email) {
   var question = roomList[socket.room]['question'];
   //find player
   var player;
   var people = roomList[socket.room]['players'];
   for(var i in people){
-    if(people[i]['name'] == name){
+    if(people[i]['socketId'] == socket.id){//Temporary
       player = people[i];
       break;
     }
   }
   //Store who answered & what
-  var score = 0;
-  if(roomList[socket.room]['answer'] == choice){
-    score = getPoints(socket, time);
-  }
-  console.log('Player scored', score);
+  var score = getPoints(socket, time, choice);
   player['score'] += score;
   player['history'].push(parseInt(choice));
+
   //Remove answered player
-  roomList[socket.room]['noResponse'].splice(roomList[socket.room]['noResponse'].indexOf(name), 1);
+  roomList[socket.room]['noResponse'].splice(roomList[socket.room]['noResponse'].indexOf(email), 1);
   if (roomList[socket.room]['noResponse'].length == 0) {
     roomList[socket.room]['interval'] = responsesIn(roomList[socket.room]['interval'], socket);
   }
 }
 
-function leaveGame(socket, name) {
-  roomList[socket.room]['players'].splice(roomList[socket.room]['players'].indexOf(name), 1);
+function leaveGame(socket, email) {
+  roomList[socket.room]['players'].splice(roomList[socket.room]['players'].indexOf(email), 1);
   io.to(socket.room).emit('roomListUpdate', roomList[socket.room]['players']);
   socket.leave(socket.room);
 }
@@ -183,17 +186,28 @@ function changeGameState(socket, state) {
 
 function deleteGame(socket) {
   socket.to(socket.room).emit('roomClosed');
-  socket.leave(socket.room);
+  //socket.leave(socket.room);
+  if(roomList[socket.room]['roomState'] == 'playing'){
+    clearInterval(roomList[socket.room]['interval']);
+  }
+  //Kick everyone from the room
+  io.of('/').in(socket.room).clients((error, socketIds) => {
+    if (error) throw error;
+    socketIds.forEach(socketId => io.sockets.sockets[socketId].leave(socket.room));
+  });
   delete roomList[socket.room];
 }
 
 // Returns the number of points to award a player
 // if they answer the question correctly
-function getPoints(socket, time) {
-  time -= 2;
-  if(time < 0)
-    time = 0;
-  return Math.ceil(Math.pow((answerTime - time) / answerTime,1.7) * 100);
+function getPoints(socket, time, choice) {
+  if(roomList[socket.room]['answer'] == choice){
+    time -= 2;
+    if(time < 0)
+      time = 0;
+    return Math.ceil(Math.pow((answerTime - time) / answerTime,1.7) * 100);
+  }
+  return 0;
 }
 
 // Adds -1 to the history of every unanswered player
@@ -202,9 +216,16 @@ function scoreLeftovers(socket) {
   people = roomList[socket.room]['players'];
 
   for(var i in people){
-    if(roomList[socket.room]['noResponse'].indexOf(people[i].name) > -1){
+    if(roomList[socket.room]['noResponse'].indexOf(people[i].email) > -1){
       people[i]['history'].push(-1);
     }
   }
-  roomList[socket.room]['noResponse'] = roomList[socket.room]['players'].map(players=>players.name);
+  roomList[socket.room]['noResponse'] = roomList[socket.room]['players'].map(players=>players.email);
+}
+
+function sendAnswerAndPoints(socket, answer){
+  for(player of roomList[socket.room]['players']){
+    io.to(player['socketId']).emit('sendAnswer', answer, player['score']);
+  }
+  io.to(socket.room).emit('sendScoreBoard', roomList[socket.room]['players'].map(player => [player['nickname'], player['score']]));
 }
