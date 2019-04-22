@@ -1,0 +1,27 @@
+<div id="signout" style="display: none;">
+  <button id="signout-button">Sign Out</button>
+  <p id="greeting"></p>
+  <div id="gameCreation">
+    <h3>Create a game!</h3>
+    <h5>Room ID: <input type="text" id="roomId" value="yourClass"><br>
+      <button id="makeGame" type="button" name="button">Create Game!</button>
+    </h5>
+  </div>
+</div>
+
+<div id="gameManagement" style="display:none;">
+  <h3>Students currently in room <span id="gameName"></span>:</h3>
+  <ul id="playerList"></ul>
+  <button id="openGame" type="button" name="button" style="display: none;">Open</button>
+  <button id="closeGame" type="button" name="button">Close</button>
+  <button id="deleteGame"type="button" name="button">Delete</button>
+  <button id="startGame" type="button" name="button">Start</button>
+
+</div>
+<span id="GameError"></span>
+<div id="dialog" title="Error">
+  <p id="dialogText"></p>
+</div>
+</body>
+<script src="dist/instructor.js"></script>
+</html>

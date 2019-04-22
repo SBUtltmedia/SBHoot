@@ -5,11 +5,8 @@
   "main": "index.js",
   "unpkg": "dist/aframe-websocket-component.min.js",
   "scripts": {
-    "build": "webpack index.js dist/bundle.js",
-    "dev": "nodemon --watch index.js --watch app.js --watch index.html --watch instructor.html  --watch src --exec 'npm run dist && npm run startServer' ",
-    "dist": "npm run build && uglifyjs dist/bundle.js > dist/bundle.min.js",
+    "dev": "nodemon --watch index.js --watch dist/client.js --watch dist/instructor.js --watch app.js --watch index.html --watch instructor.html  --watch src --exec 'npm run startServer' ",
     "lint": "semistandard -v | snazzy",
-    "prepublish": "npm run dist",
     "ghpages": "ghpages",
     "start": "npm run dev",
     "startServer": "node app.js",
@@ -75,6 +72,8 @@
   },
   "dependencies": {
     "express": "^4.16.4",
+    "mongodb-stitch": "^3.2.21",
+    "pug": "^2.0.3",
     "socket.io": "*"
   }
 }

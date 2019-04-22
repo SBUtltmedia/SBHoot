@@ -7,17 +7,12 @@
   <title>SBHoot - A Trivia Game</title>
   <link rel="stylesheet" type="text/css" title="Cool stylesheet" href="dist/css/style.css">
   <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
-  <script
-  src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js"
-  integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E="
-  crossorigin="anonymous"></script>
+  <script  src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js" integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E=" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.dev.js"></script>
-  <script src="dist/bundle.js"></script>
+  <script src="dist/index.js"></script>
   <link href="https://fonts.googleapis.com/css?family=Pangolin" rel="stylesheet">
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
-  <script src="dist/Oauth.js"></script>
+  <script src="dist/Oauth.js"></script> 
   <script src="https://apis.google.com/js/api.js"></script>
 </head>
 
@@ -27,3 +22,7 @@
     <h1 id="mainHeader">Log in to continue:</h1>
     <button id="authorize-button">Authorize</button>
   </div>
+if clientType=='instructor'
+  include instructor.pug
+else
+  include student.pug

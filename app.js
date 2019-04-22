@@ -1,5 +1,8 @@
+const path = require('path')
 var express = require('express');
 var app = express();
+app.set('view engine', 'pug')
+app.set('views', path.join(__dirname, 'views'))
 const fs = require('fs');
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
@@ -7,23 +10,18 @@ var io = require('socket.io')(http);
 var currentRightAnswer;
 let rawdata = fs.readFileSync('questions.json');
 let questions = JSON.parse(rawdata);
-var questionShuffleList = shuffle(questions.length);
 var roomList = {};
 var answerTime = 10;
+app.use('/dist', express.static('dist'));
+app.get('*', function(req, res) {
+var url = req.url.split("/")[1]
+res.render('common', { clientType: url})
 
-app.get('/', function(req, res) {
-  res.sendFile(__dirname + '/index.html');
-});
-
-app.get('/instructor', function(req, res) {
-  res.sendFile(__dirname + '/instructor.html');
 });
 
 http.listen(8090, function() {
   console.log('listening on *:8090');
 });
-
-app.use('/dist', express.static('dist'));
 
 io.on('connection', function(socket) {
 
@@ -60,11 +58,11 @@ function sendQuestion(socket) {
   //Score remaining & refill noResponse
   scoreLeftovers(socket);
   //Shuffle list if necessary
-  if (!questionShuffleList) {
-    var questionShuffleList = shuffle(questions.length);
+  if (!roomList[socket.room].questionShuffleList) {
+    roomList[socket.room].questionShuffleList = shuffle(questions.length);
   }
   //Get next question
-  var questionIndex = questionShuffleList.pop();
+  var questionIndex = roomList[socket.room].questionShuffleList.pop();
   roomList[socket.room]['questionHistory'].push(questionIndex);
   var question = questions[questionIndex];
   //Save last answer & set new answer
@@ -121,6 +119,11 @@ function makeGame(socket, room, email, callback) {
       'questionHistory': [],
       'noResponse': []
     };
+
+    var dir = __dirname + '/instructors/'+email.replace(/[@\.]/g,"_")+"/"+room;
+    if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    }
     callback(false);
   } else {
     callback(true);
