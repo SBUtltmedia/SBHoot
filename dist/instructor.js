@@ -4,6 +4,8 @@ $("#closeGame").on(listeners, closeGame);
 $("#deleteGame").on(listeners, deleteGame);
 $("#startGame").on(listeners, startGame);
 
+socket.on('playerResults', playerResults);
+
 function makeGame() {
   socket.emit('makeGame', $('#roomId').val(), email, (error)=>{
     if (!error) {
@@ -38,7 +40,30 @@ function startGame() {
   if($('ul#playerList li').length > 0){
     socket.emit('startGame');
     $('#startGame').css('display', 'none');
+    changeDisplay(['#playerResults'], ['#startGame', "#playerList"]);
   } else {
     sendAlert("Error: cannot start a game with no players");
   }
+}
+
+function playerResults(players){
+  //First run
+  if($('#playerResults tr').length == 0){
+    $('#playerResults').append('<tr><th>Name</th><th>Nickname</th><th>Score</th></tr>');
+    for(player of players){
+      tr = '<tr id="' + player[3] + '"><td>' + player[0] + '</td><td>' + player[1] + '</td><td id="score">' + player[2] + '</td></tr>';
+      $('#playerResults').append(tr);
+    }
+  }
+  //Add info
+  else {
+    console.log(players)
+    for(player of players){
+      //$('table#playerResults tr[id="' + player[3] + ']"').find("#score").text(player[2]);
+
+      console.log($("#playerResults").find("#" + player[3]).find('#score'))
+    }
+  }
+
+
 }

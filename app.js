@@ -14,9 +14,8 @@ var roomList = {};
 var answerTime = 10;
 app.use('/dist', express.static('dist'));
 app.get('*', function(req, res) {
-var url = req.url.split("/")[1]
-res.render('common', { clientType: url})
-
+  var url = req.url.split("/")[1]
+  res.render('common', { clientType: url})
 });
 
 http.listen(8090, function() {
@@ -57,6 +56,7 @@ io.on('connection', function(socket) {
 function sendQuestion(socket) {
   //Score remaining & refill noResponse
   scoreLeftovers(socket);
+  //Save information thus far
   //Shuffle list if necessary
   if (!roomList[socket.room].questionShuffleList) {
     roomList[socket.room].questionShuffleList = shuffle(questions.length);
@@ -106,6 +106,7 @@ function startGame(socket) {
   roomList[socket.room]['roomState'] = 'playing';
   roomList[socket.room]['interval'] = 0;
   roomList[socket.room]['interval'] = responsesIn(roomList[socket.room]['interval'], socket);
+  sendProfResults(socket);
 }
 
 function makeGame(socket, room, email, callback) {
@@ -117,12 +118,13 @@ function makeGame(socket, room, email, callback) {
       roomState: 'open', //roomStates: open, closed, playing
       master: email,
       'questionHistory': [],
-      'noResponse': []
+      'noResponse': [],
+      masterId: socket.id
     };
 
     var dir = __dirname + '/instructors/'+email.replace(/[@\.]/g,"_")+"/"+room;
     if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+      fs.mkdirSync(dir, { recursive: true });
     }
     callback(false);
   } else {
@@ -229,4 +231,15 @@ function sendAnswerAndPoints(socket, answer){
     io.to(player['socketId']).emit('sendAnswer', answer, player['score']);
   }
   io.to(socket.room).emit('sendScoreBoard', roomList[socket.room]['players'].map(player => [player['nickname'], player['score']]));
+
+  //Write current game state to relevant file
+  var dir = __dirname + '/instructors/'+roomList[socket.room].master.replace(/[@\.]/g,"_")+"/"+socket.room;
+  fs.writeFile(dir + '/players.json', JSON.stringify(roomList[socket.room].players), 'utf-8', (err)=>{if(err){console.log(err)}});
+
+  //Send results to instructor
+  sendProfResults(socket);
+}
+
+function sendProfResults(socket){
+  io.to(roomList[socket.room].masterId).emit('playerResults', roomList[socket.room]['players'].map(player => [player['name'], player['nickname'], player['score'], player['email'].replace(/[@\.]/g,"_")]));
 }
