@@ -1,6 +1,7 @@
 const path = require('path')
 var express = require('express');
 var app = express();
+var mysql = require('mysql');
 app.set('view engine', 'pug')
 app.set('views', path.join(__dirname, 'views'))
 const fs = require('fs');
@@ -10,6 +11,23 @@ var io = require('socket.io')(http);
 var currentRightAnswer;
 let rawdata = fs.readFileSync('questions.json');
 let questions = JSON.parse(rawdata);
+let DBInfo = JSON.parse(fs.readFileSync('DBConnect.json'));
+var con = mysql.createConnection({
+  host: DBInfo.host,
+  database: DBInfo.database,
+  user: DBInfo.username,
+  password: DBInfo.password,
+});
+con.connect(function(err) {
+    if (err) {
+        console.error('Error connecting: ' + err.stack);
+        return;
+    }
+
+    console.log('Connected as id ' + con.threadId);
+});
+
+
 var roomList = {};
 var answerTime = 10;
 app.use('/dist', express.static('dist'));
@@ -110,26 +128,27 @@ function startGame(socket) {
 }
 
 function makeGame(socket, room, email, callback) {
-  if (!(room in roomList)) {
-    socket.join(room);
-    socket.room = room;
-    roomList[room] = {
-      'players': [],
-      roomState: 'open', //roomStates: open, closed, playing
-      master: email,
-      'questionHistory': [],
-      'noResponse': [],
-      masterId: socket.id
-    };
-
-    var dir = __dirname + '/instructors/'+email.replace(/[@\.]/g,"_")+"/"+room;
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+  con.query(`INSERT INTO Person (Email) SELECT '${email}' WHERE NOT EXISTS(SELECT * FROM Person WHERE Email='${email}')`);
+  con.query(`SELECT * FROM Person WHERE Email = '${email}'`, (err, result) => {socket.masterId = result[0].PersonID;});
+  con.query(`SELECT * FROM Room WHERE InstructorID = ${socket.masterId} AND Name = '${room}'`, (err, result)=>{
+    exists = result != undefined && result.length > 0;
+    callback(exists);
+    if(!exists){
+      socket.join(room);
+      socket.room = room;
+      socket.master = email;
+      //Replace eventually
+      roomList[room] = {
+        'players': [],
+        roomState: 'open', //roomStates: open, closed, playing
+        master: email,
+        'questionHistory': [],
+        'noResponse': [],
+        masterId: socket.id
+      };
+      con.query(`INSERT INTO Room (InstructorID, Name) VALUES (${socket.masterId}, '${room}');`);
     }
-    callback(false);
-  } else {
-    callback(true);
-  }
+  })
 }
 
 function joinGame(socket, room, email, name, nickname, callback) {
@@ -185,11 +204,14 @@ function leaveGame(socket, email) {
 
 function changeGameState(socket, state) {
   roomList[socket.room]['roomState'] = state;
+  con.query(`UPDATE Room SET State = '${state}' WHERE Name = '${socket.room}' AND InstructorID = ${socket.masterId}`);
 }
 
 function deleteGame(socket) {
   socket.to(socket.room).emit('roomClosed');
-  //socket.leave(socket.room);
+
+  con.query(`DELETE FROM Room WHERE Name = '${socket.room}' AND InstructorID = '${socket.masterId}'`);
+
   if(roomList[socket.room]['roomState'] == 'playing'){
     clearInterval(roomList[socket.room]['interval']);
   }
