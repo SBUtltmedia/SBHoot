@@ -6,6 +6,7 @@ $("#startGame").on(listeners, startGame);
 
 socket.on('playerResults', playerResults);
 
+
 function makeGame() {
   socket.emit('makeGame', $('#roomId').val(), email, (error)=>{
     if (!error) {

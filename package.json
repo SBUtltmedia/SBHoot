@@ -1,15 +1,13 @@
 {
-  "name": "aframe-websocket-component",
+  "name": "SBHoot",
   "version": "1.0.0",
   "description": "An implentation of Socket.io to set an entities attributes",
   "main": "index.js",
   "unpkg": "dist/aframe-websocket-component.min.js",
   "scripts": {
-    "dev": "nodemon --watch index.js --watch dist/client.js --watch dist/instructor.js --watch app.js --watch index.html --watch instructor.html  --watch src --exec 'npm run startServer' ",
+    "dev": "nodemon --watch index.js --watch dist/client.js --watch dist/instructor.js --watch app.js --watch index.html --watch instructor.html  --watch src --exec 'node app.js' ",
     "lint": "semistandard -v | snazzy",
     "ghpages": "ghpages",
-    "start": "npm run dev",
-    "startServer": "node app.js",
     "test": "karma start ./tests/karma.conf.js",
     "test:firefox": "karma start ./tests/karma.conf.js --browsers Firefox",
     "test:chrome": "karma start ./tests/karma.conf.js --browsers Chrome"

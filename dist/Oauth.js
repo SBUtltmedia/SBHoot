@@ -78,5 +78,6 @@ function makeApiCall() {
     email = resp.result.emailAddresses[0].value;
     //p.appendChild(document.createTextNode('Hello, '+name+'!'));
     $('#greeting').text('Hello, '+name+'!');
+
   });
 }

@@ -31,6 +31,14 @@ con.connect(function(err) {
 var roomList = {};
 var answerTime = 10;
 app.use('/dist', express.static('dist'));
+app.use('/previousGames', function(req, res) {
+
+console.log(req,res)
+res.send(req.query.email)
+//$.get('http://sbhoot.fenetik.com/previousGames',{ name: "John", email: "2pm" },(data)=>{console.log(data)})
+});
+
+
 app.get('*', function(req, res) {
   var url = req.url.split("/")[1]
   res.render('common', { clientType: url})
@@ -129,26 +137,28 @@ function startGame(socket) {
 
 function makeGame(socket, room, email, callback) {
   con.query(`INSERT INTO Person (Email) SELECT '${email}' WHERE NOT EXISTS(SELECT * FROM Person WHERE Email='${email}')`);
-  con.query(`SELECT * FROM Person WHERE Email = '${email}'`, (err, result) => {socket.masterId = result[0].PersonID;});
-  con.query(`SELECT * FROM Room WHERE InstructorID = ${socket.masterId} AND Name = '${room}'`, (err, result)=>{
-    exists = result != undefined && result.length > 0;
-    callback(exists);
-    if(!exists){
-      socket.join(room);
-      socket.room = room;
-      socket.master = email;
-      //Replace eventually
-      roomList[room] = {
-        'players': [],
-        roomState: 'open', //roomStates: open, closed, playing
-        master: email,
-        'questionHistory': [],
-        'noResponse': [],
-        masterId: socket.id
-      };
-      con.query(`INSERT INTO Room (InstructorID, Name) VALUES (${socket.masterId}, '${room}');`);
-    }
-  })
+  con.query(`SELECT * FROM Person WHERE Email = '${email}'`, (err, result) => {
+    socket.masterId = result[0].PersonID;
+    con.query(`SELECT * FROM Room WHERE InstructorID = ${socket.masterId} AND Name = '${room}'`, (err, result)=>{
+      exists = result != undefined && result.length > 0;
+      callback(exists);
+      if(!exists){
+        socket.join(room);
+        socket.room = room;
+        socket.master = email;
+        //Replace eventually
+        roomList[room] = {
+          'players': [],
+          roomState: 'open', //roomStates: open, closed, playing
+          master: email,
+          'questionHistory': [],
+          'noResponse': [],
+          masterId: socket.id
+        };
+        con.query(`INSERT INTO Room (InstructorID, Name) VALUES (${socket.masterId}, '${room}');`);
+      }
+    });
+  });
 }
 
 function joinGame(socket, room, email, name, nickname, callback) {

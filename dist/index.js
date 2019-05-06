@@ -1,4 +1,4 @@
-var socket = io(`${window.location.hostname}:8090`);
+socket = io(`${window.location.hostname}:8090`);
 var listeners = "click";
 
 //Socket listeners
@@ -6,6 +6,7 @@ socket.on('roomListUpdate', roomListUpdate);
 
 //Socket functions
 function roomListUpdate(people) {
+  console.log("UPDATE was called")
   $('#playerList').empty();
   for(person of people){
     $('#playerList').append('<li>' + person + '</li>');
