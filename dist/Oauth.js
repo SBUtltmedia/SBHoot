@@ -22,6 +22,8 @@ var authorizeButton = document.getElementById('authorize-button');
 var signoutButton = document.getElementById('signout-button');
 var name;
 var email;
+var firstName;
+var lastName;
 $(function(){
   $('#authorize-button').on("click",handleAuthClick);
   $('#signout-button').on("click", handleSignoutClick);
@@ -76,6 +78,8 @@ function makeApiCall() {
     var p = document.createElement('p');
     name = resp.result.names[0].displayName;
     email = resp.result.emailAddresses[0].value;
+    firstName = resp.result.names[0].givenName;
+    lastName = resp.result.names[0].familyName;
     //p.appendChild(document.createTextNode('Hello, '+name+'!'));
     $('#greeting').text('Hello, '+name+'!');
 

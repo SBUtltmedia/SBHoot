@@ -6,7 +6,6 @@ socket.on('roomListUpdate', roomListUpdate);
 
 //Socket functions
 function roomListUpdate(people) {
-  console.log("UPDATE was called")
   $('#playerList').empty();
   for(person of people){
     $('#playerList').append('<li>' + person + '</li>');
@@ -30,4 +29,9 @@ function changeDisplay(show, noShow){
   for (var i = 0; i < noShow.length; i++) {
     $(noShow[i]).css('display', 'none');
   }
+}
+
+//Add player to DB if not exists
+function logUser(email, firstName, lastName){
+  socket.emit('logUser', email, firstName, lastName);
 }

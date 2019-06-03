@@ -20,6 +20,9 @@ function checkAnswer(evt) {
 }
 
 function joinGame() {
+  //Add player to DB if not exists
+  logUser(email, firstName, lastName);
+
   nickname = $('#nickname').val();
   socket.emit('joinGame', $('#roomId').val(), email, name, $('#nickname').val(), (isError) => {
     if (!isError) {

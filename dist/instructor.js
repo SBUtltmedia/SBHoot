@@ -8,6 +8,7 @@ socket.on('playerResults', playerResults);
 
 
 function makeGame() {
+  logUser(email, firstName, lastName);
   socket.emit('makeGame', $('#roomId').val(), email, (error)=>{
     if (!error) {
         $('#gameName').text($('#roomId').val());
@@ -58,13 +59,8 @@ function playerResults(players){
   }
   //Add info
   else {
-    console.log(players)
     for(player of players){
-      //$('table#playerResults tr[id="' + player[3] + ']"').find("#score").text(player[2]);
-
-      console.log($("#playerResults").find("#" + player[3]).find('#score'))
+      $("#playerResults").find("#" + player[3]).find('#score').text(player[2]);
     }
   }
-
-
 }
