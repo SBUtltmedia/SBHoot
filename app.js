@@ -44,7 +44,6 @@ http.listen(8090, function() {
 });
 
 io.on('connection', function(socket) {
-
   socket.on('joinGame', (room, email, name, nickname, callback) => {
     joinGame(socket, room, email, name, nickname, callback)
   });
@@ -76,6 +75,10 @@ io.on('connection', function(socket) {
   socket.on('logUser', (email, firstName, lastName) => {
     //Add user to DB if they don't exist
     con.query(`INSERT INTO Person (Email, FirstName, LastName) SELECT '${email}', '${firstName}', '${lastName}' WHERE NOT EXISTS(SELECT * FROM Person WHERE Email='${email}')`);
+  });
+
+  socket.on('requestPreviousGames', (email) =>{
+    requestPreviousGames(socket, email);
   });
 });
 
@@ -266,7 +269,19 @@ function sendProfResults(socket){
   io.to(roomList[socket.room].masterId).emit('playerResults', getMapAttr(roomList[socket.room]['players'], ['name', 'nickname', 'score', 'email']));
 }
 
-
+function requestPreviousGames(socket, email){
+  if(email == null)
+    return;
+  con.query(`SELECT * FROM Person WHERE Email = '${email}'`, (err, result)=>{
+      if(result.length == 0)
+        return;
+      con.query(`SELECT *
+        FROM Room
+        WHERE InstructorID = ${result[0].PersonID}`, (err, result) =>{
+          io.to(socket.id).emit('returnPreviousGames', result);
+        });
+    });
+}
 
 
 //UTILITY FUNCTIONS

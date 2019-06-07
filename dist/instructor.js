@@ -4,8 +4,43 @@ $("#closeGame").on(listeners, closeGame);
 $("#deleteGame").on(listeners, deleteGame);
 $("#startGame").on(listeners, startGame);
 
-socket.on('playerResults', playerResults);
 
+socket.on('playerResults', playerResults);
+socket.on('returnPreviousGames', displayPrevGames);
+
+// $(window).on( "load", function() {
+//   console.log( "window loaded" );
+//   requestPrevGames();
+// });
+
+//Request previous games as soon as they're available
+var x = setInterval(emailCheck ,25);
+function emailCheck(){
+  if(email){
+    clearInterval(x);
+    requestPrevGames();
+  }
+}
+
+function displayPrevGames(games){
+  if(games.length == 0)
+    $('#rejoin').text('No previous games')
+  else{
+    for(game of games){
+      $('#previousGames').append('<li><button class="rejoinGame" id="' + game.Name + '" type="button">Join</button>\t'  + game.Name + '</li>');
+    }
+    $(".rejoinGame").on(listeners, rejoinGame);
+  }
+}
+
+function rejoinGame(){
+  console.log(this.id);
+  //TODO: Put in logic
+}
+
+function requestPrevGames(){
+  socket.emit('requestPreviousGames', email);
+}
 
 function makeGame() {
   logUser(email, firstName, lastName);
