@@ -26,6 +26,7 @@ function displayPrevGames(games){
   if(games.length == 0)
     $('#rejoin').text('No previous games')
   else{
+    $('#previousGames').empty();
     for(game of games){
       $('#previousGames').append('<li><button class="rejoinGame" id="' + game.Name + '" type="button">Join</button>\t'  + game.Name + '</li>');
     }
@@ -34,8 +35,9 @@ function displayPrevGames(games){
 }
 
 function rejoinGame(){
-  console.log(this.id);
-  //TODO: Put in logic
+  socket.emit('rejoinGame', email, this.id);
+  $('#gameName').text(this.id);
+  changeDisplay(['#gameManagement', '#openGame'], ['#gameCreation', '#closeGame']);
 }
 
 function requestPrevGames(){
@@ -69,6 +71,7 @@ function deleteGame() {
     socket.emit('deleteGame');
     $('#playerList').empty();
     changeDisplay(['#gameCreation'], ['#gameManagement']);
+    requestPrevGames(email);
   }
 }
 

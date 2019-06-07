@@ -80,6 +80,10 @@ io.on('connection', function(socket) {
   socket.on('requestPreviousGames', (email) =>{
     requestPreviousGames(socket, email);
   });
+
+  socket.on('rejoinGame', (email, game) =>{
+    rejoinGame(socket, email, game);
+  })
 });
 
 // TODO:
@@ -283,6 +287,18 @@ function requestPreviousGames(socket, email){
     });
 }
 
+function rejoinGame(socket, email, game){
+  con.query(`SELECT * FROM Person WHERE Email = '${email}'`, (err, result) => {
+    socket.masterId = result[0].PersonID;
+    socket.join(game);
+    socket.room = game;
+    roomList[game] = {
+      players: {},
+      noResponse: [],
+      masterId: socket.id
+    };
+  });
+}
 
 //UTILITY FUNCTIONS
 
