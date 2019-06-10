@@ -8,11 +8,6 @@ $("#startGame").on(listeners, startGame);
 socket.on('playerResults', playerResults);
 socket.on('returnPreviousGames', displayPrevGames);
 
-// $(window).on( "load", function() {
-//   console.log( "window loaded" );
-//   requestPrevGames();
-// });
-
 //Request previous games as soon as they're available
 var x = setInterval(emailCheck ,25);
 function emailCheck(){
@@ -20,6 +15,10 @@ function emailCheck(){
     clearInterval(x);
     requestPrevGames();
   }
+}
+
+function requestPrevGames(){
+  socket.emit('requestPreviousGames', email);
 }
 
 function displayPrevGames(games){
@@ -40,9 +39,7 @@ function rejoinGame(){
   changeDisplay(['#gameManagement', '#openGame'], ['#gameCreation', '#closeGame']);
 }
 
-function requestPrevGames(){
-  socket.emit('requestPreviousGames', email);
-}
+
 
 function makeGame() {
   logUser(email, firstName, lastName);
@@ -91,14 +88,22 @@ function playerResults(players){
   if($('#playerResults tr').length == 0){
     $('#playerResults').append('<tr><th>Name</th><th>Nickname</th><th>Score</th></tr>');
     for(player of players){
-      tr = '<tr id="' + player[3] + '"><td>' + player[0] + '</td><td>' + player[1] + '</td><td id="score">' + player[2] + '</td></tr>';
+      tr = '<tr id="' + getSelector(player[3]) + '"><td>' + player[0] + '</td><td>' + player[1] + '</td><td class="score">' + player[2] + '</td></tr>';
       $('#playerResults').append(tr);
     }
   }
   //Add info
   else {
     for(player of players){
-      $("#playerResults").find("#" + player[3]).find('#score').text(player[2]);
+      // console.log(("#" + getSelector(player[3])));
+      console.log(player[2]);
+      $("#" + getSelector(player[3])).last().text("test");
+      //$("#" + getSelector(player[3])).find('.score').text(player[2]);
+      // $("#playerResults").find("#" + getSelector(player[3])).find('.score').text(player[2]);
     }
   }
+}
+
+function getSelector(input){
+  return input.replace('@', '.');
 }

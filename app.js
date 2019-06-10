@@ -72,26 +72,32 @@ io.on('connection', function(socket) {
     startGame(socket);
   });
 
+  //Add user to DB if they don't exist
   socket.on('logUser', (email, firstName, lastName) => {
-    //Add user to DB if they don't exist
-    con.query(`INSERT INTO Person (Email, FirstName, LastName) SELECT '${email}', '${firstName}', '${lastName}' WHERE NOT EXISTS(SELECT * FROM Person WHERE Email='${email}')`);
+    con.query(`INSERT INTO Person (Email, FirstName, LastName) SELECT ?, ? , ? WHERE NOT EXISTS(SELECT * FROM Person WHERE Email=?)`, [email, firstName, lastName, email]);
   });
 
   socket.on('requestPreviousGames', (email) =>{
     requestPreviousGames(socket, email);
   });
 
-  socket.on('rejoinGame', (email, game) =>{
-    rejoinGame(socket, email, game);
-  })
+  socket.on('requestPreviousGamesStudent', (email) =>{
+    requestPreviousGamesStudent(socket, email);
+  });
+
+  socket.on('rejoinGame', (email, game, nickname) =>{
+    rejoinGame(socket, email, game, nickname);
+  });
+
+  socket.on('rejoinGameStudent', (room, email, name, nickname, callback) =>{
+    joinGame(socket, room, email, name, nickname, callback);
+  });
 });
 
 // TODO:
-// Sanitize DB inputs
-// Allow re-joining of games
 // Display game report to instructor
 
-
+//Sends questions to students
 function sendQuestion(socket) {
   //Score remaining & refill noResponse
   scoreLeftovers(socket);
@@ -117,6 +123,7 @@ function sendQuestion(socket) {
   }
 }
 
+//Resets the waiting interval once all players have answered
 function responsesIn(x, socket){
   clearInterval(x);
   sendQuestion(socket);
@@ -126,6 +133,7 @@ function responsesIn(x, socket){
   return x;
 }
 
+//Starts a game as initiated by instructor.js
 function startGame(socket) {
   changeGameState(socket, 'playing');
   roomList[socket.room]['noResponse'] = [];
@@ -134,10 +142,11 @@ function startGame(socket) {
   sendProfResults(socket);
 }
 
+//Makes a game with the creator acting as an instructor
 function makeGame(socket, room, email, callback) {
-  con.query(`SELECT * FROM Person WHERE Email = '${email}'`, (err, result) => {
+  con.query(`SELECT * FROM Person WHERE Email = ?`, [email], (err, result) => {
     socket.masterId = result[0].PersonID;
-    con.query(`SELECT * FROM Room WHERE InstructorID = ${socket.masterId} AND Name = '${room}'`, (err, result)=>{
+    con.query(`SELECT * FROM Room WHERE InstructorID = ? AND Name = ?`, [socket.masterId, room], (err, result)=>{
       failed = result != undefined && result.length > 0;
       callback(failed);
       if(!failed){
@@ -148,14 +157,15 @@ function makeGame(socket, room, email, callback) {
           noResponse: [],
           masterId: socket.id
         };
-        con.query(`INSERT INTO Room (InstructorID, Name) VALUES (${socket.masterId}, '${room}');`);
+        con.query(`INSERT INTO Room (InstructorID, Name) VALUES (?, ?);`, [socket.masterId, room]);
       }
     });
   });
 }
 
+//Handles a student joining the game
 function joinGame(socket, room, email, name, nickname, callback) {
-  con.query(`SELECT * FROM Room WHERE Name = '${room}' AND State = 'open'`, (err, result)=>{
+  con.query(`SELECT * FROM Room WHERE Name = ? AND State = 'open'`, [room], (err, result)=>{
     exists = result != undefined && result.length > 0;
     callback(!exists);
     if(exists){
@@ -171,19 +181,23 @@ function joinGame(socket, room, email, name, nickname, callback) {
       //Send nicknames to waiting rooms
       io.to(socket.room).emit('roomListUpdate', getMapAttr(roomList[room].players, ['nickname']));
 
+      //Add player to DB
       roomId = result[0].RoomID;
       roomList[room].roomId = roomId;
-      con.query(`SELECT * FROM Person WHERE Email = '${email}'`, (err, result)=>{
+      con.query(`SELECT * FROM Person WHERE Email = ?`, [email], (err, result)=>{
         personId = result[0].PersonID;
         roomList[room].players[email].personId = personId;
-        con.query(`INSERT INTO Player (PersonID, RoomID, NickName)
-        SELECT '${personId}', '${roomId}', '${nickname}'
-        WHERE NOT EXISTS(SELECT * FROM Player WHERE PersonID='${personId}' AND RoomID = '${roomId}')`);
+        con.query(`INSERT INTO Player (PersonID, RoomID)
+        SELECT ?, ?
+        WHERE NOT EXISTS(SELECT * FROM Player WHERE PersonID = ? AND RoomID = ?)`, [personId, roomId, personId, roomId]);0
+        //Update nickname seperately so rejoin can use this function too
+        con.query('UPDATE Player SET NickName = ? WHERE PersonID = ? AND RoomID = ?', [nickname, personId, roomId]);
       });
     }
   });
 }
 
+//Checks a student submitted answerand updates the DB to reflect how they did
 function checkAnswer(socket, choice, time, email) {
   //var question = roomList[socket.room]['question'];
   var player = roomList[socket.room]['players'][email];
@@ -196,12 +210,12 @@ function checkAnswer(socket, choice, time, email) {
   var room = socket.room;
   if(score > 0){
     con.query(`UPDATE Player
-      SET NumberAnswered = NumberAnswered + 1 AND NumberCorrect = NumberCorrect + 1 AND Score = Score + ${score}
-      WHERE PersonID = ${roomList[room].players[email].personId} AND RoomID = ${roomList[room].roomId}`);
+      SET NumberAnswered = NumberAnswered + 1, NumberCorrect = NumberCorrect + 1, Score = Score + ?
+      WHERE PersonID = ? AND RoomID = ?`, [score, roomList[room].players[email].personId, roomList[room].roomId]);
   } else {
     con.query(`UPDATE Player
       SET NumberAnswered = NumberAnswered + 1
-      WHERE PersonID = ${roomList[room].players[email].personId} AND RoomID = ${roomList[room].roomId}`);
+      WHERE PersonID = ? AND RoomID = ?`, [roomList[room].players[email].personId, roomList[room].roomId]);
   }
 
   //Remove answered player
@@ -211,15 +225,16 @@ function checkAnswer(socket, choice, time, email) {
   }
 }
 
+//Handles a student leaving the game
 function leaveGame(socket, email) {
   //Make sure nobody is waiting for them to answer
   roomList[socket.room]['noResponse'].splice(roomList[socket.room]['players'].indexOf(email), 1);
   delete roomList[socket.room]['players'][email];
 
   //Set DB inRoom state to false
-  con.query(`SELECT * FROM Person WHERE Email = '${email}'`, (err, result)=>{
+  con.query(`SELECT * FROM Person WHERE Email = ?`, [email],(err, result)=>{
     personId = result[0].PersonID;
-    con.query(`UPDATE Player SET inRoom = false WHERE PersonID = '${personId}'`);
+    con.query(`UPDATE Player SET inRoom = false WHERE PersonID = ?`, [personId]);
   });
 
   io.to(socket.room).emit('roomListUpdate', getMapAttr(roomList[socket.room]['players'], ['nickname']));
@@ -227,13 +242,13 @@ function leaveGame(socket, email) {
 }
 
 function changeGameState(socket, state) {
-  con.query(`UPDATE Room SET State = '${state}' WHERE Name = '${socket.room}' AND InstructorID = ${socket.masterId}`);
+  con.query(`UPDATE Room SET State = ? WHERE Name = ? AND InstructorID = ?`, [state, socket.room, socket.masterId]);
 }
 
 function deleteGame(socket) {
   socket.to(socket.room).emit('roomClosed');
 
-  con.query(`DELETE FROM Room WHERE Name = '${socket.room}' AND InstructorID = '${socket.masterId}'`);
+  con.query(`DELETE FROM Room WHERE Name = ? AND InstructorID = ?`, [socket.room, socket.masterId]);
 
   //Stop wasting server time
   if(roomList[socket.room]['interval']){
@@ -253,7 +268,7 @@ function scoreLeftovers(socket) {
   for(var person of roomList[socket.room]['noResponse']){
     con.query(`UPDATE Player
       SET NumberAnswered = NumberAnswered + 1
-      WHERE PersonID = ${roomList[socket.room].players[person].personId} AND RoomID = ${roomList[socket.room].roomId}`);
+      WHERE PersonID = ? AND RoomID = ?`, [roomList[socket.room].players[person].personId, roomList[socket.room].roomId]);
   }
   roomList[socket.room]['noResponse'] = getMapAttr(roomList[socket.room]['players'], ['email']);
 }
@@ -269,26 +284,40 @@ function sendAnswerAndPoints(socket, answer){
   sendProfResults(socket);
 }
 
+//Sends score results to listening instructor page
 function sendProfResults(socket){
   io.to(roomList[socket.room].masterId).emit('playerResults', getMapAttr(roomList[socket.room]['players'], ['name', 'nickname', 'score', 'email']));
 }
 
+//Sends back a list of games the instructor controls to instructor.js
 function requestPreviousGames(socket, email){
   if(email == null)
     return;
-  con.query(`SELECT * FROM Person WHERE Email = '${email}'`, (err, result)=>{
-      if(result.length == 0)
+  con.query('SELECT * FROM Person WHERE Email = ?', [email], (err, result)=>{
+      if(!result || result.length == 0)
         return;
-      con.query(`SELECT *
-        FROM Room
-        WHERE InstructorID = ${result[0].PersonID}`, (err, result) =>{
+      con.query("SELECT * FROM Room WHERE InstructorID = ?", [result[0].PersonID], (err, result) =>{
           io.to(socket.id).emit('returnPreviousGames', result);
         });
     });
 }
 
+//Sends a list of games a student has played in that they can rejoin to client.js
+function requestPreviousGamesStudent(socket, email){
+  if(email == null)
+    return;
+  con.query('SELECT * FROM Person WHERE Email = ?', [email], (err, result)=>{
+      if(!result || result.length == 0)
+        return;
+      con.query("SELECT *  FROM Room  WHERE RoomID  IN (SELECT RoomID FROM Player WHERE PersonID = ?) AND State = 'open'", [result[0].PersonID], (err, result) =>{
+        io.to(socket.id).emit('returnPreviousGamesStudent', result);
+      });
+    });
+}
+
+//Handles instructor rejoining a game
 function rejoinGame(socket, email, game){
-  con.query(`SELECT * FROM Person WHERE Email = '${email}'`, (err, result) => {
+  con.query('SELECT * FROM Person WHERE Email = ?', [email], (err, result) => {
     socket.masterId = result[0].PersonID;
     socket.join(game);
     socket.room = game;
@@ -301,7 +330,6 @@ function rejoinGame(socket, email, game){
 }
 
 //UTILITY FUNCTIONS
-
 function shuffle(length) {
   var newArr = []
   var arr = Array.apply(null, {

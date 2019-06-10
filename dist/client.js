@@ -12,10 +12,31 @@ socket.on('roomClosed', roomClosed);
 socket.on('sendAnswer', sendAnswer);
 socket.on('sendScoreBoard', sendScoreBoard);
 
-function checkAnswer(evt) {
-  if (pickedAnswer == -1) {
-    pickedAnswer = evt.currentTarget.id.split('_')[1];
-    socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1], questionTime, email);
+
+socket.on('returnPreviousGamesStudent', displayPrevGames);
+
+//Request previous games as soon as they're available
+var x = setInterval(emailCheck ,25);
+function emailCheck(){
+  if(email){
+    clearInterval(x);
+    requestPrevGames();
+  }
+}
+
+function requestPrevGames(){
+  socket.emit('requestPreviousGamesStudent', email);
+}
+
+function displayPrevGames(games){
+  if(games.length == 0)
+    $('#rejoin').text('No previous games')
+  else{
+    $('#previousGames').empty();
+    for(game of games){
+      $('#previousGames').append('<li><button class="rejoinGame" id="' + game.Name + '" type="button">Join</button>\t'  + game.Name + '</li>');
+    }
+    $(".rejoinGame").on(listeners, rejoinGame);
   }
 }
 
@@ -33,12 +54,29 @@ function joinGame() {
   });
 }
 
+function checkAnswer(evt) {
+  if (pickedAnswer == -1) {
+    pickedAnswer = evt.currentTarget.id.split('_')[1];
+    socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1], questionTime, email);
+  }
+}
+
 function leaveGame() {
   socket.emit('leaveGame', email);
   changeDisplay(['#signout'], ['#waitingRoom']);
+  requestPrevGames();
 }
 
-
+function rejoinGame(){
+  socket.emit('rejoinGameStudent', this.id, email, name, $('#nickname').val(), (isError) => {
+    if (!isError) {
+      changeDisplay(['#waitingRoom'], ['#signout']);
+    } else {
+      sendAlert('Error: Room is closed or does not exist');
+    }
+  });
+  changeDisplay(['#waitingRoom'], ['#signout']);
+}
 
 function sendQuestion(myJson) {
   clearInterval(questionInterval);
