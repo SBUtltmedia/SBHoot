@@ -1,6 +1,7 @@
 const path = require('path')
 var express = require('express');
-var app = express();
+var SocketIOFileUpload = require('socketio-file-upload');
+var app = express().use(SocketIOFileUpload.router);
 var mysql = require('mysql');
 app.set('view engine', 'pug')
 app.set('views', path.join(__dirname, 'views'))
@@ -32,6 +33,20 @@ con.query("UPDATE Player SET inRoom = false")
 
 var roomList = {};
 var answerTime = 10;
+app.post('/upload',function (req, res){
+    var form = new formidable.IncomingForm();
+
+    form.parse(req);
+
+    form.on('fileBegin', function (name, file){
+        file.path = __dirname + '/uploads/' + file.name;
+    });
+
+    form.on('file', function (name, file){
+        console.log('Uploaded ' + file.name);
+    });
+});
+
 app.use('/dist', express.static('dist'));
 
 app.get('*', function(req, res) {
@@ -44,6 +59,22 @@ http.listen(8090, function() {
 });
 
 io.on('connection', function(socket) {
+
+  var uploader = new SocketIOFileUpload();
+     uploader.dir = "uploads";
+     uploader.listen(socket);
+
+     // Do something when a file is saved:
+     uploader.on("saved", function(event){
+         console.log(event.file);
+     });
+
+     // Error handler:
+     uploader.on("error", function(event){
+         console.log("Error from uploader", event);
+     });
+
+
   socket.on('joinGame', (room, email, name, nickname, callback) => {
     joinGame(socket, room, email, name, nickname, callback)
   });
@@ -96,6 +127,7 @@ io.on('connection', function(socket) {
 
 // TODO:
 // Display game report to instructor
+// CSV Question, correct, answers(variable), columnsAnsw
 
 //Sends questions to students
 function sendQuestion(socket) {

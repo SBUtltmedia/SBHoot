@@ -4,9 +4,24 @@ $("#closeGame").on(listeners, closeGame);
 $("#deleteGame").on(listeners, deleteGame);
 $("#startGame").on(listeners, startGame);
 
+var siofu = new SocketIOFileUpload(socket);
+siofu.listenOnDrop(document.getElementById("file_drop"));
+
+// Do something on upload progress:
+siofu.addEventListener("progress", function(event){
+    var percent = event.bytesLoaded / event.file.size * 100;
+    console.log("File is", percent.toFixed(2), "percent loaded");
+});
+
+// Do something when a file is uploaded:
+siofu.addEventListener("complete", function(event){
+    console.log(event.success);
+    console.log(event.file);
+});
 
 socket.on('playerResults', playerResults);
 socket.on('returnPreviousGames', displayPrevGames);
+
 
 //Request previous games as soon as they're available
 var x = setInterval(emailCheck ,25);
@@ -95,15 +110,11 @@ function playerResults(players){
   //Add info
   else {
     for(player of players){
-      // console.log(("#" + getSelector(player[3])));
-      console.log(player[2]);
-      $("#" + getSelector(player[3])).last().text("test");
-      //$("#" + getSelector(player[3])).find('.score').text(player[2]);
-      // $("#playerResults").find("#" + getSelector(player[3])).find('.score').text(player[2]);
+      $("#" + getSelector(player[3]) + ' td.score').text(player[2]);
     }
   }
 }
 
-function getSelector(input){
-  return input.replace('@', '.');
+function getSelector(input) {
+    return input.replace(/[@.]/gi, '_');
 }

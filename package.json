@@ -69,11 +69,14 @@
     ]
   },
   "dependencies": {
+    "csv-parse": "^4.4.3",
     "express": "^4.16.4",
+    "formidable": "^1.2.1",
     "mongodb-stitch": "^3.2.21",
     "mysql": "^2.17.1",
     "pug": "^2.0.3",
     "socket.io": "*",
+    "socketio-file-upload": "^0.7.0",
     "sqlstring": "^2.3.1"
   }
 }

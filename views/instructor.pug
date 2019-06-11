@@ -12,19 +12,20 @@
 </div>
 
 <div id="gameManagement" style="display:none;">
-  <h3>Students currently in room <span id="gameName"/>:</h3>
+  <h3>Please join room <span id="gameName"/>:</h3>
   <ul id="playerList"></ul>
   <table id="playerResults" style="display: none;"/>
   <button id="openGame" type="button" name="button" style="display: none;">Open</button>
   <button id="closeGame" type="button" name="button">Close</button>
   <button id="deleteGame"type="button" name="button">Delete</button>
   <button id="startGame" type="button" name="button">Start</button>
-
+<div id="file_drop" dropzone="copy" title="drop files for upload">Drop File</div>
 </div>
 <span id="GameError"></span>
 <div id="dialog" title="Error">
   <p id="dialogText"></p>
 </div>
 </body>
+    <script src="dist/siofu.js"></script>
 <script src="dist/instructor.js"></script>
 </html>
