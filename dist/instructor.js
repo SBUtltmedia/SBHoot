@@ -7,16 +7,14 @@ $("#startGame").on(listeners, startGame);
 var siofu = new SocketIOFileUpload(socket);
 siofu.listenOnDrop(document.getElementById("file_drop"));
 
-// Do something on upload progress:
-siofu.addEventListener("progress", function(event){
-    var percent = event.bytesLoaded / event.file.size * 100;
-    console.log("File is", percent.toFixed(2), "percent loaded");
+// Set meta name so the file can be renamed later
+siofu.addEventListener("start", (event)=>{
+  event.file.meta.name = $('#gameName').text();
 });
 
 // Do something when a file is uploaded:
-siofu.addEventListener("complete", function(event){
-    console.log(event.success);
-    console.log(event.file);
+siofu.addEventListener("complete", (event)=>{
+    changeDisplay(['#startGame'], []);
 });
 
 socket.on('playerResults', playerResults);

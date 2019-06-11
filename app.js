@@ -61,18 +61,22 @@ http.listen(8090, function() {
 io.on('connection', function(socket) {
 
   var uploader = new SocketIOFileUpload();
-     uploader.dir = "uploads";
-     uploader.listen(socket);
+  uploader.dir = "uploads";
+  uploader.listen(socket);
 
-     // Do something when a file is saved:
-     uploader.on("saved", function(event){
-         console.log(event.file);
-     });
+  // Do something when a file is saved:
+  uploader.on("saved", function(event){
+    fs.rename(event.file.pathName, 'uploads/'+event.file.meta.name, (err) => {
+      if(err){
+        console.log(err)
+      }
+    });
+  });
 
-     // Error handler:
-     uploader.on("error", function(event){
-         console.log("Error from uploader", event);
-     });
+  // Error handler:
+  uploader.on("error", function(event){
+    console.log("Error from uploader", event);
+  });
 
 
   socket.on('joinGame', (room, email, name, nickname, callback) => {
