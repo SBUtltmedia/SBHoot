@@ -24,8 +24,8 @@ var name;
 var email;
 var firstName;
 var lastName;
-$(function(){
-  $('#authorize-button').on("click",handleAuthClick);
+$(function() {
+  $('#authorize-button').on("click", handleAuthClick);
   $('#signout-button').on("click", handleSignoutClick);
   handleClientLoad();
 })
@@ -37,11 +37,11 @@ function handleClientLoad() {
 
 function initClient() {
   gapi.client.init({
-      apiKey: apiKey,
-      discoveryDocs: discoveryDocs,
-      clientId: clientId,
-      scope: scopes
-  }).then(function () {
+    apiKey: apiKey,
+    discoveryDocs: discoveryDocs,
+    clientId: clientId,
+    scope: scopes
+  }).then(function() {
     // Listen for sign-in state changes.
     gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
 
@@ -81,7 +81,7 @@ function makeApiCall() {
     firstName = resp.result.names[0].givenName;
     lastName = resp.result.names[0].familyName;
     //p.appendChild(document.createTextNode('Hello, '+name+'!'));
-    $('#greeting').text('Hello, '+name+'!');
+    $('#greeting').text('Hello, ' + name + '!');
 
   });
 }

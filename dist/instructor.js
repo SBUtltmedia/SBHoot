@@ -8,13 +8,13 @@ var siofu = new SocketIOFileUpload(socket);
 siofu.listenOnDrop(document.getElementById("file_drop"));
 
 // Set meta name so the file can be renamed later
-siofu.addEventListener("start", (event)=>{
+siofu.addEventListener("start", (event) => {
   event.file.meta.name = $('#gameName').text();
 });
 
 // Do something when a file is uploaded:
-siofu.addEventListener("complete", (event)=>{
-    changeDisplay(['#startGame'], []);
+siofu.addEventListener("complete", (event) => {
+  changeDisplay(['#startGame'], []);
 });
 
 socket.on('playerResults', playerResults);
@@ -22,31 +22,32 @@ socket.on('returnPreviousGames', displayPrevGames);
 
 
 //Request previous games as soon as they're available
-var x = setInterval(emailCheck ,25);
-function emailCheck(){
-  if(email){
+var x = setInterval(emailCheck, 25);
+
+function emailCheck() {
+  if (email) {
     clearInterval(x);
     requestPrevGames();
   }
 }
 
-function requestPrevGames(){
+function requestPrevGames() {
   socket.emit('requestPreviousGames', email);
 }
 
-function displayPrevGames(games){
-  if(games.length == 0)
+function displayPrevGames(games) {
+  if (games.length == 0)
     $('#rejoin').text('No previous games')
-  else{
+  else {
     $('#previousGames').empty();
-    for(game of games){
-      $('#previousGames').append('<li><button class="rejoinGame" id="' + game.Name + '" type="button">Join</button>\t'  + game.Name + '</li>');
+    for (game of games) {
+      $('#previousGames').append('<li><button class="rejoinGame" id="' + game.Name + '" type="button">Join</button>\t' + game.Name + '</li>');
     }
     $(".rejoinGame").on(listeners, rejoinGame);
   }
 }
 
-function rejoinGame(){
+function rejoinGame() {
   socket.emit('rejoinGame', email, this.id);
   $('#gameName').text(this.id);
   changeDisplay(['#gameManagement', '#openGame'], ['#gameCreation', '#closeGame']);
@@ -56,13 +57,13 @@ function rejoinGame(){
 
 function makeGame() {
   logUser(email, firstName, lastName);
-  socket.emit('makeGame', $('#roomId').val(), email, (error)=>{
+  socket.emit('makeGame', $('#roomId').val(), email, (error) => {
     if (!error) {
-        $('#gameName').text($('#roomId').val());
-        changeDisplay(['#gameManagement'], ['#gameCreation']);
-      } else {
-        sendAlert('Error: Game already exists!');
-      }
+      $('#gameName').text($('#roomId').val());
+      changeDisplay(['#gameManagement'], ['#gameCreation']);
+    } else {
+      sendAlert('Error: Game already exists!');
+    }
   });
 }
 
@@ -77,7 +78,7 @@ function closeGame() {
 }
 
 function deleteGame() {
-  if(confirm('Are you sure you want to delete ' + $('#gameName').text() + '?')){
+  if (confirm('Are you sure you want to delete ' + $('#gameName').text() + '?')) {
     socket.emit('deleteGame');
     $('#playerList').empty();
     changeDisplay(['#gameCreation'], ['#gameManagement']);
@@ -87,7 +88,7 @@ function deleteGame() {
 
 function startGame() {
   //Must have at least 1 player to start
-  if($('ul#playerList li').length > 0){
+  if ($('ul#playerList li').length > 0) {
     socket.emit('startGame');
     $('#startGame').css('display', 'none');
     changeDisplay(['#playerResults'], ['#startGame', "#playerList"]);
@@ -96,23 +97,23 @@ function startGame() {
   }
 }
 
-function playerResults(players){
+function playerResults(players) {
   //First run
-  if($('#playerResults tr').length == 0){
+  if ($('#playerResults tr').length == 0) {
     $('#playerResults').append('<tr><th>Name</th><th>Nickname</th><th>Score</th></tr>');
-    for(player of players){
+    for (player of players) {
       tr = '<tr id="' + getSelector(player[3]) + '"><td>' + player[0] + '</td><td>' + player[1] + '</td><td class="score">' + player[2] + '</td></tr>';
       $('#playerResults').append(tr);
     }
   }
   //Add info
   else {
-    for(player of players){
+    for (player of players) {
       $("#" + getSelector(player[3]) + ' td.score').text(player[2]);
     }
   }
 }
 
 function getSelector(input) {
-    return input.replace(/[@.]/gi, '_');
+  return input.replace(/[@.]/gi, '_');
 }

@@ -16,25 +16,26 @@ socket.on('sendScoreBoard', sendScoreBoard);
 socket.on('returnPreviousGamesStudent', displayPrevGames);
 
 //Request previous games as soon as they're available
-var x = setInterval(emailCheck ,25);
-function emailCheck(){
-  if(email){
+var x = setInterval(emailCheck, 25);
+
+function emailCheck() {
+  if (email) {
     clearInterval(x);
     requestPrevGames();
   }
 }
 
-function requestPrevGames(){
+function requestPrevGames() {
   socket.emit('requestPreviousGamesStudent', email);
 }
 
-function displayPrevGames(games){
-  if(games.length == 0)
+function displayPrevGames(games) {
+  if (games.length == 0)
     $('#rejoin').text('No previous games')
-  else{
+  else {
     $('#previousGames').empty();
-    for(game of games){
-      $('#previousGames').append('<li><button class="rejoinGame" id="' + game.Name + '" type="button">Join</button>\t'  + game.Name + '</li>');
+    for (game of games) {
+      $('#previousGames').append('<li><button class="rejoinGame" id="' + game.Name + '" type="button">Join</button>\t' + game.Name + '</li>');
     }
     $(".rejoinGame").on(listeners, rejoinGame);
   }
@@ -67,7 +68,7 @@ function leaveGame() {
   requestPrevGames();
 }
 
-function rejoinGame(){
+function rejoinGame() {
   socket.emit('rejoinGameStudent', this.id, email, name, $('#nickname').val(), (isError) => {
     if (!isError) {
       changeDisplay(['#waitingRoom'], ['#signout']);
