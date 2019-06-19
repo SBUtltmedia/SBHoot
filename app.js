@@ -80,12 +80,6 @@ io.on('connection', function(socket) {
 
   // Parse to JSON, check & change format
   uploader.on("saved", function(event) {
-    // //Rename file
-    // fs.rename(event.file.pathName, 'uploads/' + event.file.meta.name, (err) => {
-    //   if (err) {
-    //     console.log(err);
-    //   }
-    // });
     csv().fromFile(event.file.pathName).then((jsonObj)=>{
       questionList = jsonObj.map((question)=>{
         var newQuestion = {
@@ -156,11 +150,14 @@ io.on('connection', function(socket) {
   socket.on('rejoinGameStudent', (room, email, name, nickname, callback) => {
     joinGame(socket, room, email, name, nickname, callback);
   });
+
+  socket.on('downloadReport', ()=>{
+    sendReport(socket);
+  });
 });
 
 // TODO:
 // Display game report to instructor
-// CSV: Question, correct answer, answers 1-4 (3 & 4 can be blank)
 
 //Sends questions to students
 function sendQuestion(socket) {
@@ -176,6 +173,7 @@ function sendQuestion(socket) {
   }
   //Get next question
   var questionIndex = roomList[socket.room].questionShuffleList.pop();
+  roomList[socket.room].questionIndex = questionIndex;
   var question = questions[questionIndex];
   //Save last answer & set new answer
   var pastAnswer = roomList[socket.room]['answer'];
@@ -251,7 +249,7 @@ function joinGame(socket, room, email, name, nickname, callback) {
         nickname: nickname,
         score: 0,
         socketId: socket.id,
-        history: []
+        history: new Array(len(roomList[socket.room]['questions']))
       };
       //Send nicknames to waiting rooms
       io.to(socket.room).emit('roomListUpdate', getMapAttr(roomList[room].players, ['nickname']));
@@ -280,7 +278,14 @@ function checkAnswer(socket, choice, time, email) {
   //Store who answered & what
   var score = getPoints(socket, time, choice);
   player['score'] += score;
-  player['history'].push(parseInt(choice));
+
+  //Record score
+  i = roomList[socket.room].questionIndex;
+  if(score > player.history[i]){
+    player.history[i] = score;
+  }
+
+
 
   //Update DB
   var room = socket.room;
@@ -399,11 +404,22 @@ function rejoinGame(socket, email, game) {
     socket.room = game;
 
     roomList[game] = {
-      players: {},
+      players: {}, //TODO: Save from last run?
       noResponse: [],
       masterId: socket.id
     };
   });
+}
+
+function sendReport(socket){
+  room = socket.room;
+  con.query('SELECT * FROM Person AS p, (SELECT * FROM Player WHERE RoomID IN (SELECT RoomID FROM Room WHERE Name = ?)) AS c WHERE p.PersonID = c.PersonID', [room], (err, result)=>{
+    console.log(result);
+    // for(person of result){
+    //   //TODO: Get player report
+    // }
+  });
+
 }
 
 //UTILITY FUNCTIONS

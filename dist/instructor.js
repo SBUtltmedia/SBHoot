@@ -3,6 +3,7 @@ $("#openGame").on(listeners, openGame);
 $("#closeGame").on(listeners, closeGame);
 $("#deleteGame").on(listeners, deleteGame);
 $("#startGame").on(listeners, startGame);
+$("#downloadReport").on(listeners, downloadReport);
 
 var siofu = new SocketIOFileUpload(socket);
 
@@ -115,6 +116,10 @@ function playerResults(players) {
       $("#" + getSelector(player[3]) + ' td.score').text(player[2]);
     }
   }
+}
+
+function downloadReport(){
+  socket.emit('downloadReport');
 }
 
 function getSelector(input) {
