@@ -5,7 +5,10 @@ $("#deleteGame").on(listeners, deleteGame);
 $("#startGame").on(listeners, startGame);
 
 var siofu = new SocketIOFileUpload(socket);
+
 siofu.listenOnDrop(document.getElementById("file_drop"));
+
+
 
 // Set meta name so the file can be renamed later
 siofu.addEventListener("start", (event) => {

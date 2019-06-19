@@ -1,13 +1,14 @@
-const path = require('path')
+const path = require('path');
 var express = require('express');
 var SocketIOFileUpload = require('socketio-file-upload');
 var app = express().use(SocketIOFileUpload.router);
 var mysql = require('mysql');
-app.set('view engine', 'pug')
-app.set('views', path.join(__dirname, 'views'))
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
 const fs = require('fs');
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+const csv=require('csvtojson');
 
 var currentRightAnswer;
 let rawdata = fs.readFileSync('questions.json');
@@ -29,7 +30,7 @@ con.connect(function(err) {
 
 //'Open' rooms w/out temp data causes issues
 con.query("UPDATE Room SET State = 'closed'");
-con.query("UPDATE Player SET inRoom = false")
+con.query("UPDATE Player SET inRoom = false");
 
 var roomList = {};
 var answerTime = 10;
@@ -66,12 +67,38 @@ io.on('connection', function(socket) {
   uploader.dir = "uploads";
   uploader.listen(socket);
 
-  // Do something when a file is saved:
+  // Accepts only CSV files
+  uploader.uploadValidator = (event, callback) => {
+    if(event.file.name.split('.')[1] != "csv"){
+      sendAlert(socket, "Error: Only CSV files are accepted");
+      callback(false);
+    }
+    else{
+      callback(true);
+    }
+  };
+
+  // Parse to JSON, check & change format
   uploader.on("saved", function(event) {
-    fs.rename(event.file.pathName, 'uploads/' + event.file.meta.name, (err) => {
-      if (err) {
-        console.log(err)
-      }
+    // //Rename file
+    // fs.rename(event.file.pathName, 'uploads/' + event.file.meta.name, (err) => {
+    //   if (err) {
+    //     console.log(err);
+    //   }
+    // });
+    csv().fromFile(event.file.pathName).then((jsonObj)=>{
+      questionList = jsonObj.map((question)=>{
+        var newQuestion = {
+          question:question.Question,
+          correct:parseInt(question["Correct Answer"])-1
+        };
+        [,,...newQuestion.answers] =  Object.keys(question).map(function(v) { return question[v] });
+        return newQuestion;
+      })
+      callback = ()=>{};
+      fs.writeFile('uploads/' + event.file.meta.name, JSON.stringify(questionList), 'utf8', callback);
+
+      fs.unlink(event.file.pathName, callback);
     });
   });
 
@@ -139,6 +166,9 @@ io.on('connection', function(socket) {
 function sendQuestion(socket) {
   //Score remaining & refill noResponse
   scoreLeftovers(socket);
+
+  questions = roomList[socket.room]['questions'];
+
   //Save information thus far
   //Shuffle list if necessary
   if (!roomList[socket.room].questionShuffleList) {
@@ -176,6 +206,10 @@ function responsesIn(x, socket) {
 //Starts a game as initiated by instructor.js
 function startGame(socket) {
   changeGameState(socket, 'playing');
+
+  //Get & parse game info
+  roomList[socket.room]['questions'] = parseJSON('uploads/' + socket.room) //Parse question file
+
   roomList[socket.room]['noResponse'] = [];
   roomList[socket.room]['interval'] = 0;
   roomList[socket.room]['interval'] = responsesIn(roomList[socket.room]['interval'], socket);
@@ -363,6 +397,7 @@ function rejoinGame(socket, email, game) {
     socket.masterId = result[0].PersonID;
     socket.join(game);
     socket.room = game;
+
     roomList[game] = {
       players: {},
       noResponse: [],
@@ -395,6 +430,18 @@ function getPoints(socket, time, choice) {
     return Math.ceil(Math.pow((answerTime - time) / answerTime, 1.7) * 100);
   }
   return 0;
+}
+
+//Send alert popup to specific socket
+function sendAlert(socket, info){
+  io.to(socket.id).emit('sendAlert', info);
+}
+
+//Parses a given JSON file
+//TODO: Handle error cases
+function parseJSON(file){
+  rawdata = fs.readFileSync(file);
+  return JSON.parse(rawdata);
 }
 
 //Returns a scalar or array of specified values from a dictionary

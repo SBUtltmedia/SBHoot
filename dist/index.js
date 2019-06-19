@@ -3,6 +3,7 @@ var listeners = "click";
 
 //Socket listeners
 socket.on('roomListUpdate', roomListUpdate);
+socket.on('sendAlert', sendAlert);
 
 //Socket functions
 function roomListUpdate(people) {
