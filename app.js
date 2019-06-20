@@ -34,19 +34,6 @@ con.query("UPDATE Player SET inRoom = false");
 
 var roomList = {};
 var answerTime = 10;
-app.post('/upload', function(req, res) {
-  var form = new formidable.IncomingForm();
-
-  form.parse(req);
-
-  form.on('fileBegin', function(name, file) {
-    file.path = __dirname + '/uploads/' + file.name;
-  });
-
-  form.on('file', function(name, file) {
-    console.log('Uploaded ' + file.name);
-  });
-});
 
 app.use('/dist', express.static('dist'));
 
@@ -64,7 +51,7 @@ http.listen(8090, function() {
 io.on('connection', function(socket) {
 
   var uploader = new SocketIOFileUpload();
-  uploader.dir = "uploads";
+  uploader.dir = "uploads/";
   uploader.listen(socket);
 
   // Accepts only CSV files
@@ -73,27 +60,40 @@ io.on('connection', function(socket) {
       sendAlert(socket, "Error: Only CSV files are accepted");
       callback(false);
     }
-    else{
+    else {
       callback(true);
     }
   };
 
   // Parse to JSON, check & change format
   uploader.on("saved", function(event) {
-    csv().fromFile(event.file.pathName).then((jsonObj)=>{
-      questionList = jsonObj.map((question)=>{
-        var newQuestion = {
-          question:question.Question,
-          correct:parseInt(question["Correct Answer"])-1
-        };
-        [,,...newQuestion.answers] =  Object.keys(question).map(function(v) { return question[v] });
-        return newQuestion;
-      })
-      callback = ()=>{};
-      fs.writeFile('uploads/' + event.file.meta.name, JSON.stringify(questionList), 'utf8', callback);
+    callback = ()=>{};
 
+    //Try to parse the file to our JSON format. If it fails, we know the formatting is invalid
+    try{
+      csv().fromFile(event.file.pathName).then((jsonObj)=>{
+        questionList = [];
+        for(obj in jsonObj){
+          questionList.push(jsonObj.map((question)=>{
+            var newQuestion = {
+              question:question.Question,
+              correct:parseInt(question["Correct Answer"])-1
+            };
+            [,,...newQuestion.answers] =  Object.keys(question).map(function(v) { return question[v] });
+            return newQuestion;
+          })[0]);
+        }
+        roomList[socket.room]['questions'] = questionList;
+        //Create new file as JSON
+        fs.writeFile(`quizzes/${socket.room}.json`, JSON.stringify(questionList), 'utf8', callback);
+        //Delete file
+        fs.unlink(event.file.pathName, callback);
+      });
+    } catch(err) {
+      sendAlert(socket, "Error: The file is not in the proper format. Please reupload a properly formatted file.");
+      //Delete file
       fs.unlink(event.file.pathName, callback);
-    });
+    }
   });
 
   // Error handler:
@@ -206,7 +206,7 @@ function startGame(socket) {
   changeGameState(socket, 'playing');
 
   //Get & parse game info
-  roomList[socket.room]['questions'] = parseJSON('uploads/' + socket.room) //Parse question file
+  roomList[socket.room]['questions'] = parseJSON(socket, `quizzes/${socket.room}.json`); //Parse question file
 
   roomList[socket.room]['noResponse'] = [];
   roomList[socket.room]['interval'] = 0;
@@ -453,9 +453,12 @@ function sendAlert(socket, info){
   io.to(socket.id).emit('sendAlert', info);
 }
 
-//Parses a given JSON file
-//TODO: Handle error cases
-function parseJSON(file){
+//Parses a given JSON file. Since the file would be critiqued when it was made, there is no need to check its validity
+function parseJSON(socket, file){
+  if(roomList[socket.room]['questions']){
+    return roomList[socket.room]['questions'];
+  }
+  //Server has been restarted
   rawdata = fs.readFileSync(file);
   return JSON.parse(rawdata);
 }
