@@ -79,7 +79,7 @@ io.on('connection', function(socket) {
               question:question.Question,
               correct:parseInt(question["Correct Answer"])-1
             };
-            [,,...newQuestion.answers] =  Object.keys(question).map(function(v) { return question[v] });
+            [,,...newQuestion.answers] = Object.keys(question).map(function(v) { return question[v] });
             return newQuestion;
           })[0]);
         }
@@ -158,6 +158,7 @@ io.on('connection', function(socket) {
 
 // TODO:
 // Display game report to instructor
+// Save Question File between restarts
 
 //Sends questions to students
 function sendQuestion(socket) {
@@ -168,12 +169,13 @@ function sendQuestion(socket) {
 
   //Save information thus far
   //Shuffle list if necessary
-  if (!roomList[socket.room].questionShuffleList) {
+  if (!roomList[socket.room].questionShuffleList || roomList[socket.room].questionShuffleList.length==0) {
     roomList[socket.room].questionShuffleList = shuffle(questions.length);
   }
   //Get next question
   var questionIndex = roomList[socket.room].questionShuffleList.pop();
   roomList[socket.room].questionIndex = questionIndex;
+  console.log(questionIndex)
   var question = questions[questionIndex];
   //Save last answer & set new answer
   var pastAnswer = roomList[socket.room]['answer'];
@@ -249,7 +251,7 @@ function joinGame(socket, room, email, name, nickname, callback) {
         nickname: nickname,
         score: 0,
         socketId: socket.id,
-        history: new Array(len(roomList[socket.room]['questions']))
+        history: new Array(roomList[socket.room]['questions'].length)
       };
       //Send nicknames to waiting rooms
       io.to(socket.room).emit('roomListUpdate', getMapAttr(roomList[room].players, ['nickname']));
@@ -415,9 +417,18 @@ function sendReport(socket){
   room = socket.room;
   con.query('SELECT * FROM Person AS p, (SELECT * FROM Player WHERE RoomID IN (SELECT RoomID FROM Room WHERE Name = ?)) AS c WHERE p.PersonID = c.PersonID', [room], (err, result)=>{
     console.log(result);
+    console.log(roomList[socket.room]);
     // for(person of result){
     //   //TODO: Get player report
     // }
+    //FirstName
+    //LastName
+    //Email
+    //Nickname
+    // NumberAnswered: 30,
+    // NumberCorrect: 19,
+    // Score: 1852,
+    //Questions & answer scores
   });
 
 }
