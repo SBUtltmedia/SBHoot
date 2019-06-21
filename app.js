@@ -157,7 +157,6 @@ io.on('connection', function(socket) {
 });
 
 // TODO:
-// Display game report to instructor
 // Save Question File between restarts
 
 //Sends questions to students
@@ -175,7 +174,6 @@ function sendQuestion(socket) {
   //Get next question
   var questionIndex = roomList[socket.room].questionShuffleList.pop();
   roomList[socket.room].questionIndex = questionIndex;
-  console.log(questionIndex)
   var question = questions[questionIndex];
   //Save last answer & set new answer
   var pastAnswer = roomList[socket.room]['answer'];
@@ -262,10 +260,11 @@ function joinGame(socket, room, email, name, nickname, callback) {
       con.query(`SELECT * FROM Person WHERE Email = ?`, [email], (err, result) => {
         personId = result[0].PersonID;
         roomList[room].players[email].personId = personId;
-        con.query(`INSERT INTO Player (PersonID, RoomID)
-        SELECT ?, ?
-        WHERE NOT EXISTS(SELECT * FROM Player WHERE PersonID = ? AND RoomID = ?)`, [personId, roomId, personId, roomId]);
-        0
+          var query =`INSERT INTO Player (PersonID, RoomID)
+          SELECT ?, ?
+          WHERE NOT EXISTS(SELECT * FROM Player WHERE PersonID = ? AND RoomID = ?)`
+        con.query(query, [personId, roomId, personId, roomId]);
+
         //Update nickname seperately so rejoin can use this function too
         con.query('UPDATE Player SET NickName = ? WHERE PersonID = ? AND RoomID = ?', [nickname, personId, roomId]);
       });
@@ -282,23 +281,28 @@ function checkAnswer(socket, choice, time, email) {
   player['score'] += score;
 
   //Record score
-  i = roomList[socket.room].questionIndex;
-  if(score > player.history[i]){
-    player.history[i] = score;
+  questionIndex = roomList[socket.room].questionIndex;
+  if(score > player.history[questionIndex]){
+    player.history[questionIndex] = score;
   }
-
-
 
   //Update DB
   var room = socket.room;
-  if (score > 0) {
+  personId = roomList[room].players[email].personId;
+  if (score > 0) {//TODO
     con.query(`UPDATE Player
       SET NumberAnswered = NumberAnswered + 1, NumberCorrect = NumberCorrect + 1, Score = Score + ?
-      WHERE PersonID = ? AND RoomID = ?`, [score, roomList[room].players[email].personId, roomList[room].roomId]);
+      WHERE PersonID = ? AND RoomID = ?`, [score, personId, roomList[room].roomId]);
+
+    //Insert score
+    con.query(`INSERT INTO Answer(PlayerID, QuestionID, Score)
+      VALUES((select PlayerID from Player where PersonID = ? and roomID = ?),?,?)
+      ON DUPLICATE KEY UPDATE Score = IF(VALUES(Score)>Score,VALUES(Score),Score);`,
+    [personId, roomList[room].roomId, questionIndex, score]);
   } else {
     con.query(`UPDATE Player
       SET NumberAnswered = NumberAnswered + 1
-      WHERE PersonID = ? AND RoomID = ?`, [roomList[room].players[email].personId, roomList[room].roomId]);
+      WHERE PersonID = ? AND RoomID = ?`, [personId, roomList[room].roomId]);
   }
 
   //Remove answered player
@@ -415,10 +419,20 @@ function rejoinGame(socket, email, game) {
 
 function sendReport(socket){
   room = socket.room;
-  con.query('SELECT * FROM Person AS p, (SELECT * FROM Player WHERE RoomID IN (SELECT RoomID FROM Room WHERE Name = ?)) AS c WHERE p.PersonID = c.PersonID', [room], (err, result)=>{
-    //Let instructor.js figure it out
-    io.to(room).emit('sendReport', result, roomList[room]);
-  });
+  // con.query('SELECT * FROM Person AS p, (SELECT * FROM Player WHERE RoomID IN (SELECT RoomID FROM Room WHERE Name = ?)) AS c WHERE p.PersonID = c.PersonID', [room], (err, result)=>{
+  //   //Let instructor.js figure it out
+  //   io.to(room).emit('sendReport', result, roomList[room]);
+  // });
+  con.query(`Select Player.PersonID,Player.NumberAnswered,Player.NumberCorrect,Answer.Score
+    from Player,Answer where Player.PlayerID=Answer.PlayerID and Player.RoomID=(select RoomID from Room where Name=?);`, [room], (err1, r1)=>{
+      console.log(r1);
+      con.query(`select * from Person where PersonID in (select PersonID
+        from Player where Player.RoomID=(select RoomID from Room where Name=?));`, [room], (err2, r2)=>{
+          console.log(err1, err2);
+          io.to(socket.id).emit('sendReport', r1, r2, roomList[room]);
+        });
+    });
+
 }
 
 //UTILITY FUNCTIONS

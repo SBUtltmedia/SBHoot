@@ -5,13 +5,13 @@ $("#deleteGame").on(listeners, deleteGame);
 $("#startGame").on(listeners, startGame);
 $("#downloadReport").on(listeners, downloadReport);
 
-
+// Allows a user to upload a file
 var siofu = new SocketIOFileUpload(socket);
 siofu.listenOnDrop(document.getElementById("file_drop"));
 
 // Do something when a file is uploaded:
 siofu.addEventListener("complete", (event) => {
-  changeDisplay(['#startGame'], []);
+  changeDisplay(['#startGame', '#downloadReport'], ['#file_drop']);
 });
 
 socket.on('playerResults', playerResults);
@@ -50,6 +50,7 @@ function displayPrevGames(games) {
 function rejoinGame() {
   socket.emit('rejoinGame', email, this.id);
   gameName = this.id;
+  $('#gameName').text(gameName);
   changeDisplay(['#gameManagement', '#openGame'], ['#gameCreation', '#closeGame']);
 }
 
@@ -60,6 +61,7 @@ function makeGame() {
   socket.emit('makeGame', $('#roomId').val(), email, (error) => {
     if (!error) {
       gameName = $('#roomId').val();
+      $('#gameName').text(gameName);
       changeDisplay(['#gameManagement'], ['#gameCreation']);
     } else {
       sendAlert('Error: Game already exists!');
@@ -122,82 +124,85 @@ function getSelector(input) {
   return input.replace(/[@.]/gi, '_');
 }
 
-function sendReport(queryResult, roomList) {
-  //Final location for CSV Rows
-  data = [];
+function sendReport(r1, r2, roomList) {
+  console.log(r1, r2, roomList);
 
-  //Column names
-  columns = [
-    'First Name',
-    'Last Name',
-    'Email',
-    'Nickname',
-    'Score',
-    'Number Answered',
-    'Number Correct',
-    'Desync'
-  ];
-  //Add question text
-  roomList.questions.forEach((question) => {
-    columns.push(question.question);
-  });
-  data.push(columns);
 
-  for (person of queryResult) {
-    personTempData = roomList.players[person.Email];
-    //TODO: Get player report
-    player = [
-      person.FirstName,
-      person.LastName,
-      person.Email,
-      person.NickName,
-      person.Score,
-      person.NumberAnswered,
-      person.NumberCorrect
-    ];
-
-    //desync & fill in score vals
-    if (personTempData) {
-      player.push(person.Score == personTempData.score);
-      personTempData.history.forEach((score) => {
-        player.push(score);
-      });
-    } else {
-      player.push(true);
-      roomList.questions.forEach(() => {
-        player.push(0);
-      });
-    }
-    data.push(player);
-  }
-
-  //Solution to download report taken from Stack Overflow: https://stackoverflow.com/a/29304414
-  var csvContent = '';
-  data.forEach(function(infoArray, index) {
-    dataString = infoArray.join(';');
-    csvContent += index < data.length ? dataString + '\n' : dataString;
-  });
-
-  var download = function(content, fileName, mimeType) {
-    var a = document.createElement('a');
-    mimeType = mimeType || 'application/octet-stream';
-
-    if (navigator.msSaveBlob) { // IE10
-      navigator.msSaveBlob(new Blob([content], {
-        type: mimeType
-      }), fileName);
-    } else if (URL && 'download' in a) { //html5 A[download]
-      a.href = URL.createObjectURL(new Blob([content], {
-        type: mimeType
-      }));
-      a.setAttribute('download', fileName);
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    } else {
-      location.href = 'data:application/octet-stream,' + encodeURIComponent(content); // only this mime type is supported
-    }
-  }
-
-  download(csvContent, gameName + " Score Report.csv", 'text/csv;encoding:utf-8');
+  // //Final location for CSV Rows
+  // data = [];
+  //
+  // //Column names
+  // columns = [
+  //   'First Name',
+  //   'Last Name',
+  //   'Email',
+  //   'Nickname',
+  //   'Score',
+  //   'Number Answered',
+  //   'Number Correct',
+  //   'Desync'
+  // ];
+  // //Add question text
+  // roomList.questions.forEach((question) => {
+  //   columns.push(question.question);
+  // });
+  // data.push(columns);
+  //
+  // for (person of queryResult) {
+  //   personTempData = roomList.players[person.Email];
+  //   //TODO: Get player report
+  //   player = [
+  //     person.FirstName,
+  //     person.LastName,
+  //     person.Email,
+  //     person.NickName,
+  //     person.Score,
+  //     person.NumberAnswered,
+  //     person.NumberCorrect
+  //   ];
+  //
+  //   //desync & fill in score vals
+  //   if (personTempData) {
+  //     player.push(person.Score == personTempData.score);
+  //     personTempData.history.forEach((score) => {
+  //       player.push(score);
+  //     });
+  //   } else {
+  //     player.push(true);
+  //     roomList.questions.forEach(() => {
+  //       player.push(0);
+  //     });
+  //   }
+  //   data.push(player);
+  // }
+  //
+  // //Solution to download report taken from Stack Overflow: https://stackoverflow.com/a/29304414
+  // var csvContent = '';
+  // data.forEach(function(infoArray, index) {
+  //   dataString = infoArray.join(';');
+  //   csvContent += index < data.length ? dataString + '\n' : dataString;
+  // });
+  //
+  // var download = function(content, fileName, mimeType) {
+  //   var a = document.createElement('a');
+  //   mimeType = mimeType || 'application/octet-stream';
+  //
+  //   if (navigator.msSaveBlob) { // IE10
+  //     navigator.msSaveBlob(new Blob([content], {
+  //       type: mimeType
+  //     }), fileName);
+  //   } else if (URL && 'download' in a) { //html5 A[download]
+  //     a.href = URL.createObjectURL(new Blob([content], {
+  //       type: mimeType
+  //     }));
+  //     a.setAttribute('download', fileName);
+  //     document.body.appendChild(a);
+  //     a.click();
+  //     document.body.removeChild(a);
+  //   } else {
+  //     location.href = 'data:application/octet-stream,' + encodeURIComponent(content); // only this mime type is supported
+  //   }
+  // }
+  //
+  // download(csvContent, gameName + " Score Report.csv", 'text/csv;encoding:utf-8');
 }
