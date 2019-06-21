@@ -416,21 +416,9 @@ function rejoinGame(socket, email, game) {
 function sendReport(socket){
   room = socket.room;
   con.query('SELECT * FROM Person AS p, (SELECT * FROM Player WHERE RoomID IN (SELECT RoomID FROM Room WHERE Name = ?)) AS c WHERE p.PersonID = c.PersonID', [room], (err, result)=>{
-    console.log(result);
-    console.log(roomList[socket.room]);
-    // for(person of result){
-    //   //TODO: Get player report
-    // }
-    //FirstName
-    //LastName
-    //Email
-    //Nickname
-    // NumberAnswered: 30,
-    // NumberCorrect: 19,
-    // Score: 1852,
-    //Questions & answer scores
+    //Let instructor.js figure it out
+    io.to(room).emit('sendReport', result, roomList[room]);
   });
-
 }
 
 //UTILITY FUNCTIONS
