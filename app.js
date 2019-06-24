@@ -10,9 +10,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 const csv=require('csvtojson');
 
-var currentRightAnswer;
-let rawdata = fs.readFileSync('questions.json');
-let questions = JSON.parse(rawdata);
+//Connect to Database
 let DBInfo = JSON.parse(fs.readFileSync('DBConnect.json'));
 var con = mysql.createConnection({
   host: DBInfo.host,
@@ -43,7 +41,6 @@ app.get('*', function(req, res) {
     clientType: url
   })
 });
-
 http.listen(8090, function() {
   console.log('listening on *:8090');
 });
@@ -156,7 +153,6 @@ io.on('connection', function(socket) {
 });
 
 // TODO:
-// Save Question File between restarts
 
 //Sends questions to students
 function sendQuestion(socket) {
@@ -362,7 +358,11 @@ function sendAnswerAndPoints(socket, answer) {
 
 //Sends score results to listening instructor page
 function sendProfResults(socket) {
-  io.to(roomList[socket.room].masterId).emit('playerResults', getMapAttr(roomList[socket.room]['players'], ['name', 'nickname', 'score', 'email']));
+  var socketList = io.sockets.server.eio.clients;
+  //Only send instructor data if connected
+  if (socketList[roomList[socket.room].masterId] === undefined){
+    io.to(roomList[socket.room].masterId).emit('playerResults', getMapAttr(roomList[socket.room]['players'], ['name', 'nickname', 'score', 'email']));
+  }
 }
 
 //Sends back a list of games the instructor controls to instructor.js
