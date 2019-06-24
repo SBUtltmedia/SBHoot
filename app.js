@@ -178,7 +178,7 @@ function sendQuestion(socket) {
   //Save last answer & set new answer
   var pastAnswer = roomList[socket.room]['answer'];
   roomList[socket.room]['answer'] = question.correct;
-  delete question.correct;
+  //delete question.correct;
   roomList[socket.room]['question'] = question;
 
   if (roomList[socket.room]['interval'] == 0) { //First run
@@ -423,13 +423,15 @@ function sendReport(socket){
   //   //Let instructor.js figure it out
   //   io.to(room).emit('sendReport', result, roomList[room]);
   // });
-  con.query(`Select Player.PersonID,Player.NumberAnswered,Player.NumberCorrect,Answer.Score
-    from Player,Answer where Player.PlayerID=Answer.PlayerID and Player.RoomID=(select RoomID from Room where Name=?);`, [room], (err1, r1)=>{
-      console.log(r1);
-      con.query(`select * from Person where PersonID in (select PersonID
-        from Player where Player.RoomID=(select RoomID from Room where Name=?));`, [room], (err2, r2)=>{
-          console.log(err1, err2);
-          io.to(socket.id).emit('sendReport', r1, r2, roomList[room]);
+  con.query(`SELECT Player.PersonID,Answer.QuestionID, Answer.Score
+    FROM Player,Answer
+    WHERE Player.PlayerID=Answer.PlayerID and Player.RoomID=(select RoomID from Room where Name=?);`, [room], (err1, r1)=>{
+      con.query(`SELECT p.PersonID, p.Email, p.FirstName, p.LastName, pl.NickName, pl.NumberAnswered, pl.NumberCorrect
+        FROM Person p
+        INNER JOIN
+        (select * from Player where Player.RoomID=(select RoomID from Room where Name=?)) pl
+        ON p.PersonID = pl.PersonID;`, [room], (err2, r2)=>{
+          io.to(socket.id).emit('sendReport', r1, r2, roomList[room].questions);
         });
     });
 

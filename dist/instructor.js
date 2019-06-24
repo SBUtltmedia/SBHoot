@@ -124,85 +124,84 @@ function getSelector(input) {
   return input.replace(/[@.]/gi, '_');
 }
 
-function sendReport(r1, r2, roomList) {
-  console.log(r1, r2, roomList);
+function sendReport(questionResponses, people, questions) {
+  //Final location for CSV Rows
+  data = [];
 
+  //Column names
+  columns = [
+    'First Name',
+    'Last Name',
+    'Email',
+    'Nickname',
+    'Score',
+    'Number Answered',
+    'Number Correct',
+  ];
 
-  // //Final location for CSV Rows
-  // data = [];
-  //
-  // //Column names
-  // columns = [
-  //   'First Name',
-  //   'Last Name',
-  //   'Email',
-  //   'Nickname',
-  //   'Score',
-  //   'Number Answered',
-  //   'Number Correct',
-  //   'Desync'
-  // ];
-  // //Add question text
-  // roomList.questions.forEach((question) => {
-  //   columns.push(question.question);
-  // });
-  // data.push(columns);
-  //
-  // for (person of queryResult) {
-  //   personTempData = roomList.players[person.Email];
-  //   //TODO: Get player report
-  //   player = [
-  //     person.FirstName,
-  //     person.LastName,
-  //     person.Email,
-  //     person.NickName,
-  //     person.Score,
-  //     person.NumberAnswered,
-  //     person.NumberCorrect
-  //   ];
-  //
-  //   //desync & fill in score vals
-  //   if (personTempData) {
-  //     player.push(person.Score == personTempData.score);
-  //     personTempData.history.forEach((score) => {
-  //       player.push(score);
-  //     });
-  //   } else {
-  //     player.push(true);
-  //     roomList.questions.forEach(() => {
-  //       player.push(0);
-  //     });
-  //   }
-  //   data.push(player);
-  // }
-  //
-  // //Solution to download report taken from Stack Overflow: https://stackoverflow.com/a/29304414
-  // var csvContent = '';
-  // data.forEach(function(infoArray, index) {
-  //   dataString = infoArray.join(';');
-  //   csvContent += index < data.length ? dataString + '\n' : dataString;
-  // });
-  //
-  // var download = function(content, fileName, mimeType) {
-  //   var a = document.createElement('a');
-  //   mimeType = mimeType || 'application/octet-stream';
-  //
-  //   if (navigator.msSaveBlob) { // IE10
-  //     navigator.msSaveBlob(new Blob([content], {
-  //       type: mimeType
-  //     }), fileName);
-  //   } else if (URL && 'download' in a) { //html5 A[download]
-  //     a.href = URL.createObjectURL(new Blob([content], {
-  //       type: mimeType
-  //     }));
-  //     a.setAttribute('download', fileName);
-  //     document.body.appendChild(a);
-  //     a.click();
-  //     document.body.removeChild(a);
-  //   } else {
-  //     location.href = 'data:application/octet-stream,' + encodeURIComponent(content); // only this mime type is supported
-  //   }
-  // }
-  //
-  // download(csvContent, gameName + " Score Report.csv", 'text/csv;encoding:utf-8');
+  //Add question text
+  questions.forEach((question) => {
+    columns.push(question.question);
+  });
+  data.push(columns);
+
+  players = {};
+  for(person of people){
+    player = [
+        person.FirstName,
+        person.LastName,
+        person.Email,
+        person.NickName,
+        0,  //Compute score from answered questions
+        person.NumberAnswered,
+        person.NumberCorrect
+      ];
+      //Add empty columns to be filled with scores
+      player = player.concat(Array(questions.length).fill(0));
+      players[person.PersonID] = player;
+  }
+
+  questionResponses.forEach((question) =>{
+    //Get offset to start of question list
+    index = question.QuestionID + 7;
+    person = question.PersonID;
+    //Increment score
+    players[person][4] += question.Score;
+    players[person][index] = question.Score;
+  });
+
+  //Add players to data
+  for(var key in players){
+    data.push(players[key]);
+  }
+
+  //Solution to download report taken from Stack Overflow: https://stackoverflow.com/a/29304414
+  var csvContent = '';
+  data.forEach(function(infoArray, index) {
+    dataString = infoArray.join(';');
+    csvContent += index < data.length ? dataString + '\n' : dataString;
+  });
+
+  var download = function(content, fileName, mimeType) {
+    var a = document.createElement('a');
+    mimeType = mimeType || 'application/octet-stream';
+
+    if (navigator.msSaveBlob) { // IE10
+      navigator.msSaveBlob(new Blob([content], {
+        type: mimeType
+      }), fileName);
+    } else if (URL && 'download' in a) { //html5 A[download]
+      a.href = URL.createObjectURL(new Blob([content], {
+        type: mimeType
+      }));
+      a.setAttribute('download', fileName);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else {
+      location.href = 'data:application/octet-stream,' + encodeURIComponent(content); // only this mime type is supported
+    }
+  }
+
+  download(csvContent, gameName + " Score Report.csv", 'text/csv;encoding:utf-8');
 }
