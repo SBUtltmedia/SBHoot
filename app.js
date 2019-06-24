@@ -49,7 +49,6 @@ http.listen(8090, function() {
 });
 
 io.on('connection', function(socket) {
-
   var uploader = new SocketIOFileUpload();
   uploader.dir = "uploads/";
   uploader.listen(socket);
@@ -143,8 +142,8 @@ io.on('connection', function(socket) {
     requestPreviousGamesStudent(socket, email);
   });
 
-  socket.on('rejoinGame', (email, game, nickname) => {
-    rejoinGame(socket, email, game, nickname);
+  socket.on('rejoinGame', (email, game, nickname, callback) => {
+    rejoinGame(socket, email, game, nickname, callback);
   });
 
   socket.on('rejoinGameStudent', (room, email, name, nickname, callback) => {
@@ -206,7 +205,7 @@ function startGame(socket) {
   changeGameState(socket, 'playing');
 
   //Get & parse game info
-  roomList[socket.room]['questions'] = parseJSON(socket, `quizzes/${socket.room}.json`); //Parse question file
+  parseJSON(socket, `quizzes/${socket.room}.json`); //Parse question file
 
   roomList[socket.room]['noResponse'] = [];
   roomList[socket.room]['interval'] = 0;
@@ -248,8 +247,7 @@ function joinGame(socket, room, email, name, nickname, callback) {
         name: name,
         nickname: nickname,
         score: 0,
-        socketId: socket.id,
-        history: new Array(roomList[socket.room]['questions'].length)
+        socketId: socket.id
       };
       //Send nicknames to waiting rooms
       io.to(socket.room).emit('roomListUpdate', getMapAttr(roomList[room].players, ['nickname']));
@@ -278,20 +276,17 @@ function checkAnswer(socket, choice, time, email) {
   var player = roomList[socket.room]['players'][email];
   //Store who answered & what
   var score = getPoints(socket, time, choice);
-  player['score'] += score;
+  player.score += score;
 
   //Record score
   questionIndex = roomList[socket.room].questionIndex;
-  if(score > player.history[questionIndex]){
-    player.history[questionIndex] = score;
-  }
 
   //Update DB
   var room = socket.room;
   personId = roomList[room].players[email].personId;
-  if (score > 0) {//TODO
+  if (score > 0) {
     con.query(`UPDATE Player
-      SET NumberAnswered = NumberAnswered + 1, NumberCorrect = NumberCorrect + 1, Score = Score + ?
+      SET NumberAnswered = NumberAnswered + 1, NumberCorrect = NumberCorrect + 1
       WHERE PersonID = ? AND RoomID = ?`, [score, personId, roomList[room].roomId]);
 
     //Insert score
@@ -349,14 +344,8 @@ function deleteGame(socket) {
   delete roomList[socket.room];
 }
 
-// Adds -1 to the history of every unanswered player
-// & resets the noResponse array
+// Refills noResponse array
 function scoreLeftovers(socket) {
-  for (var person of roomList[socket.room]['noResponse']) {
-    con.query(`UPDATE Player
-      SET NumberAnswered = NumberAnswered + 1
-      WHERE PersonID = ? AND RoomID = ?`, [roomList[socket.room].players[person].personId, roomList[socket.room].roomId]);
-  }
   roomList[socket.room]['noResponse'] = getMapAttr(roomList[socket.room]['players'], ['email']);
 }
 
@@ -403,7 +392,7 @@ function requestPreviousGamesStudent(socket, email) {
 }
 
 //Handles instructor rejoining a game
-function rejoinGame(socket, email, game) {
+function rejoinGame(socket, email, game, callback) {
   con.query('SELECT * FROM Person WHERE Email = ?', [email], (err, result) => {
     socket.masterId = result[0].PersonID;
     socket.join(game);
@@ -414,18 +403,25 @@ function rejoinGame(socket, email, game) {
       noResponse: [],
       masterId: socket.id
     };
+    changeGameState(socket, 'open');
+
+    //See whether or not we need to display file drop
+    if(fs.existsSync('quizzes/' + game + '.json')){
+      callback(true);
+      parseJSON(socket, 'quizzes/' + game + '.json');
+    } else {
+      callback(false);
+    }
   });
 }
 
 function sendReport(socket){
   room = socket.room;
-  // con.query('SELECT * FROM Person AS p, (SELECT * FROM Player WHERE RoomID IN (SELECT RoomID FROM Room WHERE Name = ?)) AS c WHERE p.PersonID = c.PersonID', [room], (err, result)=>{
-  //   //Let instructor.js figure it out
-  //   io.to(room).emit('sendReport', result, roomList[room]);
-  // });
+  //Gets answers with identifying PersonID
   con.query(`SELECT Player.PersonID,Answer.QuestionID, Answer.Score
     FROM Player,Answer
     WHERE Player.PlayerID=Answer.PlayerID and Player.RoomID=(select RoomID from Room where Name=?);`, [room], (err1, r1)=>{
+      //Gets all necessary info about people
       con.query(`SELECT p.PersonID, p.Email, p.FirstName, p.LastName, pl.NickName, pl.NumberAnswered, pl.NumberCorrect
         FROM Person p
         INNER JOIN
@@ -434,7 +430,6 @@ function sendReport(socket){
           io.to(socket.id).emit('sendReport', r1, r2, roomList[room].questions);
         });
     });
-
 }
 
 //UTILITY FUNCTIONS
@@ -470,12 +465,11 @@ function sendAlert(socket, info){
 
 //Parses a given JSON file. Since the file would be critiqued when it was made, there is no need to check its validity
 function parseJSON(socket, file){
-  if(roomList[socket.room]['questions']){
-    return roomList[socket.room]['questions'];
-  }
   //Server has been restarted
-  rawdata = fs.readFileSync(file);
-  return JSON.parse(rawdata);
+  if(!roomList[socket.room]['questions']){
+    rawdata = fs.readFileSync(file);
+    roomList[socket.room]['questions'] = JSON.parse(rawdata);
+  }
 }
 
 //Returns a scalar or array of specified values from a dictionary

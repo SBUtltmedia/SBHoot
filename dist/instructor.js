@@ -48,10 +48,17 @@ function displayPrevGames(games) {
 }
 
 function rejoinGame() {
-  socket.emit('rejoinGame', email, this.id);
   gameName = this.id;
   $('#gameName').text(gameName);
-  changeDisplay(['#gameManagement', '#openGame'], ['#gameCreation', '#closeGame']);
+  changeDisplay(['#gameManagement'], ['#gameCreation']);
+
+  //See whether or not we need to display file drop
+  callback = (fileExists) => {
+    if(fileExists){
+      changeDisplay(['#startGame'], ['#file_drop']);
+    }
+  };
+  socket.emit('rejoinGame', email, this.id, callback);
 }
 
 
