@@ -16,7 +16,7 @@ var con = mysql.createConnection({
   host: DBInfo.host,
   database: DBInfo.database,
   user: DBInfo.username,
-  password: DBInfo.password,
+  password: DBInfo.password
 });
 con.connect(function(err) {
   if (err) {
@@ -153,6 +153,11 @@ io.on('connection', function(socket) {
 });
 
 // TODO:
+// Break up app.js into seperate files for clarity
+
+////////////////////////////
+// GAME PLAYING FUNCTIONS //
+////////////////////////////
 
 //Sends questions to students
 function sendQuestion(socket) {
@@ -195,6 +200,84 @@ function responsesIn(x, socket) {
   }, answerTime * 1000);
   return x;
 }
+
+//Checks a student submitted answerand updates the DB to reflect how they did
+function checkAnswer(socket, choice, time, email) {
+  //var question = roomList[socket.room]['question'];
+  var player = roomList[socket.room]['players'][email];
+  //Store who answered & what
+  var score = getPoints(socket, time, choice);
+  player.score += score;
+
+  //Record score
+  questionIndex = roomList[socket.room].questionIndex;
+
+  //Update DB
+  var room = socket.room;
+  personId = roomList[room].players[email].personId;
+  if (score > 0) {
+    con.query(`UPDATE Player
+      SET NumberAnswered = NumberAnswered + 1, NumberCorrect = NumberCorrect + 1
+      WHERE PersonID = ? AND RoomID = ?`, [score, personId, roomList[room].roomId]);
+
+    //Insert score
+    con.query(`INSERT INTO Answer(PlayerID, QuestionID, Score)
+      VALUES((select PlayerID from Player where PersonID = ? and roomID = ?),?,?)
+      ON DUPLICATE KEY UPDATE Score = IF(VALUES(Score)>Score,VALUES(Score),Score);`,
+    [personId, roomList[room].roomId, questionIndex, score]);
+  } else {
+    con.query(`UPDATE Player
+      SET NumberAnswered = NumberAnswered + 1
+      WHERE PersonID = ? AND RoomID = ?`, [personId, roomList[room].roomId]);
+  }
+
+  //Remove answered player
+  roomList[socket.room]['noResponse'].splice(roomList[socket.room]['noResponse'].indexOf(email), 1);
+  if (roomList[socket.room]['noResponse'].length == 0) {
+    roomList[socket.room]['interval'] = responsesIn(roomList[socket.room]['interval'], socket);
+  }
+}
+
+// Refills noResponse array
+function scoreLeftovers(socket) {
+  roomList[socket.room]['noResponse'] = getMapAttr(roomList[socket.room]['players'], ['email']);
+}
+
+function sendAnswerAndPoints(socket, answer) {
+  for (var key in roomList[socket.room]['players']) {
+    var player = roomList[socket.room].players[key];
+    io.to(player.socketId).emit('sendAnswer', answer, player.score);
+  }
+  io.to(socket.room).emit('sendScoreBoard', getMapAttr(roomList[socket.room]['players'], ['nickname', 'score']));
+
+  //Send results to instructor
+  sendProfResults(socket);
+}
+
+// Returns the number of points to award a player
+// if they answer the question correctly
+function getPoints(socket, time, choice) {
+  if (roomList[socket.room]['answer'] == choice) {
+    time -= 1;
+    if (time < 0)
+      time = 0;
+    return Math.ceil(Math.pow((answerTime - time) / answerTime, 1.7) * 100);
+  }
+  return 0;
+}
+
+//Sends score results to listening instructor page
+function sendProfResults(socket) {
+  var socketList = io.sockets.server.eio.clients;
+  //Only send instructor data if connected
+  if (socketList[roomList[socket.room].masterId] === undefined){
+    io.to(roomList[socket.room].masterId).emit('playerResults', getMapAttr(roomList[socket.room]['players'], ['name', 'nickname', 'score', 'email']));
+  }
+}
+
+///////////////////////////////
+// GAME MANAGEMENT FUNCTIONS //
+///////////////////////////////
 
 //Starts a game as initiated by instructor.js
 function startGame(socket) {
@@ -266,48 +349,11 @@ function joinGame(socket, room, email, name, nickname, callback) {
   });
 }
 
-//Checks a student submitted answerand updates the DB to reflect how they did
-function checkAnswer(socket, choice, time, email) {
-  //var question = roomList[socket.room]['question'];
-  var player = roomList[socket.room]['players'][email];
-  //Store who answered & what
-  var score = getPoints(socket, time, choice);
-  player.score += score;
-
-  //Record score
-  questionIndex = roomList[socket.room].questionIndex;
-
-  //Update DB
-  var room = socket.room;
-  personId = roomList[room].players[email].personId;
-  if (score > 0) {
-    con.query(`UPDATE Player
-      SET NumberAnswered = NumberAnswered + 1, NumberCorrect = NumberCorrect + 1
-      WHERE PersonID = ? AND RoomID = ?`, [score, personId, roomList[room].roomId]);
-
-    //Insert score
-    con.query(`INSERT INTO Answer(PlayerID, QuestionID, Score)
-      VALUES((select PlayerID from Player where PersonID = ? and roomID = ?),?,?)
-      ON DUPLICATE KEY UPDATE Score = IF(VALUES(Score)>Score,VALUES(Score),Score);`,
-    [personId, roomList[room].roomId, questionIndex, score]);
-  } else {
-    con.query(`UPDATE Player
-      SET NumberAnswered = NumberAnswered + 1
-      WHERE PersonID = ? AND RoomID = ?`, [personId, roomList[room].roomId]);
-  }
-
-  //Remove answered player
-  roomList[socket.room]['noResponse'].splice(roomList[socket.room]['noResponse'].indexOf(email), 1);
-  if (roomList[socket.room]['noResponse'].length == 0) {
-    roomList[socket.room]['interval'] = responsesIn(roomList[socket.room]['interval'], socket);
-  }
-}
-
 //Handles a student leaving the game
-function leaveGame(socket, email) {
+function leaveGame(socket, email) {//TODO
   //Make sure nobody is waiting for them to answer
-  roomList[socket.room]['noResponse'].splice(roomList[socket.room]['players'].indexOf(email), 1);
-  delete roomList[socket.room]['players'][email];
+  roomList[socket.room].noResponse.splice(roomList[socket.room].noResponse.indexOf(email), 1);
+  delete roomList[socket.room].players[email];
 
   //Set DB inRoom state to false
   con.query(`SELECT * FROM Person WHERE Email = ?`, [email], (err, result) => {
@@ -340,30 +386,6 @@ function deleteGame(socket) {
   delete roomList[socket.room];
 }
 
-// Refills noResponse array
-function scoreLeftovers(socket) {
-  roomList[socket.room]['noResponse'] = getMapAttr(roomList[socket.room]['players'], ['email']);
-}
-
-function sendAnswerAndPoints(socket, answer) {
-  for (var key in roomList[socket.room]['players']) {
-    var player = roomList[socket.room].players[key];
-    io.to(player.socketId).emit('sendAnswer', answer, player.score);
-  }
-  io.to(socket.room).emit('sendScoreBoard', getMapAttr(roomList[socket.room]['players'], ['nickname', 'score']));
-
-  //Send results to instructor
-  sendProfResults(socket);
-}
-
-//Sends score results to listening instructor page
-function sendProfResults(socket) {
-  var socketList = io.sockets.server.eio.clients;
-  //Only send instructor data if connected
-  if (socketList[roomList[socket.room].masterId] === undefined){
-    io.to(roomList[socket.room].masterId).emit('playerResults', getMapAttr(roomList[socket.room]['players'], ['name', 'nickname', 'score', 'email']));
-  }
-}
 
 //Sends back a list of games the instructor controls to instructor.js
 function requestPreviousGames(socket, email) {
@@ -446,17 +468,7 @@ function shuffle(length) {
   return newArr;
 }
 
-// Returns the number of points to award a player
-// if they answer the question correctly
-function getPoints(socket, time, choice) {
-  if (roomList[socket.room]['answer'] == choice) {
-    time -= 1;
-    if (time < 0)
-      time = 0;
-    return Math.ceil(Math.pow((answerTime - time) / answerTime, 1.7) * 100);
-  }
-  return 0;
-}
+
 
 //Send alert popup to specific socket
 function sendAlert(socket, info){

@@ -52,12 +52,10 @@ function initClient() {
 
 function updateSigninStatus(isSignedIn) {
   if (isSignedIn) {
-    $('#authorize').css('display', 'none');
-    $('#signout').css('display', 'block');
+    changeDisplay(['#signout', '#gameCreation'], ["#authorize"]);
     makeApiCall();
   } else {
-    $('#authorize').css('display', 'block');
-    $('#signout').css('display', 'none');
+    changeDisplay(["#authorize"], ['#signout']);
   }
 }
 
@@ -66,6 +64,7 @@ function handleAuthClick(event) {
 }
 
 function handleSignoutClick(event) {
+  changeDisplay([], ["#gameCreation", "#gameManagement"]);
   gapi.auth2.getAuthInstance().signOut();
 }
 

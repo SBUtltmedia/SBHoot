@@ -17,7 +17,12 @@ siofu.addEventListener("complete", (event) => {
 socket.on('playerResults', playerResults);
 socket.on('returnPreviousGames', displayPrevGames);
 socket.on('sendReport', sendReport);
+socket.on('disconnect', handleDisconnect);
 
+function handleDisconnect() {
+  changeDisplay(['#gameCreation'], ['#gameManagement']);
+  sendAlert("Error: Disconnected from server");
+}
 
 var gameName;
 
@@ -48,32 +53,40 @@ function displayPrevGames(games) {
 }
 
 function rejoinGame() {
-  gameName = this.id;
-  $('#gameName').text(gameName);
-  changeDisplay(['#gameManagement'], ['#gameCreation']);
+  if (socket.connected) {
+    gameName = this.id;
+    $('#gameName').text(gameName);
+    changeDisplay(['#gameManagement', '#downloadReport'], ['#gameCreation']);
 
-  //See whether or not we need to display file drop
-  callback = (fileExists) => {
-    if(fileExists){
-      changeDisplay(['#startGame'], ['#file_drop']);
-    }
-  };
-  socket.emit('rejoinGame', email, this.id, callback);
+    //See whether or not we need to display file drop
+    callback = (fileExists) => {
+      if (fileExists) {
+        changeDisplay(['#startGame'], ['#file_drop']);
+      }
+    };
+    socket.emit('rejoinGame', email, this.id, callback);
+  } else {
+    sendAlert("Error: Not connected to server");
+  }
 }
 
 
 
 function makeGame() {
-  logUser(email, firstName, lastName);
-  socket.emit('makeGame', $('#roomId').val(), email, (error) => {
-    if (!error) {
-      gameName = $('#roomId').val();
-      $('#gameName').text(gameName);
-      changeDisplay(['#gameManagement'], ['#gameCreation']);
-    } else {
-      sendAlert('Error: Game already exists!');
-    }
-  });
+  if (socket.connected) {
+    logUser(email, firstName, lastName);
+    socket.emit('makeGame', $('#roomId').val(), email, (error) => {
+      if (!error) {
+        gameName = $('#roomId').val();
+        $('#gameName').text(gameName);
+        changeDisplay(['#gameManagement'], ['#gameCreation']);
+      } else {
+        sendAlert('Error: Game already exists!');
+      }
+    });
+  } else {
+    sendAlert("Error: Not connected to server");
+  }
 }
 
 function openGame() {
@@ -153,22 +166,22 @@ function sendReport(questionResponses, people, questions) {
   data.push(columns);
 
   players = {};
-  for(person of people){
+  for (person of people) {
     player = [
-        person.FirstName,
-        person.LastName,
-        person.Email,
-        person.NickName,
-        0,  //Compute score from answered questions
-        person.NumberAnswered,
-        person.NumberCorrect
-      ];
-      //Add empty columns to be filled with scores
-      player = player.concat(Array(questions.length).fill(0));
-      players[person.PersonID] = player;
+      person.FirstName,
+      person.LastName,
+      person.Email,
+      person.NickName,
+      0, //Compute score from answered questions
+      person.NumberAnswered,
+      person.NumberCorrect
+    ];
+    //Add empty columns to be filled with scores
+    player = player.concat(Array(questions.length).fill(0));
+    players[person.PersonID] = player;
   }
 
-  questionResponses.forEach((question) =>{
+  questionResponses.forEach((question) => {
     //Get offset to start of question list
     index = question.QuestionID + 7;
     person = question.PersonID;
@@ -178,7 +191,7 @@ function sendReport(questionResponses, people, questions) {
   });
 
   //Add players to data
-  for(var key in players){
+  for (var key in players) {
     data.push(players[key]);
   }
 
