@@ -133,21 +133,24 @@ function leaveGame(){
   requestPrevGames(email);
 }
 
-function playerResults(players) {
-  //First run
-  if ($('#playerResults tr').length == 0) {
-    $('#playerResults').append('<tr><th>Name</th><th>Nickname</th><th>Score</th></tr>');
-    for (player of players) {
-      tr = '<tr id="' + getSelector(player[3]) + '"><td>' + player[0] + '</td><td>' + player[1] + '</td><td class="score">' + player[2] + '</td></tr>';
-      $('#playerResults').append(tr);
-    }
-  }
-  //Add info
-  else {
-    for (player of players) {
-      $("#" + getSelector(player[3]) + ' td.score').text(player[2]);
-    }
-  }
+function playerResults(questionResponses, people) {
+  console.log(questionResponses, people);
+
+
+  // //First run
+  // if ($('#playerResults tr').length == 0) {
+  //   $('#playerResults').append('<tr><th>Name</th><th>Nickname</th><th>Score</th></tr>');
+  //   for (player of players) {
+  //     tr = '<tr id="' + getSelector(player[3]) + '"><td>' + player[0] + '</td><td>' + player[1] + '</td><td class="score">' + player[2] + '</td></tr>';
+  //     $('#playerResults').append(tr);
+  //   }
+  // }
+  // //Add info
+  // else {
+  //   for (player of players) {
+  //     $("#" + getSelector(player[3]) + ' td.score').text(player[2]);
+  //   }
+  // }
 }
 
 function downloadReport() {

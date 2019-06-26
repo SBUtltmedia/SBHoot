@@ -275,8 +275,22 @@ function getPoints(socket, time, choice) {
 function sendProfResults(socket) {
   var socketList = io.sockets.server.eio.clients;
   //Only send instructor data if connected
-  if (!socketList[roomList[socket.room].masterId] === undefined){
-    io.to(roomList[socket.room].masterId).emit('playerResults', getMapAttr(roomList[socket.room]['players'], ['name', 'nickname', 'score', 'email']));
+  if (!(socketList[roomList[socket.room].masterId] === undefined)){
+    con.query(`SELECT Player.PersonID, Answer.Score
+      FROM Player,Answer
+      WHERE Player.PlayerID=Answer.PlayerID and Player.RoomID=(SELECT RoomID FROM Room WHERE Name=?);`, [socket.room], (err1, r1)=>{
+        //Gets all necessary info about people
+        con.query(`SELECT p.Email, p.FirstName, p.LastName, pl.NickName
+          FROM Person p
+          INNER JOIN
+          (SELECT * FROM Player WHERE Player.RoomID=(SELECT RoomID FROM Room WHERE Name=?)) pl
+          ON p.PersonID = pl.PersonID;`, [socket.room], (err2, r2)=>{
+            //io.to(socket.id).emit('sendReport', r1, r2);
+            io.to(roomList[socket.room].masterId).emit('playerResults', r1,r2);
+          });
+      });
+
+    //io.to(roomList[socket.room].masterId).emit('playerResults', getMapAttr(roomList[socket.room]['players'], ['name', 'nickname', 'score', 'email']));
   }
 }
 
