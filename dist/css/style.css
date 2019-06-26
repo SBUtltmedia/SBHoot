@@ -3,13 +3,14 @@ body {
   /* margin: 10%; */
   /* font-family: 'Pangolin', cursive; */
   font-size: 30px;
-  background:
 }
 
 .row {
   display: flex;
   align-self: center;
+
 }
+
 
 .column {
   flex: 50%;
@@ -17,13 +18,20 @@ body {
   align-content: center;
 }
 
-#question {
-  font-size: 36px;
+#header {
+  font-family: Helvetica;
+  font-size: 36pt;
   text-align: center;
-  background-color: rgba(255, 255, 255, 0.3);
+  /*background-color: rgba(255, 255, 255, 0.3);*/
+  background-color: #C6C6DB;
+	-webkit-box-shadow: 0 8px  #8E8EA5;
+	   -moz-box-shadow: 0 8px  #8E8EA5;
+	        box-shadow: 0 8px  #8E8EA5;
+
 }
 
 #code {
+  display:none;
   padding: 10px 10px 10px 10px;
 }
 
@@ -35,10 +43,8 @@ body {
   font-size: 50px;
   width: 80px;
   height: 80px;
-  background: #ffff90;
-  border-radius: 0 0 0 100px;
-  -moz-border-radius: 0 0 0 100px;
-  -webkit-border-radius: 0 0 0 100px;
+  /*background: #D3D3EA;*/
+  background-color: rgba(0, 160, 120, 0.2);
 }
 
 #submit {
@@ -52,7 +58,8 @@ body {
 }
 
 .rightAnswer {
-  background-color: #24e527 !important;
+  background-color: #66FF66 !important;
+  box-shadow: 10px 10px #4E936E !important;
 }
 
 @keyframes rightAnswer {
@@ -60,24 +67,33 @@ body {
 }
 
 .wrongAnswer {
-  background-color: #e52424 !important;
+  background-color: #FF4848 !important;
+  box-shadow: 10px 10px #BC646B !important;
 }
 
 .answer {
-  float:center;
-  width: 60%;
-  height: 80%;
-  background-color: #fffff0;
+  font-family: Helvetica;
+  float:center
+  width: 800px;
+  height: 120px;
+  background-color: #F2F1EB;
   margin: 50px;
   text-align: center;
-  border-radius: 1em;
+  font-size:56pt;
+  border-radius: 0.5em;
+  box-shadow: 10px 10px #C6C4B9;
   animation: answerOff  1s forwards;
 }
 
-.answer:hover {
+/* .answer:hover {
   animation: answerHover 2s infinite;
 
-  background-color: #ffffc0
+background-color: #ffffc0*/
+
+.answer:active{
+  background-color: #E0DED7;
+  box-shadow: inset 10px 10px #B2AFA3
+
 }
 
 @keyframes answerHover {
@@ -94,4 +110,10 @@ body {
   0% {font-size: 50px;}
   33% {font-size: 60px;}
   66% {font-size: 50px;}
+}
+@media only screen and (max-width: 768px) {
+.answer {
+
+    font-size: 2rem;
+  }
 }
