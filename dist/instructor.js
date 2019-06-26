@@ -3,6 +3,8 @@ $("#openGame").on(listeners, openGame);
 $("#closeGame").on(listeners, closeGame);
 $("#deleteGame").on(listeners, deleteGame);
 $("#startGame").on(listeners, startGame);
+$("#stopGame").on(listeners, stopGame);
+$("#leaveGame").on(listeners, leaveGame);
 $("#downloadReport").on(listeners, downloadReport);
 
 // Allows a user to upload a file
@@ -58,6 +60,8 @@ function rejoinGame() {
     $('#gameName').text(gameName);
     changeDisplay(['#gameManagement', '#downloadReport'], ['#gameCreation']);
 
+    //TODO: check current game state
+
     //See whether or not we need to display file drop
     callback = (fileExists) => {
       if (fileExists) {
@@ -69,8 +73,6 @@ function rejoinGame() {
     sendAlert("Error: Not connected to server");
   }
 }
-
-
 
 function makeGame() {
   if (socket.connected) {
@@ -113,10 +115,22 @@ function startGame() {
   if ($('ul#playerList li').length > 0) {
     socket.emit('startGame');
     $('#startGame').css('display', 'none');
-    changeDisplay(['#playerResults'], ['#startGame', "#playerList"]);
+    changeDisplay(['#playerResults', '#stopGame'], ['#startGame', "#playerList"]);
   } else {
     sendAlert("Error: cannot start a game with no players");
   }
+}
+
+function stopGame() {
+  socket.emit('stopGame');
+  $('ul#playerList li').empty();
+  changeDisplay(['#startGame', '#openGame'], ['#stopGame', '#closeGame']);
+}
+
+function leaveGame(){
+  $('#playerList').empty();
+  changeDisplay(['#gameCreation'], ['#gameManagement']);
+  requestPrevGames(email);
 }
 
 function playerResults(players) {

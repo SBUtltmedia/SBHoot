@@ -28,7 +28,6 @@ con.connect(function(err) {
 
 //'Open' rooms w/out temp data causes issues
 con.query("UPDATE Room SET State = 'closed'");
-con.query("UPDATE Player SET inRoom = false");
 
 var roomList = {};
 var answerTime = 10;
@@ -150,10 +149,16 @@ io.on('connection', function(socket) {
   socket.on('downloadReport', ()=>{
     sendReport(socket);
   });
+
+  socket.on('stopGame', ()=>{
+    stopGame(socket);
+  });
 });
 
 // TODO:
 // Break up app.js into seperate files for clarity
+// Implement leave game (instructor)
+// Fix rejoining game lists
 
 ////////////////////////////
 // GAME PLAYING FUNCTIONS //
@@ -270,7 +275,7 @@ function getPoints(socket, time, choice) {
 function sendProfResults(socket) {
   var socketList = io.sockets.server.eio.clients;
   //Only send instructor data if connected
-  if (socketList[roomList[socket.room].masterId] === undefined){
+  if (!socketList[roomList[socket.room].masterId] === undefined){
     io.to(roomList[socket.room].masterId).emit('playerResults', getMapAttr(roomList[socket.room]['players'], ['name', 'nickname', 'score', 'email']));
   }
 }
@@ -296,7 +301,7 @@ function startGame(socket) {
 function makeGame(socket, room, email, callback) {
   con.query(`SELECT * FROM Person WHERE Email = ?`, [email], (err, result) => {
     socket.masterId = result[0].PersonID;
-    con.query(`SELECT * FROM Room WHERE InstructorID = ? AND Name = ?`, [socket.masterId, room], (err, result) => {
+    con.query(`SELECT * FROM Room WHERE Name = ?`, [room], (err, result) => {
       failed = result != undefined && result.length > 0;
       callback(failed);
       if (!failed) {
@@ -350,16 +355,10 @@ function joinGame(socket, room, email, name, nickname, callback) {
 }
 
 //Handles a student leaving the game
-function leaveGame(socket, email) {//TODO
+function leaveGame(socket, email) {
   //Make sure nobody is waiting for them to answer
   roomList[socket.room].noResponse.splice(roomList[socket.room].noResponse.indexOf(email), 1);
   delete roomList[socket.room].players[email];
-
-  //Set DB inRoom state to false
-  con.query(`SELECT * FROM Person WHERE Email = ?`, [email], (err, result) => {
-    personId = result[0].PersonID;
-    con.query(`UPDATE Player SET inRoom = false WHERE PersonID = ?`, [personId]);
-  });
 
   io.to(socket.room).emit('roomListUpdate', getMapAttr(roomList[socket.room]['players'], ['nickname']));
   socket.leave(socket.room);
@@ -386,6 +385,21 @@ function deleteGame(socket) {
   delete roomList[socket.room];
 }
 
+function stopGame(socket){
+  socket.to(socket.room).emit('roomClosed');
+  //Stop wasting server time
+  if (roomList[socket.room]['interval']) {
+    clearInterval(roomList[socket.room]['interval']);
+  }
+  //Kick everyone from the room except instructor
+  io.of('/').in(socket.room).clients((error, socketIds) => {
+    if (error) throw error;
+    socketIds.forEach(socketId => {
+      io.sockets.sockets[socketId].leave(socket.room);
+    });
+  });
+  changeGameState(socket, 'closed');
+}
 
 //Sends back a list of games the instructor controls to instructor.js
 function requestPreviousGames(socket, email) {
@@ -454,7 +468,10 @@ function sendReport(socket){
     });
 }
 
-//UTILITY FUNCTIONS
+///////////////////////
+// UTILITY FUNCTIONS //
+///////////////////////
+
 function shuffle(length) {
   var newArr = []
   var arr = Array.apply(null, {
@@ -467,8 +484,6 @@ function shuffle(length) {
   }
   return newArr;
 }
-
-
 
 //Send alert popup to specific socket
 function sendAlert(socket, info){

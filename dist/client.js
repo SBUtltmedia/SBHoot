@@ -6,6 +6,7 @@ var questionInterval = 0;
 $(".answer").on(listeners, checkAnswer);
 $("#joinGame").on(listeners, joinGame);
 $("#leaveRoom").on(listeners, leaveGame);
+$("#previousGames").on("show", requestPrevGames);
 
 socket.on('sendQuestion', sendQuestion);
 socket.on('roomClosed', roomClosed);
@@ -29,6 +30,7 @@ function emailCheck() {
 }
 
 function requestPrevGames() {
+  $("#previousGames").empty();
   socket.emit('requestPreviousGamesStudent', email);
 }
 

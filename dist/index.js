@@ -1,24 +1,14 @@
 socket = io(`${window.location.hostname}:8090`);
 var listeners = "click";
-//
-// var childDisplayRules = {
-//   "#gameManagement": () =>{
-//     $("#playerList").empty();
-//     $("#downloadReport").hide();
-//     $("#playerResults").hide();
-//     $("#openGame").hide();
-//     $("#closeGame").show();
-//     $("#startGame").hide();
-//     $("#file_drop").show();
-//   },
-//   "#signout": () => {
-//     $("#previousGames").empty();
-//   }
-// };
 
 //Socket listeners
 socket.on('roomListUpdate', roomListUpdate);
 socket.on('sendAlert', sendAlert);
+socket.on('reconnect', handleReconnect);
+
+function handleReconnect() {
+	$('#dialog').dialog('close');
+}
 
 //Socket functions
 function roomListUpdate(people) {
@@ -41,9 +31,6 @@ function sendAlert(info) {
 function changeDisplay(show, noShow) {
   for (item of show) {
     $(item).show();
-    // if(childDisplayRules[item]){
-    //   childDisplayRules[item]();
-    // }
   }
   for (item of noShow) {
     $(item).hide();
