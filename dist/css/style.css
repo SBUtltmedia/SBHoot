@@ -8,6 +8,7 @@ body {
 .row {
   display: flex;
   align-self: center;
+  /* */
 
 }
 
