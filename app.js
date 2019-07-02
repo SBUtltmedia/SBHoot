@@ -160,10 +160,8 @@ io.on('connection', function(socket) {
 // Fix rejoining game lists
 // Send student only score & rank
 // Deep linking https://github.com/asual/jquery-address, http://www.asual.com/jquery/address/
-// Save roomID in socket
 // Improve queries
 // Fix score on student side
-// Security bugs
 
 ////////////////////////////
 // GAME PLAYING FUNCTIONS //
@@ -285,7 +283,7 @@ function sendProfResults(socket) {
   var socketList = io.sockets.server.eio.clients;
   //Only send instructor data if connected
   if (!(socketList[roomList[socket.room].masterId] === undefined)){
-    con.query('SELECT NickName, Score FROM Player WHERE RoomID IN (SELECT RoomID FROM Room WHERE Name = ?)', [socket.room], (err, result)=>{
+    con.query('SELECT NickName, Score FROM Player WHERE RoomID = ?', [roomList[socket.room].roomId], (err, result)=>{
       io.to(roomList[socket.room].masterId).emit('playerResults', result);
     });
   }
@@ -325,7 +323,7 @@ function makeGame(socket, room, email, callback) {
         };
         con.query(`INSERT INTO Room (InstructorID, Name) VALUES (?, ?);`, [socket.masterId, room], (err, result)=>{
           //Get RoomID to make subsequent references easier
-          con.query('SELECT RoomID FROM Room WHERE Name = ?', [room], (err, result) =>{
+          con.query("SELECT RoomID FROM Room WHERE Name = ?", [room], (err, result) =>{
             roomList[room].roomId = result[0].RoomID;
           })
         });
@@ -459,7 +457,7 @@ function requestPreviousGamesStudent(socket, email) {
   con.query('SELECT * FROM Person WHERE Email = ?', [email], (err, result) => {
     if (!result || result.length == 0)
       return;
-    con.query("SELECT *  FROM Room  WHERE RoomID  IN (SELECT RoomID FROM Player WHERE PersonID = ?) AND State = 'open'", [result[0].PersonID], (err, result) => {
+    con.query("SELECT * FROM Room WHERE RoomID IN (SELECT RoomID FROM Player WHERE PersonID = ?) AND State = 'open'", [result[0].PersonID], (err, result) => {
       io.to(socket.id).emit('returnPreviousGamesStudent', result);
     });
   });
@@ -467,11 +465,6 @@ function requestPreviousGamesStudent(socket, email) {
 
 //Handles instructor rejoining a game
 function rejoinGame(socket, email, game, callback) {
-  //Get RoomID to make subsequent references easier
-  con.query('SELECT RoomID FROM Room WHERE Name = ?', [game], (err, result) =>{
-    roomList[game].roomId = result[0].RoomID;
-  });
-
   con.query('SELECT * FROM Person WHERE Email = ?', [email], (err, result) => {
     socket.masterId = result[0].PersonID;
     socket.join(game);
@@ -482,6 +475,12 @@ function rejoinGame(socket, email, game, callback) {
       noResponse: [],
       masterId: socket.id
     };
+
+    //Get RoomID to make subsequent references easier
+    con.query("SELECT RoomID FROM Room WHERE Name = ?", [game], (err, result) =>{
+      roomList[game].roomId = result[0].RoomID;
+    });
+
     changeGameState(socket, 'open');
 
     //See whether or not we need to display file drop
@@ -499,13 +498,13 @@ function sendReport(socket){
   //Gets answers with identifying PersonID
   con.query(`SELECT Player.PersonID,Answer.QuestionID, Answer.Score
     FROM Player,Answer
-    WHERE Player.PlayerID=Answer.PlayerID and Player.RoomID=(select RoomID from Room where Name=?);`, [room], (err1, r1)=>{
+    WHERE Player.PlayerID=Answer.PlayerID and Player.RoomID = ?;`, [roomList[room].roomId], (err1, r1)=>{
       //Gets all necessary info about people
       con.query(`SELECT p.PersonID, p.Email, p.FirstName, p.LastName, pl.NickName, pl.NumberAnswered, pl.NumberCorrect
         FROM Person p
         INNER JOIN
-        (select * from Player where Player.RoomID=(select RoomID from Room where Name=?)) pl
-        ON p.PersonID = pl.PersonID;`, [room], (err2, r2)=>{
+        (SELECT * FROM Player WHERE Player.RoomID = ?) pl
+        ON p.PersonID = pl.PersonID;`, [roomList[room].roomId], (err2, r2)=>{
           io.to(socket.id).emit('sendReport', r1, r2, roomList[room].questions);
         });
     });

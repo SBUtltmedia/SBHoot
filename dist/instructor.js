@@ -222,7 +222,6 @@ function sendReport(questionResponses, people, questions) {
   for (var key in players) {
     data.push(players[key]);
   }
-
   //Solution to download report taken from Stack Overflow: https://stackoverflow.com/a/29304414
   var csvContent = '';
   data.forEach(function(infoArray, index) {
