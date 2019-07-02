@@ -19,7 +19,7 @@ siofu.addEventListener("complete", (event) => {
 socket.on('playerResults', playerResults);
 socket.on('returnPreviousGames', displayPrevGames);
 socket.on('sendReport', sendReport);
-socket.on('disconnect', handleDisconnect);
+//socket.on('disconnect', handleDisconnect);
 
 function handleDisconnect() {
   changeDisplay(['#gameCreation'], ['#gameManagement']);
@@ -133,13 +133,24 @@ function leaveGame(){
   requestPrevGames(email);
 }
 
-function playerResults(questionResponses, people) {
-  console.log(questionResponses, people);
+function playerResults(results) {
+  if ($('#playerResults tr').length == 0) {
+    $('#playerResults').append('<tr><th>Nickname</th><th>Score</th></tr>');
+    for (player of results) {
+      tr = '<tr id="' + getSelector(player.NickName) + '"><td>' + player.NickName + '</td><td class="score">' + player.Score + '</td></tr>';
+      $('#playerResults').append(tr);
+    }
+  } else {
+      for (player of results) {
+        console.log("#" + getSelector(player.NickName) + ' td.score', player.Score);
+        $("#" + getSelector(player.NickName) + ' td.score').text(player.Score);
+      }
+  }
 
 
   // //First run
   // if ($('#playerResults tr').length == 0) {
-  //   $('#playerResults').append('<tr><th>Name</th><th>Nickname</th><th>Score</th></tr>');
+  //   $('#playerResults').append('<tr><th>Name</th><th>Email</th><th>Nickname</th><th>Score</th></tr>');
   //   for (player of players) {
   //     tr = '<tr id="' + getSelector(player[3]) + '"><td>' + player[0] + '</td><td>' + player[1] + '</td><td class="score">' + player[2] + '</td></tr>';
   //     $('#playerResults').append(tr);

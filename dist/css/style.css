@@ -21,7 +21,10 @@ body {
 #header {
   font-family: Helvetica;
   font-size: 36pt;
+  height:22rem;
+  min-height:22rem;
   text-align: center;
+  overflow:hidden;
   /*background-color: rgba(255, 255, 255, 0.3);*/
   background-color: #C6C6DB;
 	-webkit-box-shadow: 0 8px  #8E8EA5;
@@ -36,6 +39,7 @@ body {
 }
 
 #timer {
+  display:none;
   position: fixed;
   top: 0;
   right: 0;
@@ -59,7 +63,7 @@ body {
 
 .rightAnswer {
   background-color: #66FF66 !important;
-  box-shadow: 10px 10px #4E936E !important;
+  box-shadow: 0px 10px #4E936E !important;
 }
 
 @keyframes rightAnswer {
@@ -68,7 +72,7 @@ body {
 
 .wrongAnswer {
   background-color: #FF4848 !important;
-  box-shadow: 10px 10px #BC646B !important;
+  box-shadow: 0px 10px #BC646B !important;
 }
 
 .answer {
@@ -81,7 +85,7 @@ body {
   text-align: center;
   font-size:56pt;
   border-radius: 0.5em;
-  box-shadow: 10px 10px #C6C4B9;
+  box-shadow: 0px 10px #C6C4B9;
   animation: answerOff  1s forwards;
 }
 
@@ -92,7 +96,7 @@ background-color: #ffffc0*/
 
 .answer:active{
   background-color: #E0DED7;
-  box-shadow: inset 10px 10px #B2AFA3
+  box-shadow: inset 0px 10px #B2AFA3
 
 }
 

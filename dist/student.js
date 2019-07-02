@@ -13,7 +13,7 @@ socket.on('roomClosed', roomClosed);
 socket.on('sendAnswer', sendAnswer);
 socket.on('sendScoreBoard', sendScoreBoard);
 socket.on('returnPreviousGamesStudent', displayPrevGames);
-socket.on('disconnect', handleDisconnect);
+//socket.on('disconnect', handleDisconnect);
 
 function handleDisconnect() {
   leaveRoom("Error: Disconnected from server");
@@ -52,11 +52,11 @@ function joinGame() {
     logUser(email, firstName, lastName);
 
     nickname = $('#nickname').val();
-    socket.emit('joinGame', $('#roomId').val(), email, name, $('#nickname').val(), (isError) => {
+    socket.emit('joinGame', $('#roomId').val(), email, name, $('#nickname').val(), (isError, reason) => {
       if (!isError) {
         changeDisplay(['#waitingRoom'], ['#signout']);
       } else {
-        sendAlert('Error: Room is closed or does not exist');
+        sendAlert(reason);
       }
     });
   } else {

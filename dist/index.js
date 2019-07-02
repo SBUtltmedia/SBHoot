@@ -4,7 +4,7 @@ var listeners = "click";
 //Socket listeners
 socket.on('roomListUpdate', roomListUpdate);
 socket.on('sendAlert', sendAlert);
-socket.on('reconnect', handleReconnect);
+//socket.on('reconnect', handleReconnect);
 
 function handleReconnect() {
 	$('#dialog').dialog('close');
