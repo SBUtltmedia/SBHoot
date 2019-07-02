@@ -157,7 +157,6 @@ io.on('connection', function(socket) {
 
 // TODO:
 // Break up app.js into seperate files for clarity
-// Implement leave game (instructor) Done?
 // Fix rejoining game lists
 // Send student only score & rank
 // Deep linking https://github.com/asual/jquery-address, http://www.asual.com/jquery/address/
@@ -324,7 +323,12 @@ function makeGame(socket, room, email, callback) {
           noResponse: [],
           masterId: socket.id
         };
-        con.query(`INSERT INTO Room (InstructorID, Name) VALUES (?, ?);`, [socket.masterId, room]);
+        con.query(`INSERT INTO Room (InstructorID, Name) VALUES (?, ?);`, [socket.masterId, room], (err, result)=>{
+          //Get RoomID to make subsequent references easier
+          con.query('SELECT RoomID FROM Room WHERE Name = ?', [room], (err, result) =>{
+            roomList[room].roomId = result[0].RoomID;
+          })
+        });
       }
     });
   });
@@ -463,6 +467,11 @@ function requestPreviousGamesStudent(socket, email) {
 
 //Handles instructor rejoining a game
 function rejoinGame(socket, email, game, callback) {
+  //Get RoomID to make subsequent references easier
+  con.query('SELECT RoomID FROM Room WHERE Name = ?', [game], (err, result) =>{
+    roomList[game].roomId = result[0].RoomID;
+  });
+
   con.query('SELECT * FROM Person WHERE Email = ?', [email], (err, result) => {
     socket.masterId = result[0].PersonID;
     socket.join(game);
