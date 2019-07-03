@@ -477,7 +477,7 @@ function rejoinGame(socket, email, game, callback) {
       roomList[game].roomId = result[0].RoomID;
     });
 
-    changeGameState(socket, 'open');
+    changeGameState(socket, 'open');  
 
     //See whether or not we need to display file drop
     if(fs.existsSync('quizzes/' + game + '.json')){
