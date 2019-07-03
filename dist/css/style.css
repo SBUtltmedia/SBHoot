@@ -1,8 +1,112 @@
 body {
   user-select: none;
+font-family: 'PT Sans'!important;
   /* margin: 10%; */
   /* font-family: 'Pangolin', cursive; */
   font-size: 30px;
+  border-style: solid;
+  border-width: 10px;
+  border-color: white;
+  background-color: #C1272D;
+}
+.item1 {
+  grid-column: 1/2;
+}
+.BGhighlight{
+  color:#EEEEEE;
+  background-color: #C1272D;
+}
+
+@import url('https://fonts.googleapis.com/css?family=PT+Sans&display=swap');
+#join{
+    margin:auto;
+border:100px solid whie;
+max-width:768px;
+min-width:768px;
+max-height:1768px;
+min-height:1768px;}
+button {
+
+    display: inline-block;
+    border: none;
+    padding: .2rem .75rem;
+    margin: 0;
+    border-radius:1rem;
+    text-decoration: none;
+    background: #0069ed;
+    color: #ffffff;
+    font-family: sans-serif;
+    font-size: 2rem!important;
+    cursor: pointer;
+    text-align: center;
+    transition: background 250ms ease-in-out,
+                transform 150ms ease;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+button:hover,
+button:focus {
+    background: #0053ba;
+}
+
+button:focus {
+    outline: 1px solid #fff;
+    outline-offset: -4px;
+}
+
+button:active {
+    transform: scale(0.99);
+}
+
+/*
+.grid-container {
+  display: grid;
+    grid-template-areas:
+      'header header header header header header'
+      'menu main main main right right'
+      'menu footer footer footer footer footer';
+    grid-gap: 10px;
+    background-color: #C1272D;
+    padding: 10px;
+}
+.grid-container > div {
+  background-color: rgba(255, 255, 255, 0.8);
+ text-align: center;
+ padding: 20px 0;
+ font-size: 30px;
+} */
+
+
+#signout-button {
+  Background-color: #C1272D;
+  color: #EEEEEE;
+
+
+}
+
+#greeting {
+  font-size: 2rem;
+  margin:3rem;
+  text-align: center;
+}
+
+h3{
+  text-align: center;
+}
+
+h5{
+  text-align: center;
+
+}
+
+#Nickname{
+  color: black;
+}
+
+#joinGame {
+  Background-color: white;
+  color: black;
 }
 
 .row {
@@ -21,16 +125,17 @@ body {
 
 #header {
   font-family: Helvetica;
-  font-size: 36pt;
+  font-size: 32pt;
+  font color: white;
   height:22rem;
   min-height:22rem;
   text-align: center;
   overflow:hidden;
   /*background-color: rgba(255, 255, 255, 0.3);*/
-  background-color: #C6C6DB;
-	-webkit-box-shadow: 0 8px  #8E8EA5;
+  background-color: #C1272D;
+	/*-webkit-box-shadow: 0 8px  #8E8EA5;
 	   -moz-box-shadow: 0 8px  #8E8EA5;
-	        box-shadow: 0 8px  #8E8EA5;
+	        box-shadow: 0 8px  #8E8EA5;*/
 
 }
 
