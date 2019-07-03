@@ -434,7 +434,7 @@ function closeGameStep(socket) {
 }
 
 //Sends back a list of games the instructor controls to instructor.js
-function requestPreviousGames(socket, email) {
+function requestPreviousGames(socket, email) {  
   if (email == null)
     return;
   con.query('SELECT * FROM Person WHERE Email = ?', [email], (err, result) => {
@@ -477,7 +477,7 @@ function rejoinGame(socket, email, game, callback) {
       roomList[game].roomId = result[0].RoomID;
     });
 
-    changeGameState(socket, 'open');  
+    changeGameState(socket, 'open');
 
     //See whether or not we need to display file drop
     if(fs.existsSync('quizzes/' + game + '.json')){
