@@ -158,10 +158,9 @@ io.on('connection', function(socket) {
 // TODO:
 // Break up app.js into seperate files for clarity
 // Fix rejoining game lists
-// Send student only score & rank
 // Deep linking https://github.com/asual/jquery-address, http://www.asual.com/jquery/address/
 // Improve queries
-// Fix score on student side
+// Stop multiple intervals on instructor join
 
 ////////////////////////////
 // GAME PLAYING FUNCTIONS //
@@ -256,11 +255,14 @@ function scoreLeftovers(socket) {
 }
 
 function sendAnswerAndPoints(socket, answer) {
+  //Only calculate once
+  results = getMapAttr(roomList[socket.room]['players'], ['nickname', 'score']);
+
+  //Send specifically to each connected player
   for (var key in roomList[socket.room].players) {
     var player = roomList[socket.room].players[key];
-    io.to(player.socketId).emit('sendAnswer', answer, player.score);
+    io.to(player.socketId).emit('sendAnswer', answer, player.score, results);
   }
-  io.to(socket.room).emit('sendScoreBoard', getMapAttr(roomList[socket.room]['players'], ['nickname', 'score']));
 
   //Send results to instructor
   sendProfResults(socket);
@@ -345,7 +347,7 @@ function joinGame(socket, room, email, name, nickname, callback) {
         personId = result2[0].PersonID;
         roomId = result1[0].RoomID;
         //Check if there is a player in the room already with the same nickname
-        con.query(`SELECT * FROM Player WHERE NickName = ? and RoomID = ?`, [personId, roomId], (err, result3)=>{
+        con.query(`SELECT * FROM Player WHERE PersonID = ? and RoomID = ?`, [personId, roomId], (err, result3)=>{
 
           //All tests have been passed
           if(!result3 || result3.length == 0 || result3[0].PersonID == personId){

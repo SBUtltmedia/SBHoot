@@ -2,6 +2,7 @@ var nickname;
 var pickedAnswer;
 var questionTime = 0;
 var questionInterval = 0;
+var rank;
 
 $(".answer").on(listeners, checkAnswer);
 $("#joinGame").on(listeners, joinGame);
@@ -11,7 +12,6 @@ $("#previousGames").on("show", requestPrevGames);
 socket.on('sendQuestion', sendQuestion);
 socket.on('roomClosed', roomClosed);
 socket.on('sendAnswer', sendAnswer);
-socket.on('sendScoreBoard', sendScoreBoard);
 socket.on('returnPreviousGamesStudent', displayPrevGames);
 //socket.on('disconnect', handleDisconnect);
 
@@ -82,6 +82,7 @@ function rejoinGame() {
     socket.emit('rejoinGameStudent', this.id, email, name, $('#nickname').val(), (isError) => {
       if (!isError) {
         changeDisplay(['#waitingRoom'], ['#signout']);
+        nickname = $('#nickname').val();
       } else {
         sendAlert('Error: Room is closed or does not exist');
       }
@@ -113,7 +114,7 @@ function roomClosed() {
   leaveRoom("Your game was terminated by the instructor");
 }
 
-function sendAnswer(answer, points) {
+function sendAnswer(answer, points, players) {
   $('#pointCounter').text(points);
   $('#answer_' + answer).addClass("rightAnswer");
   if (answer != pickedAnswer) {
@@ -121,10 +122,8 @@ function sendAnswer(answer, points) {
   }
   //Prevent player from answering after receiving
   pickedAnswer = -2;
-}
 
-function sendScoreBoard(players) {
-  //Bubblesort
+  //Bubblesort player standings
   for (var i = 0; i < players.length - 1; i++) {
     for (var j = 0; j < players.length - i - 1; j++) {
       if (players[j][1] < players[j + 1][1]) {
@@ -135,6 +134,18 @@ function sendScoreBoard(players) {
     }
   }
 
+  //Get player rank
+  for (var i = 0; i < players.length; i++){
+    console.log(players[i], nickname)
+    if(players[i][0] == nickname){
+      console.log("Found!")
+      rank = i + 1;
+      $("#rank").text(rank);
+      break;
+    }
+  }
+
+  //Show top 5
   for (var i = 0; i < players.length && i < 5; i++) {
     $('#topRanked_' + i).text(players[i][0] + "\t\t" + players[i][1]);
   }
