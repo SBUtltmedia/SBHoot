@@ -161,6 +161,7 @@ io.on('connection', function(socket) {
 // Deep linking https://github.com/asual/jquery-address, http://www.asual.com/jquery/address/
 // Improve queries
 // Stop multiple intervals on instructor join
+// Allow for default question sheet
 
 ////////////////////////////
 // GAME PLAYING FUNCTIONS //
@@ -341,13 +342,13 @@ function joinGame(socket, room, email, name, nickname, callback) {
     exists = result1 != undefined && result1.length > 0;
     if(!exists){
       callback(true, 'Error: Room is closed or does not exist');
-    } else{
+    } else {
       //Get PersonID
       con.query(`SELECT PersonID FROM Person WHERE Email = ?`, [email], (err, result2) => {
         personId = result2[0].PersonID;
         roomId = result1[0].RoomID;
-        //Check if there is a player in the room already with the same nickname
-        con.query(`SELECT * FROM Player WHERE PersonID = ? and RoomID = ?`, [personId, roomId], (err, result3)=>{
+        //Check if there is a player in the room already
+        con.query(`SELECT * FROM Player WHERE NickName = ? AND RoomID = ?`, [nickname, roomId], (err, result3)=>{
 
           //All tests have been passed
           if(!result3 || result3.length == 0 || result3[0].PersonID == personId){
@@ -407,23 +408,17 @@ function changeGameState(socket, state) {
 }
 
 function deleteGame(socket) {
-  socket.to(socket.room).emit('roomClosed');
-
   con.query(`DELETE FROM Room WHERE Name = ? AND InstructorID = ?`, [socket.room, socket.masterId]);
-
-  //Stop wasting server time
-  if (roomList[socket.room]['interval']) {
-    clearInterval(roomList[socket.room]['interval']);
-  }
-  //Kick everyone from the room
-  io.of('/').in(socket.room).clients((error, socketIds) => {
-    if (error) throw error;
-    socketIds.forEach(socketId => io.sockets.sockets[socketId].leave(socket.room));
-  });
+  closeGameStep(socket);
   delete roomList[socket.room];
 }
 
 function stopGame(socket){
+  closeGameStep(socket);
+  changeGameState(socket, 'closed');
+}
+
+function closeGameStep(socket) {
   socket.to(socket.room).emit('roomClosed');
   //Stop wasting server time
   if (roomList[socket.room]['interval']) {
@@ -436,7 +431,6 @@ function stopGame(socket){
       io.sockets.sockets[socketId].leave(socket.room);
     });
   });
-  changeGameState(socket, 'closed');
 }
 
 //Sends back a list of games the instructor controls to instructor.js
