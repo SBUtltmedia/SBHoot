@@ -138,8 +138,8 @@ io.on('connection', function(socket) {
     requestPreviousGamesStudent(socket, email);
   });
 
-  socket.on('rejoinGame', (email, game, nickname, callback) => {
-    rejoinGame(socket, email, game, nickname, callback);
+  socket.on('rejoinGame', (email, game, callback) => {
+    rejoinGame(socket, email, game, callback);
   });
 
   socket.on('rejoinGameStudent', (room, email, name, nickname, callback) => {
@@ -285,9 +285,9 @@ function getPoints(socket, time, choice) {
 function sendProfResults(socket) {
   var socketList = io.sockets.server.eio.clients;
   //Only send instructor data if connected
-  if (!(socketList[roomList[socket.room].masterId] === undefined)){
+  if (!(socketList[roomList[socket.room].masterSocketId] === undefined)){
     con.query('SELECT NickName, Score FROM Player WHERE RoomID = ?', [roomList[socket.room].roomId], (err, result)=>{
-      io.to(roomList[socket.room].masterId).emit('playerResults', result);
+      io.to(roomList[socket.room].masterSocketId).emit('playerResults', result);
     });
   }
 }
@@ -461,30 +461,37 @@ function requestPreviousGamesStudent(socket, email) {
 
 //Handles instructor rejoining a game
 function rejoinGame(socket, email, game, callback) {
-  con.query('SELECT * FROM Person WHERE Email = ?', [email], (err, result) => {
-    socket.masterId = result[0].PersonID;
+  //Initialize roomList to avoid synchronicity errors
+  roomList[game] = roomList[game] ? roomList[game] : {};
+  //Get RoomID to make subsequent references easier
+  con.query("SELECT RoomID FROM Room WHERE Name = ?", [game], (err, result) =>{
+    roomList[game].roomId = result[0].RoomID;
+  });
+
+  con.query('SELECT * FROM Room WHERE Name = ?', [game], (err, result) => {
+    socket.masterId = result[0].InstructorID;
     socket.join(game);
     socket.room = game;
 
-    roomList[game] = {
-      players: {}, //TODO: Save from last run?
-      noResponse: [],
-      masterId: socket.id
-    };
-
-    //Get RoomID to make subsequent references easier
-    con.query("SELECT RoomID FROM Room WHERE Name = ?", [game], (err, result) =>{
-      roomList[game].roomId = result[0].RoomID;
-    });
-
-    changeGameState(socket, 'open');
-
-    //See whether or not we need to display file drop
-    if(fs.existsSync('quizzes/' + game + '.json')){
-      callback(true);
-      parseJSON(socket, 'quizzes/' + game + '.json');
+    //Shouldn't pile a new game onto a running one
+    if(result[0].State != 'closed'){
+      roomList[game].masterSocketId = socket.id;
+      callback("running");
+      sendProfResults(socket);
     } else {
-      callback(false);
+      roomList[game] = {
+        players: {}, //TODO: Save from last run?
+        noResponse: [],
+        masterSocketId: socket.id
+      };
+
+      changeGameState(socket, 'open');
+
+      //See whether or not we need to display file drop
+      if(fs.existsSync('quizzes/' + game + '.json')){
+        callback("file drop");
+        parseJSON(socket, 'quizzes/' + game + '.json');
+      }
     }
   });
 }

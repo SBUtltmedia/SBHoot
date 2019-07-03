@@ -63,11 +63,22 @@ function rejoinGame() {
     //TODO: check current game state
 
     //See whether or not we need to display file drop
-    callback = (fileExists) => {
-      if (fileExists) {
+    callbackFileDrop = () => {
+      changeDisplay(['#startGame'], ['#file_drop']);
+    };
+
+    callback = (input) => {
+      if(input == "running"){
+        changeDisplay(['#playerResults', '#stopGame'], ['#startGame', "#playerList"]);
+      } else if (input == "file drop") {
         changeDisplay(['#startGame'], ['#file_drop']);
       }
-    };
+    }
+
+    //Jump right to playing if the game was left in motion
+    isRunning = () => {
+      changeDisplay(['#playerResults', '#stopGame'], ['#startGame', "#playerList"]);
+    }
     socket.emit('rejoinGame', email, this.id, callback);
   } else {
     sendAlert("Error: Not connected to server");
@@ -114,7 +125,6 @@ function startGame() {
   //Must have at least 1 player to start
   if ($('ul#playerList li').length > 0) {
     socket.emit('startGame');
-    $('#startGame').css('display', 'none');
     changeDisplay(['#playerResults', '#stopGame'], ['#startGame', "#playerList"]);
   } else {
     sendAlert("Error: cannot start a game with no players");
@@ -146,22 +156,6 @@ function playerResults(results) {
         $("#" + getSelector(player.NickName) + ' td.score').text(player.Score);
       }
   }
-
-
-  // //First run
-  // if ($('#playerResults tr').length == 0) {
-  //   $('#playerResults').append('<tr><th>Name</th><th>Email</th><th>Nickname</th><th>Score</th></tr>');
-  //   for (player of players) {
-  //     tr = '<tr id="' + getSelector(player[3]) + '"><td>' + player[0] + '</td><td>' + player[1] + '</td><td class="score">' + player[2] + '</td></tr>';
-  //     $('#playerResults').append(tr);
-  //   }
-  // }
-  // //Add info
-  // else {
-  //   for (player of players) {
-  //     $("#" + getSelector(player[3]) + ' td.score').text(player[2]);
-  //   }
-  // }
 }
 
 function downloadReport() {
