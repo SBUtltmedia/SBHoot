@@ -434,7 +434,7 @@ function closeGameStep(socket) {
 }
 
 //Sends back a list of games the instructor controls to instructor.js
-function requestPreviousGames(socket, email) {
+function requestPreviousGames(socket, email) {  
   if (email == null)
     return;
   con.query('SELECT * FROM Person WHERE Email = ?', [email], (err, result) => {
