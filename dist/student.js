@@ -54,7 +54,7 @@ function joinGame() {
     nickname = $('#nickname').val();
     socket.emit('joinGame', $('#roomId').val(), email, name, $('#nickname').val(), (isError, reason) => {
       if (!isError) {
-        changeDisplay(['#waitingRoom'], ['#signout']);
+        changeDisplay(['#waitingRoom'], ['#join']);
       } else {
         sendAlert(reason);
       }
@@ -73,7 +73,7 @@ function checkAnswer(evt) {
 
 function leaveGame() {
   socket.emit('leaveGame', email);
-  changeDisplay(['#signout'], ['#waitingRoom']);
+  changeDisplay(['#join'], ['#waitingRoom']);
   requestPrevGames();
 }
 
@@ -81,13 +81,13 @@ function rejoinGame() {
   if (socket.connected) {
     socket.emit('rejoinGameStudent', this.id, email, name, $('#nickname').val(), (isError) => {
       if (!isError) {
-        changeDisplay(['#waitingRoom'], ['#signout']);
+        changeDisplay(['#waitingRoom'], ['#join']);
         nickname = $('#nickname').val();
       } else {
         sendAlert('Error: Room is closed or does not exist');
       }
     });
-    changeDisplay(['#waitingRoom'], ['#signout']);
+    changeDisplay(['#waitingRoom'], ['#join']);
   } else {
     sendAlert("Error: Not connected to server");
   }
@@ -154,7 +154,7 @@ function sendAnswer(answer, points, players) {
 function leaveRoom(reason) {
   clearInterval(questionInterval);
   $('#playerList').empty();
-  changeDisplay(['#signout'], ['#waitingRoom', '#stage']);
+  changeDisplay(['#join'], ['#waitingRoom', '#stage']);
   sendAlert(reason);
   requestPrevGames();
 }

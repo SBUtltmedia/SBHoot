@@ -9,6 +9,10 @@ font-family: 'PT Sans'!important;
   border-color: white;
   background-color: #C1272D;
 }
+
+ul {
+  list-style: none;
+}
 .item1 {
   grid-column: 1/2;
 }

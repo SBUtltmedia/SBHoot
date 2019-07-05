@@ -153,6 +153,10 @@ io.on('connection', function(socket) {
   socket.on('stopGame', ()=>{
     stopGame(socket);
   });
+
+  socket.on('useDefaultQuestions', (name, callback)=>{
+    useDefaultQuestions(socket, name, callback);
+  })
 });
 
 // TODO:
@@ -160,8 +164,7 @@ io.on('connection', function(socket) {
 // Fix rejoining game lists
 // Deep linking https://github.com/asual/jquery-address, http://www.asual.com/jquery/address/
 // Improve queries
-// Stop multiple intervals on instructor join
-// Allow for default question sheet
+// Fix the 1 question delay on score & rank changes
 
 ////////////////////////////
 // GAME PLAYING FUNCTIONS //
@@ -215,13 +218,12 @@ function checkAnswer(socket, choice, time, email) {
   var player = roomList[socket.room].players[email];
   //Store who answered & what
   var score = getPoints(socket, time, choice);
-
+  console.log(score);
 
   //Record score
   questionIndex = roomList[socket.room].questionIndex;
 
   //Update DB
-
   if (score > 0) {
     con.query(`SELECT Score FROM Answer WHERE QuestionID = ? AND PlayerID = ?`,
     [questionIndex, player.playerID], (err, result)=>{
@@ -410,6 +412,9 @@ function changeGameState(socket, state) {
 function deleteGame(socket) {
   con.query(`DELETE FROM Room WHERE Name = ? AND InstructorID = ?`, [socket.room, socket.masterId]);
   closeGameStep(socket);
+  if(fs.existsSync("quizzes/" + socket.room + ".json")){
+    fs.unlinkSync("quizzes/" + socket.room + ".json");
+  }
   delete roomList[socket.room];
 }
 
@@ -434,7 +439,7 @@ function closeGameStep(socket) {
 }
 
 //Sends back a list of games the instructor controls to instructor.js
-function requestPreviousGames(socket, email) {  
+function requestPreviousGames(socket, email) {
   if (email == null)
     return;
   con.query('SELECT * FROM Person WHERE Email = ?', [email], (err, result) => {
@@ -511,6 +516,16 @@ function sendReport(socket){
           io.to(socket.id).emit('sendReport', r1, r2, roomList[room].questions);
         });
     });
+}
+
+function useDefaultQuestions(socket, name, callback){
+  fs.copyFile('questions.json', 'quizzes/'+ name + '.json', (err)=>{
+    if(!err){
+      parseJSON(socket, 'questions.json');
+      callback();
+    }
+    else console.log(err);
+  });
 }
 
 ///////////////////////

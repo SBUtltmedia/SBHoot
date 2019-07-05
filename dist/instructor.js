@@ -6,15 +6,23 @@ $("#startGame").on(listeners, startGame);
 $("#stopGame").on(listeners, stopGame);
 $("#leaveGame").on(listeners, leaveGame);
 $("#downloadReport").on(listeners, downloadReport);
+$("#useDefaultQuestions").on(listeners, useDefaultQuestions);
 
+var gameName;
 // Allows a user to upload a file
 var siofu = new SocketIOFileUpload(socket);
 siofu.listenOnDrop(document.getElementById("file_drop"));
 
 // Do something when a file is uploaded:
 siofu.addEventListener("complete", (event) => {
-  changeDisplay(['#startGame', '#downloadReport'], ['#file_drop']);
+  changeDisplay(['#startGame', '#downloadReport'], ['#questionFile']);
 });
+
+function useDefaultQuestions(){
+  socket.emit('useDefaultQuestions', gameName, ()=>{
+    changeDisplay(['#startGame', '#downloadReport'], ['#questionFile']);
+  });
+}
 
 socket.on('playerResults', playerResults);
 socket.on('returnPreviousGames', displayPrevGames);
@@ -25,8 +33,6 @@ function handleDisconnect() {
   changeDisplay(['#gameCreation'], ['#gameManagement']);
   sendAlert("Error: Disconnected from server");
 }
-
-var gameName;
 
 //Request previous games as soon as they're available
 var x = setInterval(emailCheck, 25);
@@ -60,25 +66,17 @@ function rejoinGame() {
     $('#gameName').text(gameName);
     changeDisplay(['#gameManagement', '#downloadReport'], ['#gameCreation']);
 
-    //TODO: check current game state
-
-    //See whether or not we need to display file drop
-    callbackFileDrop = () => {
-      changeDisplay(['#startGame'], ['#file_drop']);
-    };
-
     callback = (input) => {
+      //Jump right to playing if the game was left in motion
       if(input == "running"){
         changeDisplay(['#playerResults', '#stopGame'], ['#startGame', "#playerList"]);
-      } else if (input == "file drop") {
-        changeDisplay(['#startGame'], ['#file_drop']);
+      }
+      //See whether or not we need to display file drop
+      else if (input == "file drop") {
+        changeDisplay(['#startGame'], ['#questionFile']);
       }
     }
 
-    //Jump right to playing if the game was left in motion
-    isRunning = () => {
-      changeDisplay(['#playerResults', '#stopGame'], ['#startGame', "#playerList"]);
-    }
     socket.emit('rejoinGame', email, this.id, callback);
   } else {
     sendAlert("Error: Not connected to server");
