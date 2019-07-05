@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <script
+      src="https://code.jquery.com/jquery-3.4.1.js"
+      integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
+      crossorigin="anonymous"></script>
+      <script type="text/javascript">
+        id = location.href.split("?")[1];
+        //$.get(`https://create.kahoot.it/rest/kahoots/${id}`,(data)=>console.log(data));
+        $.get(`http://proxy.fenetik.com?url=${id}`,(data)=>{
+          var questions = JSON.parse(data).questions;
+
+        });
+      </script>
+  </head>
+  <body>
+
+  </body>
+</html>

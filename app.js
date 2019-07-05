@@ -74,7 +74,7 @@ io.on('connection', function(socket) {
               question:question.Question,
               correct:parseInt(question["Correct Answer"])-1
             };
-            [,,...newQuestion.answers] = Object.keys(question).map(function(v) { return question[v] });
+            newQuestion.answers = [question["Answer 1"], question["Answer 2"], question["Answer 3"], question["Answer 4"]]; //Object.keys(question).map(function(v) { return question[v] });
             return newQuestion;
           })[0]);
         }
@@ -313,9 +313,9 @@ function startGame(socket) {
 
 //Makes a game with the creator acting as an instructor
 function makeGame(socket, room, email, callback) {
-  con.query(`SELECT * FROM Person WHERE Email = ?`, [email], (err, result) => {
+  con.query(`SELECT * FROM Person WHERE Email = ? LIMIT 1`, [email], (err, result) => {
     socket.masterId = result[0].PersonID;
-    con.query(`SELECT * FROM Room WHERE Name = ?`, [room], (err, result) => {
+    con.query(`SELECT * FROM Room WHERE Name = ? LIMIT 1`, [room], (err, result) => {
       failed = result != undefined && result.length > 0;
       callback(failed);
       if (!failed) {
@@ -328,7 +328,7 @@ function makeGame(socket, room, email, callback) {
         };
         con.query(`INSERT INTO Room (InstructorID, Name) VALUES (?, ?);`, [socket.masterId, room], (err, result)=>{
           //Get RoomID to make subsequent references easier
-          con.query("SELECT RoomID FROM Room WHERE Name = ?", [room], (err, result) =>{
+          con.query("SELECT RoomID FROM Room WHERE Name = ? LIMIT 1", [room], (err, result) =>{
             roomList[room].roomId = result[0].RoomID;
           })
         });
@@ -340,17 +340,17 @@ function makeGame(socket, room, email, callback) {
 //Handles a student joining the game
 function joinGame(socket, room, email, name, nickname, callback) {
   //Check if the room is open and exists
-  con.query(`SELECT * FROM Room WHERE Name = ? AND State = 'open'`, [room], (err, result1) => {
+  con.query(`SELECT * FROM Room WHERE Name = ? AND State = 'open' LIMIT 1`, [room], (err, result1) => {
     exists = result1 != undefined && result1.length > 0;
     if(!exists){
       callback(true, 'Error: Room is closed or does not exist');
     } else {
       //Get PersonID
-      con.query(`SELECT PersonID FROM Person WHERE Email = ?`, [email], (err, result2) => {
+      con.query(`SELECT PersonID FROM Person WHERE Email = ? LIMIT 1`, [email], (err, result2) => {
         personId = result2[0].PersonID;
         roomId = result1[0].RoomID;
         //Check if there is a player in the room already
-        con.query(`SELECT * FROM Player WHERE NickName = ? AND RoomID = ?`, [nickname, roomId], (err, result3)=>{
+        con.query(`SELECT * FROM Player WHERE NickName = ? AND RoomID = ? LIMIT 1`, [nickname, roomId], (err, result3)=>{
 
           //All tests have been passed
           if(!result3 || result3.length == 0 || result3[0].PersonID == personId){
@@ -379,7 +379,7 @@ function joinGame(socket, room, email, name, nickname, callback) {
             [personId, roomId, personId, roomId], (err, result) => {
               //Get PlayerID if player is new
               if(!roomList[room].players[email].playerID){
-                con.query(`SELECT PlayerID FROM Player WHERE PersonID = ? AND RoomID = ?`, [personId, roomId], (err, result)=>{
+                con.query(`SELECT PlayerID FROM Player WHERE PersonID = ? AND RoomID = ? LIMIT 1`, [personId, roomId], (err, result)=>{
                   roomList[room].players[email].playerID = result[0].PlayerID;
                 });
               }
@@ -442,10 +442,10 @@ function closeGameStep(socket) {
 function requestPreviousGames(socket, email) {
   if (email == null)
     return;
-  con.query('SELECT * FROM Person WHERE Email = ?', [email], (err, result) => {
+  con.query('SELECT PersonID FROM Person WHERE Email = ? LIMIT 1', [email], (err, result) => {
     if (!result || result.length == 0)
       return;
-    con.query("SELECT * FROM Room WHERE InstructorID = ?", [result[0].PersonID], (err, result) => {
+    con.query("SELECT Name FROM Room WHERE InstructorID = ?", [result[0].PersonID], (err, result) => {
       io.to(socket.id).emit('returnPreviousGames', result);
     });
   });
@@ -455,10 +455,10 @@ function requestPreviousGames(socket, email) {
 function requestPreviousGamesStudent(socket, email) {
   if (email == null)
     return;
-  con.query('SELECT * FROM Person WHERE Email = ?', [email], (err, result) => {
+  con.query('SELECT PersonID FROM Person WHERE Email = ? LIMIT 1', [email], (err, result) => {
     if (!result || result.length == 0)
       return;
-    con.query("SELECT * FROM Room WHERE RoomID IN (SELECT RoomID FROM Player WHERE PersonID = ?) AND State = 'open'", [result[0].PersonID], (err, result) => {
+    con.query("SELECT Name FROM Room WHERE RoomID IN (SELECT RoomID FROM Player WHERE PersonID = ?) AND State = 'open'", [result[0].PersonID], (err, result) => {
       io.to(socket.id).emit('returnPreviousGamesStudent', result);
     });
   });
@@ -468,13 +468,13 @@ function requestPreviousGamesStudent(socket, email) {
 function rejoinGame(socket, email, game, callback) {
   //Initialize roomList to avoid synchronicity errors
   roomList[game] = roomList[game] ? roomList[game] : {};
-  //Get RoomID to make subsequent references easier
-  con.query("SELECT RoomID FROM Room WHERE Name = ?", [game], (err, result) =>{
-    roomList[game].roomId = result[0].RoomID;
-  });
 
-  con.query('SELECT * FROM Room WHERE Name = ?', [game], (err, result) => {
+
+  con.query('SELECT RoomID, InstructorID, State FROM Room WHERE Name = ? LIMIT 1', [game], (err, result) => {
+    //Get RoomID & InstructorID to make subsequent references easier
+    roomList[game].roomId = result[0].RoomID;
     socket.masterId = result[0].InstructorID;
+
     socket.join(game);
     socket.room = game;
 
