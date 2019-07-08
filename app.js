@@ -75,6 +75,7 @@ io.on('connection', function(socket) {
               correct:parseInt(question["Correct Answer"])-1
             };
             newQuestion.answers = [question["Answer 1"], question["Answer 2"], question["Answer 3"], question["Answer 4"]]; //Object.keys(question).map(function(v) { return question[v] });
+            newQuestion.time = question["Question Time"];
             return newQuestion;
           })[0]);
         }
@@ -156,14 +157,17 @@ io.on('connection', function(socket) {
 
   socket.on('useDefaultQuestions', (name, callback)=>{
     useDefaultQuestions(socket, name, callback);
-  })
+  });
+
+  socket.on('kahootUpload', (name, questions, callback) =>{
+    kahootUpload(name, questions, callback);
+  });
 });
 
 // TODO:
 // Break up app.js into seperate files for clarity
 // Fix rejoining game lists
 // Deep linking https://github.com/asual/jquery-address, http://www.asual.com/jquery/address/
-// Improve queries
 // Fix the 1 question delay on score & rank changes
 
 ////////////////////////////
@@ -218,7 +222,6 @@ function checkAnswer(socket, choice, time, email) {
   var player = roomList[socket.room].players[email];
   //Store who answered & what
   var score = getPoints(socket, time, choice);
-  console.log(score);
 
   //Record score
   questionIndex = roomList[socket.room].questionIndex;
@@ -522,6 +525,16 @@ function useDefaultQuestions(socket, name, callback){
   fs.copyFile('questions.json', 'quizzes/'+ name + '.json', (err)=>{
     if(!err){
       parseJSON(socket, 'questions.json');
+      callback();
+    }
+    else console.log(err);
+  });
+}
+
+function kahootUpload(name, questions, callback){
+  fs.writeFile('quizzes/' + name + '.json', questions, (err)=>{
+    if(!err){
+      roomList[name]['questions'] = questions;
       callback();
     }
     else console.log(err);

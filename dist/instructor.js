@@ -7,6 +7,7 @@ $("#stopGame").on(listeners, stopGame);
 $("#leaveGame").on(listeners, leaveGame);
 $("#downloadReport").on(listeners, downloadReport);
 $("#useDefaultQuestions").on(listeners, useDefaultQuestions);
+$("#uploadKahoot").on(listeners, uploadFromKahoot);
 
 var gameName;
 // Allows a user to upload a file
@@ -22,6 +23,47 @@ function useDefaultQuestions(){
   socket.emit('useDefaultQuestions', gameName, ()=>{
     changeDisplay(['#startGame', '#downloadReport'], ['#questionFile']);
   });
+}
+
+function uploadFromKahoot() {
+  url = $("#kahootURL")[0].value.split("/");
+  id = url[url.length - 1];
+  sendAlert("Uploading file from Kahoot...");
+  try {
+    $.get(`http://proxy.fenetik.com?url=${id}`,(data)=>{
+      //Parse on client side to reduce server load
+      var questions = JSON.parse(data).questions;
+      var parsedQuestions = [];
+      for(var i = 0; i < questions.length; i++){
+        question = questions[i];
+        parsedQuestion = {
+          question: question.question,
+          answers: [],
+          time: question.time
+        };
+        for(var j = 0; j < question.choices.length; j++){
+          choice = question.choices[j]
+          if(choice.correct){
+            if(!parsedQuestion.correct){
+              parsedQuestion.correct = j;
+            } else {
+              i = questions.length;
+              break;
+              sendAlert("Error: SBHoot only accepts questions with one correct answer");
+            }
+          }
+          parsedQuestion.answers.push(choice.answer);
+        }
+        parsedQuestions.push(parsedQuestion);
+      }
+      socket.emit('kahootUpload', gameName, parsedQuestions, ()=>{
+        closeAlert();
+        changeDisplay(['#startGame', '#downloadReport'], ['#questionFile']);
+      })
+    });
+  } catch(err) {
+    sendAlert("Error: invalid URL");
+  }
 }
 
 socket.on('playerResults', playerResults);
@@ -90,7 +132,7 @@ function makeGame() {
       if (!error) {
         gameName = $('#roomId').val();
         $('#gameName').text(gameName);
-        changeDisplay(['#gameManagement'], ['#gameCreation']);
+        changeDisplay(['#gameManagement', '#questionFile'], ['#gameCreation']);
       } else {
         sendAlert('Error: Game already exists!');
       }

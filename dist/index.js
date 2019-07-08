@@ -6,7 +6,7 @@ socket.on('roomListUpdate', roomListUpdate);
 socket.on('sendAlert', sendAlert);
 //socket.on('reconnect', handleReconnect);
 
-function handleReconnect() {
+function closeAlert() {
 	$('#dialog').dialog('close');
 }
 
