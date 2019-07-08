@@ -30,7 +30,6 @@ con.connect(function(err) {
 con.query("UPDATE Room SET State = 'closed'");
 
 var roomList = {};
-var answerTime = 10;
 
 app.use('/dist', express.static('dist'));
 
@@ -75,7 +74,7 @@ io.on('connection', function(socket) {
               correct:parseInt(question["Correct Answer"])-1
             };
             newQuestion.answers = [question["Answer 1"], question["Answer 2"], question["Answer 3"], question["Answer 4"]]; //Object.keys(question).map(function(v) { return question[v] });
-            newQuestion.time = question["Question Time"];
+            newQuestion.time = question["Question Time"] * 1000; //Assume the user entered a time in seconds
             return newQuestion;
           })[0]);
         }
@@ -190,11 +189,13 @@ function sendQuestion(socket) {
   var questionIndex = roomList[socket.room].questionShuffleList.pop();
   roomList[socket.room].questionIndex = questionIndex;
   var question = questions[questionIndex];
+
   //Save last answer & set new answer
   var pastAnswer = roomList[socket.room]['answer'];
   roomList[socket.room]['answer'] = question.correct;
   //delete question.correct;
   roomList[socket.room]['question'] = question;
+  roomList[socket.room].answerTime = question.time;
 
   if (roomList[socket.room]['interval'] == 0) { //First run
     io.to(socket.room).emit('sendQuestion', question);
@@ -207,13 +208,12 @@ function sendQuestion(socket) {
 }
 
 //Resets the waiting interval once all players have answered
-function responsesIn(x, socket) {
-  clearInterval(x);
+function responsesIn(socket) {
+  clearTimeout(roomList[socket.room].interval);
   sendQuestion(socket);
-  x = setInterval(function() {
+  roomList[socket.room].interval = setTimeout(()=>{
     sendQuestion(socket);
-  }, answerTime * 1000);
-  return x;
+  }, roomList[socket.room].answerTime);
 }
 
 //Checks a student submitted answerand updates the DB to reflect how they did
@@ -251,7 +251,7 @@ function checkAnswer(socket, choice, time, email) {
   //Remove answered player
   roomList[room]['noResponse'].splice(roomList[room]['noResponse'].indexOf(email), 1);
   if (roomList[room]['noResponse'].length == 0) {
-    roomList[room]['interval'] = responsesIn(roomList[room]['interval'], socket);
+    responsesIn(socket);
   }
 }
 
@@ -278,6 +278,7 @@ function sendAnswerAndPoints(socket, answer) {
 // if they answer the question correctly
 function getPoints(socket, time, choice) {
   if (roomList[socket.room]['answer'] == choice) {
+    answerTime = roomList[socket.room].answerTime / 1000;
     time -= 1;
     if (time < 0)
       time = 0;
@@ -310,7 +311,7 @@ function startGame(socket) {
 
   roomList[socket.room]['noResponse'] = [];
   roomList[socket.room]['interval'] = 0;
-  roomList[socket.room]['interval'] = responsesIn(roomList[socket.room]['interval'], socket);
+  responsesIn(socket);
   sendProfResults(socket);
 }
 
@@ -430,7 +431,7 @@ function closeGameStep(socket) {
   socket.to(socket.room).emit('roomClosed');
   //Stop wasting server time
   if (roomList[socket.room]['interval']) {
-    clearInterval(roomList[socket.room]['interval']);
+    clearTimeout(roomList[socket.room].interval);
   }
   //Kick everyone from the room except instructor
   io.of('/').in(socket.room).clients((error, socketIds) => {
@@ -532,7 +533,7 @@ function useDefaultQuestions(socket, name, callback){
 }
 
 function kahootUpload(name, questions, callback){
-  fs.writeFile('quizzes/' + name + '.json', questions, (err)=>{
+  fs.writeFile('quizzes/' + name + '.json', JSON.stringify(questions), (err)=>{
     if(!err){
       roomList[name]['questions'] = questions;
       callback();
