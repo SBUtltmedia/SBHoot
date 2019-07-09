@@ -24,7 +24,9 @@ var name;
 var email;
 var firstName;
 var lastName;
+var roomURL;
 $(function() {
+  roomURL = location.hash.split('#')[1] || "yourClass";
   $('#authorize-button').on("click", handleAuthClick);
   $('#signout-button').on("click", handleSignoutClick);
   handleClientLoad();
@@ -52,10 +54,10 @@ function initClient() {
 
 function updateSigninStatus(isSignedIn) {
   if (isSignedIn) {
-    changeDisplay(['#signout', '#gameCreation'], ["#authorize"]);
+    changeState("MAIN_SCREEN");
     makeApiCall();
   } else {
-    changeDisplay(["#authorize"], ['#signout']);
+    changeState("LOGIN");
   }
 }
 

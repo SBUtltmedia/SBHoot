@@ -168,6 +168,8 @@ io.on('connection', function(socket) {
 // Fix rejoining game lists
 // Deep linking https://github.com/asual/jquery-address, http://www.asual.com/jquery/address/
 // Fix the 1 question delay on score & rank changes
+// Create state list
+// Allow student to join a game while playing
 
 ////////////////////////////
 // GAME PLAYING FUNCTIONS //
@@ -472,7 +474,6 @@ function requestPreviousGamesStudent(socket, email) {
 function rejoinGame(socket, email, game, callback) {
   //Initialize roomList to avoid synchronicity errors
   roomList[game] = roomList[game] ? roomList[game] : {};
-
 
   con.query('SELECT RoomID, InstructorID, State FROM Room WHERE Name = ? LIMIT 1', [game], (err, result) => {
     //Get RoomID & InstructorID to make subsequent references easier

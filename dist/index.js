@@ -41,3 +41,34 @@ function changeDisplay(show, noShow) {
 function logUser(email, firstName, lastName) {
   socket.emit('logUser', email, firstName, lastName);
 }
+
+function changeState(state){
+	switch(state){
+		//State where user is prompted to log in
+		case "LOGIN":
+			if(isInstructor()){
+				changeDisplay(["#authorize"], ['#signout']);
+			} else {
+				changeDisplay(["#authorize"], ['#join']);
+			}
+			break;
+		//State after user has logged in and has not connected to a game
+		case "MAIN_SCREEN":
+			if(isInstructor()){
+				changeDisplay(['#signout', '#gameCreation'], ["#authorize"]);
+			} else {
+				changeDisplay(['#join', '#gameCreation'], ["#authorize"]);
+				$("#roomId").val(roomURL);
+			}
+			break;
+		//State where user has connected to a game
+		case "WAITING_ROOM":
+			break;
+		case "PLAYING":
+			break;
+	}
+}
+
+function isInstructor(){
+	return window.location.href.split("/")[3] == "instructor";
+}
