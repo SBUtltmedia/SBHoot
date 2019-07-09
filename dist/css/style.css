@@ -4,18 +4,45 @@ font-family: 'PT Sans'!important;
   /* margin: 10%; */
   /* font-family: 'Pangolin', cursive; */
   font-size: 30px;
-  border-style: solid;
-  border-width: 10px;
-  border-color: white;
-  background-color: #C1272D;
 }
 
+#join img{
+  width: 20%;
+  height: 20%;
+  margin: auto;
+  display:flex;
+ align-self: center;
+}
 ul {
   list-style: none;
 }
 .item1 {
   grid-column: 1/2;
 }
+
+#waitingRoom{
+  font-size: 4rem;
+  margin: 6rem;
+}
+
+#waitingRoom h5{
+  font-size: 2rem;
+  margin: 1rem;
+  color: #C1272D;
+}
+
+#waitingRoom h6{
+  font-size: 2rem;
+}
+
+#waitingRoom img{
+  width: 20%;
+  height: 20%;
+  margin: auto;
+  display:flex;
+}
+
+
 .BGhighlight{
   color:#EEEEEE;
   background-color: #C1272D;
@@ -23,25 +50,25 @@ ul {
 
 @import url('https://fonts.googleapis.com/css?family=PT+Sans&display=swap');
 #join{
+
     margin:auto;
-border:100px solid whie;
-max-width:768px;
-min-width:768px;
-max-height:1768px;
-min-height:1768px;}
+max-width:100%;
+min-width:100%;
+
+border-style: solid;
+border-width: 4rem;
+border-color: white;}
+
 button {
 
     display: inline-block;
-    border: none;
     padding: .2rem .75rem;
     margin: 0;
     border-radius:1rem;
     text-decoration: none;
-    background: #0069ed;
+    background: #C1272D;
     color: #ffffff;
-    font-family: sans-serif;
     font-size: 2rem!important;
-    cursor: pointer;
     text-align: center;
     transition: background 250ms ease-in-out,
                 transform 150ms ease;
@@ -49,9 +76,10 @@ button {
     -moz-appearance: none;
 }
 
-button:hover,
+/*button:hover,
 button:focus {
-    background: #0053ba;
+    background: #C1272D;
+    border-color: #EEEEEE;*/
 }
 
 button:focus {
@@ -80,28 +108,65 @@ button:active {
  padding: 20px 0;
  font-size: 30px;
 } */
-
+#signout{
+  border-style: solid;
+  border-width: 4rem;
+  border-color: #C1272D;}
+}
 
 #signout-button {
   Background-color: #C1272D;
   color: #EEEEEE;
+}
 
+#signout #signout-button {
+  background-color: #EEEEEE;
+  color: #C1272D;
+}
 
+#signout .rejoinGame{
+  Background-color: #C1272D;
+  color: #EEEEEE;
+}
+
+#signout #roomId{
+  text-align: center;
+  font-size: 2rem;
+  background-color: #C1272D;
+  color: #EEEEEE;
+}
+
+#signout img{
+  width: 20%;
+  height: 20%;
+  margin: auto;
+  display:flex;
+ align-self: center;
 }
 
 #greeting {
-  font-size: 2rem;
-  margin:3rem;
+  font-size: 4rem;
   text-align: center;
+  margin-top: 2rem;
+  margin-bottom: 4rem;
 }
 
+#joinOptions{
+  padding: 1rem;
+  margin-top: 4rem;
+}
 h3{
   text-align: center;
+  font-size: 2.5rem;
 }
 
 h5{
   text-align: center;
+}
 
+input{
+  color: black;
+  margin: 1rem;
 }
 
 #Nickname{
@@ -110,7 +175,14 @@ h5{
 
 #joinGame {
   Background-color: white;
-  color: black;
+  color: #C1272D;
+  margin-top: 1rem;
+  margin-bottom: 4rem;
+}
+
+.rejoinGame {
+  color: #C1272D;
+  background-color:white;
 }
 
 .row {
@@ -125,6 +197,11 @@ h5{
   flex: 50%;
   padding: 10px;
   align-content: center;
+}
+
+#stage {
+  background-color: #B3B3B3;
+  border-bottom: 3rem white;
 }
 
 #header {
@@ -149,7 +226,6 @@ h5{
 }
 
 #timer {
-  display:none;
   position: fixed;
   top: 0;
   right: 0;
@@ -225,7 +301,10 @@ background-color: #ffffc0*/
   33% {font-size: 60px;}
   66% {font-size: 50px;}
 }
-@media only screen and (max-width: 768px) {
+@media only screen and (min-width: 768px) {
+  body{
+    /*background: green;*/
+  }
 .answer {
 
     font-size: 2rem;
