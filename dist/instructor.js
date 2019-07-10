@@ -9,7 +9,6 @@ $("#downloadReport").on(listeners, downloadReport);
 $("#useDefaultQuestions").on(listeners, useDefaultQuestions);
 $("#uploadKahoot").on(listeners, uploadFromKahoot);
 
-var gameName;
 // Allows a user to upload a file
 var siofu = new SocketIOFileUpload(socket);
 siofu.listenOnDrop(document.getElementById("file_drop"));
@@ -20,7 +19,7 @@ siofu.addEventListener("complete", (event) => {
 });
 
 function useDefaultQuestions(){
-  socket.emit('useDefaultQuestions', gameName, ()=>{
+  socket.emit('useDefaultQuestions', state.gameName, ()=>{
     changeDisplay(['#startGame', '#downloadReport'], ['#questionFile']);
   });
 }
@@ -56,7 +55,7 @@ function uploadFromKahoot() {
         }
         parsedQuestions.push(parsedQuestion);
       }
-      socket.emit('kahootUpload', gameName, parsedQuestions, ()=>{
+      socket.emit('kahootUpload', state.gameName, parsedQuestions, ()=>{
         closeAlert();
         changeDisplay(['#startGame', '#downloadReport'], ['#questionFile']);
       })
@@ -104,8 +103,8 @@ function displayPrevGames(games) {
 
 function rejoinGame() {
   if (socket.connected) {
-    gameName = this.id;
-    $('#gameName').text(gameName);
+    state.gameName = this.id;
+    $('.state.gameName').text(state.gameName);
     changeDisplay(['#gameManagement', '#downloadReport'], ['#gameCreation']);
 
     callback = (input) => {
@@ -130,8 +129,8 @@ function makeGame() {
     logUser(email, firstName, lastName);
     socket.emit('makeGame', $('#roomId').val(), email, (error) => {
       if (!error) {
-        gameName = $('#roomId').val();
-        $('#gameName').text(gameName);
+        state.gameName = $('#roomId').val();
+        $('#state.gameName').text(state.gameName);
         changeDisplay(['#gameManagement', '#questionFile'], ['#gameCreation']);
       } else {
         sendAlert('Error: Game already exists!');
@@ -143,19 +142,20 @@ function makeGame() {
 }
 
 function openGame() {
-  socket.emit('changeGameState', gameName, 'open');
+  socket.emit('changeGameState', state.gameName, 'open');
   changeDisplay(['#closeGame', '#startGame'], ['#openGame']);
 }
 
 function closeGame() {
-  socket.emit('changeGameState', gameName, 'closed');
+  socket.emit('changeGameState', state.gameName, 'closed');
   changeDisplay(['#openGame'], ['#closeGame']);
 }
 
 function deleteGame() {
-  if (confirm('Are you sure you want to delete ' + gameName + '?')) {
+  if (confirm('Are you sure you want to delete ' + state.gameName + '?')) {
     socket.emit('deleteGame');
     $('#playerList').empty();
+    state.roomSize = 0;
     changeDisplay(['#gameCreation'], ['#gameManagement']);
     requestPrevGames(email);
   }
@@ -163,7 +163,7 @@ function deleteGame() {
 
 function startGame() {
   //Must have at least 1 player to start
-  if ($('ul#playerList li').length > 0) {
+  if (state.roomSize > 0) {
     socket.emit('startGame');
     changeDisplay(['#playerResults', '#stopGame'], ['#startGame', "#playerList"]);
   } else {
@@ -179,6 +179,7 @@ function stopGame() {
 
 function leaveGame(){
   $('#playerList').empty();
+  state.roomSize = 0;
   changeDisplay(['#gameCreation'], ['#gameManagement']);
   requestPrevGames(email);
 }
@@ -192,7 +193,6 @@ function playerResults(results) {
     }
   } else {
       for (player of results) {
-        console.log("#" + getSelector(player.NickName) + ' td.score', player.Score);
         $("#" + getSelector(player.NickName) + ' td.score').text(player.Score);
       }
   }
@@ -284,5 +284,5 @@ function sendReport(questionResponses, people, questions) {
     }
   }
 
-  download(csvContent, gameName + " Score Report.csv", 'text/csv;encoding:utf-8');
+  download(csvContent, state.gameName + " Score Report.csv", 'text/csv;encoding:utf-8');
 }

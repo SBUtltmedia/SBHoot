@@ -1,5 +1,8 @@
 socket = io(`${window.location.hostname}:8090`);
 var listeners = "click";
+state = {
+	roomSize: 0
+};
 
 //Socket listeners
 socket.on('roomListUpdate', roomListUpdate);
@@ -13,6 +16,7 @@ function closeAlert() {
 //Socket functions
 function roomListUpdate(people) {
   $('#playerList').empty();
+	state.roomSize = people.length;
   for (person of people) {
     $('#playerList').append('<li>' + person + '</li>');
   }
@@ -63,8 +67,15 @@ function changeState(state){
 			break;
 		//State where user has connected to a game
 		case "WAITING_ROOM":
+			$('.gameName').text(state.gameName);
+			if(isInstructor()){
+			} else {
+			}
 			break;
 		case "PLAYING":
+			if(isInstructor()){
+			} else {
+			}
 			break;
 	}
 }

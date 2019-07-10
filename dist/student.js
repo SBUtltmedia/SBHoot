@@ -1,8 +1,5 @@
-var nickname;
-var pickedAnswer;
-var questionTime = 0;
-var questionInterval = 0;
-var rank;
+state.questionTime = 0;
+state.questionInterval = 0;
 
 $(".answer").on(listeners, checkAnswer);
 $("#joinGame").on(listeners, joinGame);
@@ -51,7 +48,7 @@ function joinGame() {
     //Add player to DB if not exists
     logUser(email, firstName, lastName);
 
-    nickname = $('#nickname').val();
+    state.nickname = $('#nickname').val();
     socket.emit('joinGame', $('#roomId').val(), email, name, $('#nickname').val(), (isError, reason) => {
       if (!isError) {
         changeDisplay(['#waitingRoom'], ['#join']);
@@ -65,9 +62,9 @@ function joinGame() {
 }
 
 function checkAnswer(evt) {
-  if (pickedAnswer == -1) {
-    pickedAnswer = evt.currentTarget.id.split('_')[1];
-    socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1], questionTime, email);
+  if (state.pickedAnswer == -1) {
+    state.pickedAnswer = evt.currentTarget.id.split('_')[1];
+    socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1], state.questionTime, email);
   }
 }
 
@@ -82,7 +79,7 @@ function rejoinGame() {
     socket.emit('rejoinGameStudent', this.id, email, name, $('#nickname').val(), (isError) => {
       if (!isError) {
         changeDisplay(['#waitingRoom'], ['#join']);
-        nickname = $('#nickname').val();
+        state.nickname = $('#nickname').val();
       } else {
         sendAlert('Error: Room is closed or does not exist');
       }
@@ -94,12 +91,12 @@ function rejoinGame() {
 }
 
 function sendQuestion(myJson) {
-  clearInterval(questionInterval);
-  questionTime = 0;
-  questionInterval = setInterval(() => {
-    questionTime++;
+  clearInterval(state.questionInterval);
+  state.questionTime = 0;
+  state.questionInterval = setInterval(() => {
+    state.questionTime++;
   }, 1000);
-  pickedAnswer = -1;
+  state.pickedAnswer = -1;
 
   //changeBodyBg();
   changeDisplay(['#stage'], ['#waitingRoom']);
@@ -108,6 +105,7 @@ function sendQuestion(myJson) {
   for (var i = 0; i < myJson.answers.length; i++) {
     $("#answer_" + i).text(myJson.answers[i]);
   }
+  resizeWindow();
 }
 
 function roomClosed() {
@@ -117,11 +115,11 @@ function roomClosed() {
 function sendAnswer(answer, points, players) {
   $('#pointCounter').text(points);
   $('#answer_' + answer).addClass("rightAnswer");
-  if (answer != pickedAnswer) {
-    $('#answer_' + pickedAnswer).addClass("wrongAnswer");
+  if (answer != state.pickedAnswer) {
+    $('#answer_' + state.pickedAnswer).addClass("wrongAnswer");
   }
   //Prevent player from answering after receiving
-  pickedAnswer = -2;
+  state.pickedAnswer = -2;
 
   //Bubblesort player standings
   for (var i = 0; i < players.length - 1; i++) {
@@ -136,11 +134,11 @@ function sendAnswer(answer, points, players) {
 
   //Get player rank
   for (var i = 0; i < players.length; i++){
-    console.log(players[i], nickname)
-    if(players[i][0] == nickname){
+    console.log(players[i], state.nickname)
+    if(players[i][0] == state.nickname){
       console.log("Found!")
-      rank = i + 1;
-      $("#rank").text(rank);
+      state.rank = i + 1;
+      $("#rank").text(state.rank);
       break;
     }
   }
@@ -152,7 +150,7 @@ function sendAnswer(answer, points, players) {
 }
 
 function leaveRoom(reason) {
-  clearInterval(questionInterval);
+  clearInterval(state.questionInterval);
   $('#playerList').empty();
   changeDisplay(['#join'], ['#waitingRoom', '#stage']);
   sendAlert(reason);
