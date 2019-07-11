@@ -127,6 +127,7 @@ button:active {
 #signout #signout-button {
   background-color: #EEEEEE;
   color: #C1272D;
+  margin: 2rem;
 }
 
 #signout .rejoinGame{
@@ -150,6 +151,20 @@ button:active {
  align-self: center;
 }
 
+#previousGames{
+  margin: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#questionFile{
+  padding: 2rem;
+}
+#gameManagement{
+  padding: 2rem;
+}
+
 #greeting {
   font-size: 4rem;
   text-align: center;
@@ -161,6 +176,7 @@ button:active {
   padding: 1rem;
   margin-top: 4rem;
 }
+
 h3{
   text-align: center;
   font-size: 2.5rem;
@@ -172,6 +188,10 @@ h5{
 
 input{
   color: black;
+  margin: 1rem;
+}
+
+li{
   margin: 1rem;
 }
 
@@ -267,11 +287,6 @@ input{
 }
 
 .answer {
-  display:grid;
-grid-template-columns:repeat(12,1fr);
-grid-gap: 10px;
-background-color: #fff;
-border: 10px solid #fff;
   font-family: Helvetica;
   float:center
   width: 800px;
@@ -313,10 +328,10 @@ background-color: #ffffc0*/
 }
 @media only screen and (min-width: 768px) {
   body{
-    /*background: green;*/
+    background: green;
   }
 .answer {
 
-    font-size: 2rem;
+    font-size: 5rem;
   }
 }
