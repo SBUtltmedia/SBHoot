@@ -1,6 +1,6 @@
 socket = io(`${window.location.hostname}:8090`);
 var listeners = "click";
-state = {
+var state = {
 	roomSize: 0
 };
 
@@ -33,11 +33,11 @@ function sendAlert(info) {
 }
 
 function changeDisplay(show, noShow) {
+	for (item of noShow) {
+    $(item).hide();
+  }
   for (item of show) {
     $(item).show();
-  }
-  for (item of noShow) {
-    $(item).hide();
   }
 }
 
@@ -61,8 +61,8 @@ function displayPrevGames(games) {
   }
 }
 
-function changeState(state){
-	switch(state){
+function changeState(newState){
+	switch(newState){
 		//State where user is prompted to log in
 		case "LOGIN":
 			if(isInstructor()){
@@ -85,21 +85,26 @@ function changeState(state){
 		case "WAITING_ROOM":
 			$('.gameName').text(state.gameName);
 			if(isInstructor()){
-
+				changeDisplay(['#gameManagement'], ['#gameCreation']);
 			} else {
 
 			}
 			break;
+		case "WAITING_ROOM_FILE_READY":
+			$('.gameName').text(state.gameName);
+			changeDisplay(['#gameManagement', '#startGame', '#downloadReport'], ['#gameCreation', '#questionFile']);
+			break;
 		case "PLAYING":
 			if(isInstructor()){
-
+				changeDisplay(['#playerResults', '#stopGame'], ['#startGame', "#playerList"]);
 			} else {
 
 			}
 			break;
 	}
+	state.state = newState;
 }
 
 function isInstructor(){
-	return window.location.href.split("/")[3] == "instructor";
+	return location.href.split("/")[3] == "instructor";
 }

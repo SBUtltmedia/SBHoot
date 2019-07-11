@@ -26,9 +26,11 @@ function joinGame() {
     //Add player to DB if not exists
     logUser(email, firstName, lastName);
 
-    state.nickname = $('#nickname').val();
+
     socket.emit('joinGame', $('#roomId').val(), email, name, $('#nickname').val(), (isError, reason) => {
       if (!isError) {
+        state.nickname = $('#nickname').val();
+        state.gameName = $('#roomId').val();
         changeDisplay(['#waitingRoom'], ['#join']);
       } else {
         sendAlert(reason);
@@ -58,6 +60,7 @@ function rejoinGame() {
       if (!isError) {
         changeDisplay(['#waitingRoom'], ['#join']);
         state.nickname = $('#nickname').val();
+        state.gameName = $('#roomId').val();
       } else {
         requestPrevGames();
         sendAlert('Error: Room is closed or does not exist');

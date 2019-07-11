@@ -15,12 +15,12 @@ siofu.listenOnDrop(document.getElementById("file_drop"));
 
 // Do something when a file is uploaded:
 siofu.addEventListener("complete", (event) => {
-  changeDisplay(['#startGame', '#downloadReport'], ['#questionFile']);
+  changeState("WAITING_ROOM_FILE_READY");
 });
 
 function useDefaultQuestions(){
   socket.emit('useDefaultQuestions', state.gameName, ()=>{
-    changeDisplay(['#startGame', '#downloadReport'], ['#questionFile']);
+    changeState("WAITING_ROOM_FILE_READY");
   });
 }
 
@@ -57,7 +57,7 @@ function uploadFromKahoot() {
       }
       socket.emit('kahootUpload', state.gameName, parsedQuestions, ()=>{
         closeAlert();
-        changeDisplay(['#startGame', '#downloadReport'], ['#questionFile']);
+        changeState("WAITING_ROOM_FILE_READY");
       })
     });
   } catch(err) {
@@ -83,17 +83,18 @@ function requestPrevGames() {
 function rejoinGame() {
   if (socket.connected) {
     state.gameName = this.id;
-    $('.state.gameName').text(state.gameName);
-    changeDisplay(['#gameManagement', '#downloadReport'], ['#gameCreation']);
 
     callback = (input) => {
+      console.log("I was pressed!");
       //Jump right to playing if the game was left in motion
       if(input == "running"){
-        changeDisplay(['#playerResults', '#stopGame'], ['#startGame', "#playerList"]);
+        changeState("PLAYING");
       }
       //See whether or not we need to display file drop
       else if (input == "file drop") {
-        changeDisplay(['#startGame'], ['#questionFile']);
+        changeState("WAITING_ROOM_FILE_READY");
+      } else {
+        changeState("WAITING_ROOM");
       }
     }
 
@@ -109,8 +110,7 @@ function makeGame() {
     socket.emit('makeGame', $('#roomId').val(), email, (error) => {
       if (!error) {
         state.gameName = $('#roomId').val();
-        $('#state.gameName').text(state.gameName);
-        changeDisplay(['#gameManagement', '#questionFile'], ['#gameCreation']);
+        changeState("WAITING_ROOM");
       } else {
         sendAlert('Error: Game already exists!');
       }
@@ -164,7 +164,6 @@ function leaveGame(){
 }
 
 function playerResults(results) {
-  console.log(results);
   if ($('#playerResults tr').length == 0) {
     $('#playerResults').append('<tr><th>Nickname</th><th>Score</th></tr>');
     for (player of results) {
