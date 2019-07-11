@@ -16,31 +16,9 @@ function handleDisconnect() {
   leaveRoom("Error: Disconnected from server");
 }
 
-//Request previous games as soon as they're available
-var x = setInterval(emailCheck, 25);
-
-function emailCheck() {
-  if (email) {
-    clearInterval(x);
-    requestPrevGames();
-  }
-}
-
 function requestPrevGames() {
   $("#previousGames").empty();
   socket.emit('requestPreviousGamesStudent', email);
-}
-
-function displayPrevGames(games) {
-  $('#previousGames').empty();
-  if (games.length == 0)
-    $('#rejoin').text('No previous games')
-  else {
-    for (game of games) {
-      $('#previousGames').append('<li><button class="rejoinGame" id="' + game.Name + '" type="button">Join</button>\t' + game.Name + '</li>');
-    }
-    $(".rejoinGame").on(listeners, rejoinGame);
-  }
 }
 
 function joinGame() {
@@ -81,10 +59,10 @@ function rejoinGame() {
         changeDisplay(['#waitingRoom'], ['#join']);
         state.nickname = $('#nickname').val();
       } else {
+        requestPrevGames();
         sendAlert('Error: Room is closed or does not exist');
       }
     });
-    changeDisplay(['#waitingRoom'], ['#join']);
   } else {
     sendAlert("Error: Not connected to server");
   }
@@ -134,9 +112,7 @@ function sendAnswer(answer, points, players) {
 
   //Get player rank
   for (var i = 0; i < players.length; i++){
-    console.log(players[i], state.nickname)
     if(players[i][0] == state.nickname){
-      console.log("Found!")
       state.rank = i + 1;
       $("#rank").text(state.rank);
       break;

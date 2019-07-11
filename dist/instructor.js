@@ -75,30 +75,9 @@ function handleDisconnect() {
   sendAlert("Error: Disconnected from server");
 }
 
-//Request previous games as soon as they're available
-var x = setInterval(emailCheck, 25);
-
-function emailCheck() {
-  if (email) {
-    clearInterval(x);
-    requestPrevGames();
-  }
-}
-
 function requestPrevGames() {
+  $('#previousGames').empty();
   socket.emit('requestPreviousGames', email);
-}
-
-function displayPrevGames(games) {
-  if (games.length == 0)
-    $('#rejoin').text('No previous games')
-  else {
-    $('#previousGames').empty();
-    for (game of games) {
-      $('#previousGames').append('<li><button class="rejoinGame" id="' + game.Name + '" type="button">Join</button>\t' + game.Name + '</li>');
-    }
-    $(".rejoinGame").on(listeners, rejoinGame);
-  }
 }
 
 function rejoinGame() {
@@ -185,6 +164,7 @@ function leaveGame(){
 }
 
 function playerResults(results) {
+  console.log(results);
   if ($('#playerResults tr').length == 0) {
     $('#playerResults').append('<tr><th>Nickname</th><th>Score</th></tr>');
     for (player of results) {

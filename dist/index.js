@@ -46,18 +46,34 @@ function logUser(email, firstName, lastName) {
   socket.emit('logUser', email, firstName, lastName);
 }
 
+function displayPrevGames(games) {
+  if (games.length == 0){
+    $('#rejoin ul').html('No previous games');
+  }
+  else {
+    for (game of games) {
+      var li=$('<li/>',{"html":game.Name});
+      var button=$('<button/>',{"class":"rejoinGame","id":game.Name,"type":"button","html":"Join"});
+
+      $('#previousGames').append(li.prepend(button));
+    }
+    $(".rejoinGame").on(listeners, rejoinGame);
+  }
+}
+
 function changeState(state){
 	switch(state){
 		//State where user is prompted to log in
 		case "LOGIN":
 			if(isInstructor()){
-				changeDisplay(["#authorize"], ['#signout']);
+				changeDisplay(["#authorize"], ['#signout', "#gameCreation", "#gameManagement"]);
 			} else {
-				changeDisplay(["#authorize"], ['#join']);
+				changeDisplay(["#authorize"], ['#join', '#waitingRoom', '#stage']);
 			}
 			break;
 		//State after user has logged in and has not connected to a game
 		case "MAIN_SCREEN":
+			requestPrevGames();
 			if(isInstructor()){
 				changeDisplay(['#signout', '#gameCreation'], ["#authorize"]);
 			} else {
@@ -69,12 +85,16 @@ function changeState(state){
 		case "WAITING_ROOM":
 			$('.gameName').text(state.gameName);
 			if(isInstructor()){
+
 			} else {
+
 			}
 			break;
 		case "PLAYING":
 			if(isInstructor()){
+
 			} else {
+
 			}
 			break;
 	}

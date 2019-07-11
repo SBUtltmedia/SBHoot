@@ -54,7 +54,6 @@ function initClient() {
 
 function updateSigninStatus(isSignedIn) {
   if (isSignedIn) {
-    changeState("MAIN_SCREEN");
     makeApiCall();
   } else {
     changeState("LOGIN");
@@ -66,7 +65,6 @@ function handleAuthClick(event) {
 }
 
 function handleSignoutClick(event) {
-  changeDisplay([], ["#gameCreation", "#gameManagement"]);
   gapi.auth2.getAuthInstance().signOut();
 }
 
@@ -81,8 +79,7 @@ function makeApiCall() {
     email = resp.result.emailAddresses[0].value;
     firstName = resp.result.names[0].givenName;
     lastName = resp.result.names[0].familyName;
-    //p.appendChild(document.createTextNode('Hello, '+name+'!'));
     $('#greeting').text('Hello, ' + name + '!');
-
+    changeState("MAIN_SCREEN");
   });
 }

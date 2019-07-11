@@ -6,6 +6,10 @@ font-family: 'PT Sans'!important;
   font-size: 30px;
 }
 
+#authorize{
+  text-align: center;
+}
+
 #join img{
   width: 20%;
   height: 20%;
@@ -91,6 +95,7 @@ button:active {
     transform: scale(0.99);
 }
 
+
 /*
 .grid-container {
   display: grid;
@@ -108,7 +113,7 @@ button:active {
  padding: 20px 0;
  font-size: 30px;
 } */
-#signout{
+#border{
   border-style: solid;
   border-width: 4rem;
   border-color: #C1272D;}
@@ -202,7 +207,6 @@ input{
 
 #stage {
   background-color: #B3B3B3;
-  border-bottom: 2rem white;
 }
 
 #header {
@@ -263,6 +267,11 @@ input{
 }
 
 .answer {
+  display:grid;
+grid-template-columns:repeat(12,1fr);
+grid-gap: 10px;
+background-color: #fff;
+border: 10px solid #fff;
   font-family: Helvetica;
   float:center
   width: 800px;

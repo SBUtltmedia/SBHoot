@@ -165,7 +165,6 @@ io.on('connection', function(socket) {
 
 // TODO:
 // Break up app.js into seperate files for clarity
-// Fix rejoining game lists
 // Deep linking https://github.com/asual/jquery-address, http://www.asual.com/jquery/address/
 // Fix the 1 question delay on score & rank changes
 // Create state list
@@ -376,7 +375,6 @@ function joinGame(socket, room, email, name, nickname, callback) {
 
             //Send nicknames to waiting rooms
             io.to(socket.room).emit('roomListUpdate', getMapAttr(roomList[room].players, ['nickname']));
-
             //Add player to DB
             roomList[room].roomId = roomId;
             roomList[room].players[email].personId = personId;
@@ -446,27 +444,15 @@ function closeGameStep(socket) {
 
 //Sends back a list of games the instructor controls to instructor.js
 function requestPreviousGames(socket, email) {
-  if (email == null)
-    return;
-  con.query('SELECT PersonID FROM Person WHERE Email = ? LIMIT 1', [email], (err, result) => {
-    if (!result || result.length == 0)
-      return;
-    con.query("SELECT Name FROM Room WHERE InstructorID = ?", [result[0].PersonID], (err, result) => {
-      io.to(socket.id).emit('returnPreviousGames', result);
-    });
+  con.query("SELECT Name FROM Room WHERE InstructorID = (SELECT PersonID FROM Person WHERE Email = ? LIMIT 1)", [email], (err, result) => {
+    io.to(socket.id).emit('returnPreviousGames', result);
   });
 }
 
 //Sends a list of games a student has played in that they can rejoin to client.js
 function requestPreviousGamesStudent(socket, email) {
-  if (email == null)
-    return;
-  con.query('SELECT PersonID FROM Person WHERE Email = ? LIMIT 1', [email], (err, result) => {
-    if (!result || result.length == 0)
-      return;
-    con.query("SELECT Name FROM Room WHERE RoomID IN (SELECT RoomID FROM Player WHERE PersonID = ?) AND State = 'open'", [result[0].PersonID], (err, result) => {
-      io.to(socket.id).emit('returnPreviousGamesStudent', result);
-    });
+  con.query("SELECT Name FROM Room WHERE RoomID IN (SELECT RoomID FROM Player WHERE PersonID = (SELECT PersonID FROM Person WHERE Email = ? LIMIT 1)) AND State = 'open'", [email], (err, result) => {
+    io.to(socket.id).emit('returnPreviousGamesStudent', result);
   });
 }
 
@@ -488,6 +474,7 @@ function rejoinGame(socket, email, game, callback) {
       roomList[game].masterSocketId = socket.id;
       callback("running");
       sendProfResults(socket);
+      io.to(socket.id).emit('playerResults', getMapAttr(roomList[game].players, ['nickname']));
     } else {
       roomList[game] = {
         players: {}, //TODO: Save from last run?
