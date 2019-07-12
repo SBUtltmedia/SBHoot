@@ -50,8 +50,7 @@ function checkAnswer(evt) {
 
 function leaveGame() {
   socket.emit('leaveGame', email);
-  changeDisplay(['#join'], ['#waitingRoom']);
-  requestPrevGames();
+  changeState("MAIN_SCREEN");
 }
 
 function rejoinGame() {

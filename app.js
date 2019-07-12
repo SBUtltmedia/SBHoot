@@ -166,9 +166,13 @@ io.on('connection', function(socket) {
 // TODO:
 // Break up app.js into seperate files for clarity
 // Deep linking https://github.com/asual/jquery-address, http://www.asual.com/jquery/address/
+//  - hash link quick game setup
+//  - Auto join or auto create if possible
+//  - Link for instructor
 // Fix the 1 question delay on score & rank changes
 // Create state list
 // Allow student to join a game while playing
+// Add kick functionality for the instructor
 
 ////////////////////////////
 // GAME PLAYING FUNCTIONS //
@@ -480,7 +484,7 @@ function rejoinGame(socket, email, game, callback) {
       default:
         state = result[0].State;
         roomList[game] = {
-          players: {}, //TODO: Save from last run?
+          players: {},
           noResponse: [],
           masterSocketId: socket.id
         };

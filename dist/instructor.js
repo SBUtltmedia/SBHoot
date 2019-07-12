@@ -121,7 +121,7 @@ function makeGame() {
 
 function openGame() {
   socket.emit('changeGameState', state.gameName, 'open');
-  changeDisplay(['#closeGame', '#startGame'], ['#openGame']);
+  changeDisplay(['#closeGame'], ['#openGame']);
 }
 
 function closeGame() {
@@ -143,7 +143,7 @@ function startGame() {
   //Must have at least 1 player to start
   if (state.roomSize > 0) {
     socket.emit('startGame');
-    changeDisplay(['#playerResults', '#stopGame'], ['#startGame', "#playerList"]);
+    changeState('PLAYING');
   } else {
     sendAlert("Error: cannot start a game with no players");
   }
@@ -152,7 +152,7 @@ function startGame() {
 function stopGame() {
   socket.emit('stopGame');
   $('ul#playerList li').empty();
-  changeDisplay(['#startGame', '#openGame'], ['#stopGame', '#closeGame']);
+  changeState("WAITING_ROOM_FILE_READY", 'closed');
 }
 
 function leaveGame(){

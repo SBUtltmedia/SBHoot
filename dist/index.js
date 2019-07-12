@@ -85,7 +85,7 @@ function changeState(newState, roomState){
 		case "WAITING_ROOM":
 			$('.gameName').text(state.gameName);
 			if(isInstructor()){
-				changeDisplay(['#gameManagement', '#questionFile'], ['#gameCreation']);
+				changeDisplay(['#gameManagement', '#questionFile'], ['#gameCreation', '#playerResults']);
 				getRightButtons(roomState);
 			} else {
 
@@ -93,7 +93,7 @@ function changeState(newState, roomState){
 			break;
 		case "WAITING_ROOM_FILE_READY":
 			$('.gameName').text(state.gameName);
-			changeDisplay(['#gameManagement', '#startGame', '#downloadReport'], ['#gameCreation', '#questionFile']);
+			changeDisplay(['#gameManagement', '#startGame', '#downloadReport'], ['#gameCreation', '#questionFile', '#playerResults', '#stopGame']);
 			getRightButtons(roomState);
 			break;
 		case "PLAYING":
@@ -114,8 +114,8 @@ function isInstructor(){
 function getRightButtons(roomState){
 	//Make sure the right one is displayed
 	if(roomState == 'open'){
-		changeDisplay(["#openGame"], ["#closeGame"]);
-	} else if(roomState == 'closed') {
 		changeDisplay(["#closeGame"], ["#openGame"]);
+	} else if(roomState == 'closed') {
+		changeDisplay(["#openGame"], ["#closeGame"]);
 	}
 }
