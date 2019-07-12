@@ -61,7 +61,7 @@ function displayPrevGames(games) {
   }
 }
 
-function changeState(newState){
+function changeState(newState, roomState){
 	switch(newState){
 		//State where user is prompted to log in
 		case "LOGIN":
@@ -85,7 +85,8 @@ function changeState(newState){
 		case "WAITING_ROOM":
 			$('.gameName').text(state.gameName);
 			if(isInstructor()){
-				changeDisplay(['#gameManagement'], ['#gameCreation']);
+				changeDisplay(['#gameManagement', '#questionFile'], ['#gameCreation']);
+				getRightButtons(roomState);
 			} else {
 
 			}
@@ -93,6 +94,7 @@ function changeState(newState){
 		case "WAITING_ROOM_FILE_READY":
 			$('.gameName').text(state.gameName);
 			changeDisplay(['#gameManagement', '#startGame', '#downloadReport'], ['#gameCreation', '#questionFile']);
+			getRightButtons(roomState);
 			break;
 		case "PLAYING":
 			if(isInstructor()){
@@ -107,4 +109,13 @@ function changeState(newState){
 
 function isInstructor(){
 	return location.href.split("/")[3] == "instructor";
+}
+
+function getRightButtons(roomState){
+	//Make sure the right one is displayed
+	if(roomState == 'open'){
+		changeDisplay(["#openGame"], ["#closeGame"]);
+	} else if(roomState == 'closed') {
+		changeDisplay(["#closeGame"], ["#openGame"]);
+	}
 }

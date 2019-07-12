@@ -84,17 +84,16 @@ function rejoinGame() {
   if (socket.connected) {
     state.gameName = this.id;
 
-    callback = (input) => {
-      console.log("I was pressed!");
+    callback = (input, roomState) => {
       //Jump right to playing if the game was left in motion
       if(input == "running"){
         changeState("PLAYING");
       }
       //See whether or not we need to display file drop
       else if (input == "file drop") {
-        changeState("WAITING_ROOM_FILE_READY");
+        changeState("WAITING_ROOM_FILE_READY", roomState);
       } else {
-        changeState("WAITING_ROOM");
+        changeState("WAITING_ROOM", roomState);
       }
     }
 

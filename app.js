@@ -461,7 +461,7 @@ function rejoinGame(socket, email, game, callback) {
   //Initialize roomList to avoid synchronicity errors
   roomList[game] = roomList[game] ? roomList[game] : {};
 
-  con.query('SELECT RoomID, InstructorID, State FROM Room WHERE Name = ? LIMIT 1', [game], (err, result) => {
+  con.query('SELECT State, RoomID, InstructorID, State FROM Room WHERE Name = ? LIMIT 1', [game], (err, result) => {
     //Get RoomID & InstructorID to make subsequent references easier
     roomList[game].roomId = result[0].RoomID;
     socket.masterId = result[0].InstructorID;
@@ -469,26 +469,30 @@ function rejoinGame(socket, email, game, callback) {
     socket.join(game);
     socket.room = game;
 
-    //Shouldn't pile a new game onto a running one
-    if(result[0].State != 'closed'){
-      roomList[game].masterSocketId = socket.id;
-      callback("running");
-      sendProfResults(socket);
-      io.to(socket.id).emit('playerResults', getMapAttr(roomList[game].players, ['nickname']));
-    } else {
-      roomList[game] = {
-        players: {}, //TODO: Save from last run?
-        noResponse: [],
-        masterSocketId: socket.id
-      };
+    switch(result[0].State){
+      //Shouldn't pile a new game onto a running one
+      case 'playing':
+        roomList[game].masterSocketId = socket.id;
+        callback("running");
+        sendProfResults(socket);
+        io.to(socket.id).emit('playerResults', getMapAttr(roomList[game].players, ['nickname']));
+        break;
+      default:
+        state = result[0].State;
+        roomList[game] = {
+          players: {}, //TODO: Save from last run?
+          noResponse: [],
+          masterSocketId: socket.id
+        };
 
-      changeGameState(socket, 'open');
-
-      //See whether or not we need to display file drop
-      if(fs.existsSync('quizzes/' + game + '.json')){
-        callback("file drop");
-        parseJSON(socket, 'quizzes/' + game + '.json');
-      }
+        //See whether or not we need to display file drop
+        if(fs.existsSync('quizzes/' + game + '.json')){
+          callback("file drop", state);
+          parseJSON(socket, 'quizzes/' + game + '.json');
+        } else {
+          callback("", state);
+        }
+      case 'open'://TODO: handle this case seperately
     }
   });
 }
