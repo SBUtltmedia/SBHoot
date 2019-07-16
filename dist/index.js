@@ -8,6 +8,7 @@ var state = {
 //Socket listeners
 socket.on('roomListUpdate', roomListUpdate);
 socket.on('sendAlert', sendAlert);
+socket.on('serverMismatch', serverMismatch);
 //socket.on('reconnect', handleReconnect);
 
 function closeAlert() {
@@ -31,6 +32,12 @@ function changeBodyBg() {
 function sendAlert(info) {
   $('#dialogText').text(info);
   $('#dialog').dialog();
+}
+
+//Moves user is something is funky
+function serverMismatch(reason, resetState){
+	changeState(resetState);
+	sendAlert(reason);
 }
 
 function changeDisplay(show, noShow) {
@@ -69,7 +76,6 @@ function displayPrevGames(games) {
 }
 
 function changeState(newState, roomState) {
-	closeAlert();
   if (newState != "LOGIN" && newState == state.currentState) {
     getRightButtons(roomState);
   } else {

@@ -43,7 +43,27 @@ http.listen(8090, function() {
   console.log('listening on *:8090');
 });
 
+
+// TODO:
+// Break up app.js into seperate files for clarity
+// Deep linking https://github.com/asual/jquery-address, http://www.asual.com/jquery/address/
+//  - hash link quick game setup
+//  - Auto join or auto create if possible
+//  - Link for instructor
+//  - Auto fill student name?
+// Fix the 1 question delay on score & rank changes
+// Allow student to join a game while playing
+// Add kick functionality for the instructor
+// Implement server mismatch
+
+
 io.on('connection', function(socket) {
+
+  /////////////////////
+  // FILE MANAGEMENT //
+  /////////////////////
+
+  //Uploaded CSV
   var uploader = new SocketIOFileUpload();
   uploader.dir = "uploads/";
   uploader.listen(socket);
@@ -96,36 +116,49 @@ io.on('connection', function(socket) {
     console.log("Error from uploader", event);
   });
 
+  socket.on('downloadReport', ()=>{
+    if(errorCheck(socket, [socket.room], "MAIN_SCREEN"))
+      sendReport(socket);
+  });
+
+  socket.on('useDefaultQuestions', (callback)=>{
+    if(errorCheck(socket, [socket.room], "MAIN_SCREEN"))
+      useDefaultQuestions(socket, callback);
+  });
+
+  socket.on('kahootUpload', (questions, callback) =>{
+    if(errorCheck(socket, [socket.room], "MAIN_SCREEN"))
+      kahootUpload(socket, questions, callback);
+  });
+
+
+  /////////////////////
+  // GAME MANAGEMENT //
+  /////////////////////
 
   socket.on('joinGame', (room, email, name, nickname, callback) => {
     joinGame(socket, room, email, name, nickname, callback)
-  });
-
-  socket.on('checkAnswer', (choice, time, email) => {
-    checkAnswer(socket, choice, time, email);
-  });
-
-  socket.on('leaveGame', (email) => {
-    leaveGame(socket, email);
   });
 
   socket.on('makeGame', (room, email, callback) => {
     makeGame(socket, room, email, callback);
   });
 
-  socket.on('changeGameState', (room, state) => {
-    changeGameState(socket, state);
+  socket.on('changeGameState', (state) => {
+    if(errorCheck(socket, [socket.room, socket.masterId], "MAIN_SCREEN"))
+      changeGameState(socket, state);
   });
 
   socket.on('deleteGame', () => {
-    deleteGame(socket);
+    if(errorCheck(socket, [socket.room], "MAIN_SCREEN"))
+      deleteGame(socket);
   });
 
   socket.on('startGame', () => {
-    startGame(socket);
+    if(errorCheck(socket, [socket.room], "MAIN_SCREEN"))
+      startGame(socket);
   });
 
-  //Add user to DB if they don't exist
   socket.on('logUser', (email, firstName, lastName) => {
     con.query(`INSERT INTO Person (Email, FirstName, LastName) SELECT ?, ? , ? WHERE NOT EXISTS(SELECT * FROM Person WHERE Email=?)`, [email, firstName, lastName, email]);
   });
@@ -146,33 +179,23 @@ io.on('connection', function(socket) {
     joinGame(socket, room, email, name, nickname, callback);
   });
 
-  socket.on('downloadReport', ()=>{
-    sendReport(socket);
+
+  //////////////////
+  // GAME PLAYING //
+  //////////////////
+
+  socket.on('checkAnswer', (choice, time, email) => {
+    checkAnswer(socket, choice, time, email);
+  });
+
+  socket.on('leaveGame', (email) => {
+    leaveGame(socket, email);
   });
 
   socket.on('stopGame', ()=>{
     stopGame(socket);
   });
-
-  socket.on('useDefaultQuestions', (name, callback)=>{
-    useDefaultQuestions(socket, name, callback);
-  });
-
-  socket.on('kahootUpload', (name, questions, callback) =>{
-    kahootUpload(name, questions, callback);
-  });
 });
-
-// TODO:
-// Break up app.js into seperate files for clarity
-// Deep linking https://github.com/asual/jquery-address, http://www.asual.com/jquery/address/
-//  - hash link quick game setup
-//  - Auto join or auto create if possible
-//  - Link for instructor
-// Fix the 1 question delay on score & rank changes
-// Create state list
-// Allow student to join a game while playing
-// Add kick functionality for the instructor
 
 ////////////////////////////
 // GAME PLAYING FUNCTIONS //
@@ -518,7 +541,8 @@ function sendReport(socket){
     });
 }
 
-function useDefaultQuestions(socket, name, callback){
+function useDefaultQuestions(socket, callback){
+  name = socket.room;
   fs.copyFile('questions.json', 'quizzes/'+ name + '.json', (err)=>{
     if(!err){
       parseJSON(socket, 'questions.json');
@@ -528,7 +552,8 @@ function useDefaultQuestions(socket, name, callback){
   });
 }
 
-function kahootUpload(name, questions, callback){
+function kahootUpload(socket, questions, callback){
+  name = socket.room;
   fs.writeFile('quizzes/' + name + '.json', JSON.stringify(questions), (err)=>{
     if(!err){
       roomList[name]['questions'] = questions;
@@ -541,6 +566,17 @@ function kahootUpload(name, questions, callback){
 ///////////////////////
 // UTILITY FUNCTIONS //
 ///////////////////////
+
+//Checks for a lack of room info, may be changed later
+function errorCheck(socket, needed, state){
+  for(item of needed){
+    if(!item){
+      io.to(socket.id).emit('serverMismatch', "Error: Server information does not reflect current client state", state);
+      return false;
+    }
+  }
+  return true;
+}
 
 function shuffle(length) {
   var newArr = []

@@ -19,7 +19,7 @@ siofu.addEventListener("complete", (event) => {
 });
 
 function useDefaultQuestions(){
-  socket.emit('useDefaultQuestions', state.gameName, ()=>{
+  socket.emit('useDefaultQuestions', ()=>{
     changeState("WAITING_ROOM_FILE_READY");
   });
 }
@@ -55,7 +55,7 @@ function uploadFromKahoot() {
         }
         parsedQuestions.push(parsedQuestion);
       }
-      socket.emit('kahootUpload', state.gameName, parsedQuestions, ()=>{
+      socket.emit('kahootUpload', parsedQuestions, ()=>{
         closeAlert();
         changeState("WAITING_ROOM_FILE_READY");
       })
@@ -120,12 +120,12 @@ function makeGame() {
 }
 
 function openGame() {
-  socket.emit('changeGameState', state.gameName, 'open');
+  socket.emit('changeGameState', 'open');
   changeState(state.currentState, 'open');
 }
 
 function closeGame() {
-  socket.emit('changeGameState', state.gameName, 'closed');
+  socket.emit('changeGameState', 'closed');
   changeState(state.currentState, 'closed');
 }
 
