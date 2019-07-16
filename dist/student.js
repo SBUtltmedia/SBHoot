@@ -26,12 +26,9 @@ function joinGame() {
     //Add player to DB if not exists
     logUser(email, firstName, lastName);
 
-
     socket.emit('joinGame', $('#roomId').val(), email, name, $('#nickname').val(), (isError, reason) => {
       if (!isError) {
-        state.nickname = $('#nickname').val();
-        state.gameName = $('#roomId').val();
-        changeDisplay(['#waitingRoom'], ['#join']);
+        changeState("WAITING_ROOM");
       } else {
         sendAlert(reason);
       }
@@ -57,9 +54,7 @@ function rejoinGame() {
   if (socket.connected) {
     socket.emit('rejoinGameStudent', this.id, email, name, $('#nickname').val(), (isError) => {
       if (!isError) {
-        changeDisplay(['#waitingRoom'], ['#join']);
-        state.nickname = $('#nickname').val();
-        state.gameName = $('#roomId').val();
+        changeState("WAITING_ROOM");
       } else {
         requestPrevGames();
         sendAlert('Error: Room is closed or does not exist');
@@ -79,8 +74,7 @@ function sendQuestion(myJson) {
   state.pickedAnswer = -1;
 
   //changeBodyBg();
-  changeDisplay(['#stage'], ['#waitingRoom']);
-  $('.answer').removeClass('rightAnswer wrongAnswer');
+  changeState("PLAYING");
   $("#question").text(myJson.question);
   for (var i = 0; i < myJson.answers.length; i++) {
     $("#answer_" + i).text(myJson.answers[i]);
@@ -129,8 +123,6 @@ function sendAnswer(answer, points, players) {
 
 function leaveRoom(reason) {
   clearInterval(state.questionInterval);
-  $('#playerList').empty();
-  changeDisplay(['#join'], ['#waitingRoom', '#stage']);
+  changeState("MAIN_SCREEN");
   sendAlert(reason);
-  requestPrevGames();
 }

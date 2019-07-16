@@ -481,6 +481,7 @@ function rejoinGame(socket, email, game, callback) {
         sendProfResults(socket);
         io.to(socket.id).emit('playerResults', getMapAttr(roomList[game].players, ['nickname']));
         break;
+      case 'open'://TODO: handle this case seperately
       default:
         state = result[0].State;
         roomList[game] = {
@@ -496,7 +497,6 @@ function rejoinGame(socket, email, game, callback) {
         } else {
           callback("", state);
         }
-      case 'open'://TODO: handle this case seperately
     }
   });
 }

@@ -121,21 +121,18 @@ function makeGame() {
 
 function openGame() {
   socket.emit('changeGameState', state.gameName, 'open');
-  changeDisplay(['#closeGame'], ['#openGame']);
+  changeState(state.currentState, 'open');
 }
 
 function closeGame() {
   socket.emit('changeGameState', state.gameName, 'closed');
-  changeDisplay(['#openGame'], ['#closeGame']);
+  changeState(state.currentState, 'closed');
 }
 
 function deleteGame() {
   if (confirm('Are you sure you want to delete ' + state.gameName + '?')) {
     socket.emit('deleteGame');
-    $('#playerList').empty();
-    state.roomSize = 0;
-    changeDisplay(['#gameCreation'], ['#gameManagement']);
-    requestPrevGames(email);
+    changeState("MAIN_SCREEN");
   }
 }
 
@@ -151,15 +148,12 @@ function startGame() {
 
 function stopGame() {
   socket.emit('stopGame');
-  $('ul#playerList li').empty();
+  state.roomSize = 0;
   changeState("WAITING_ROOM_FILE_READY", 'closed');
 }
 
 function leaveGame(){
-  $('#playerList').empty();
-  state.roomSize = 0;
-  changeDisplay(['#gameCreation'], ['#gameManagement']);
-  requestPrevGames(email);
+  changeState("MAIN_SCREEN");
 }
 
 function playerResults(results) {

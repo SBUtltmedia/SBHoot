@@ -1,7 +1,8 @@
 socket = io(`${window.location.hostname}:8090`);
 var listeners = "click";
 var state = {
-	roomSize: 0
+  roomSize: 0,
+  currentState: 'LOGIN'
 };
 
 //Socket listeners
@@ -10,13 +11,13 @@ socket.on('sendAlert', sendAlert);
 //socket.on('reconnect', handleReconnect);
 
 function closeAlert() {
-	$('#dialog').dialog('close');
+  $('#dialog').dialog('close');
 }
 
 //Socket functions
 function roomListUpdate(people) {
   $('#playerList').empty();
-	state.roomSize = people.length;
+  state.roomSize = people.length;
   for (person of people) {
     $('#playerList').append('<li>' + person + '</li>');
   }
@@ -33,7 +34,7 @@ function sendAlert(info) {
 }
 
 function changeDisplay(show, noShow) {
-	for (item of noShow) {
+  for (item of noShow) {
     $(item).hide();
   }
   for (item of show) {
@@ -47,13 +48,19 @@ function logUser(email, firstName, lastName) {
 }
 
 function displayPrevGames(games) {
-  if (games.length == 0){
+  if (games.length == 0) {
     $('#rejoin ul').html('No previous games');
-  }
-  else {
+  } else {
     for (game of games) {
-      var li=$('<li/>',{"html":game.Name});
-      var button=$('<button/>',{"class":"rejoinGame","id":game.Name,"type":"button","html":"Join"});
+      var li = $('<li/>', {
+        "html": game.Name
+      });
+      var button = $('<button/>', {
+        "class": "rejoinGame",
+        "id": game.Name,
+        "type": "button",
+        "html": "Join"
+      });
 
       $('#previousGames').append(li.prepend(button));
     }
@@ -61,61 +68,73 @@ function displayPrevGames(games) {
   }
 }
 
-function changeState(newState, roomState){
-	switch(newState){
-		//State where user is prompted to log in
-		case "LOGIN":
-			if(isInstructor()){
-				changeDisplay(["#authorize"], ['#signout', "#gameCreation", "#gameManagement"]);
-			} else {
-				changeDisplay(["#authorize"], ['#join', '#waitingRoom', '#stage']);
-			}
-			break;
-		//State after user has logged in and has not connected to a game
-		case "MAIN_SCREEN":
-			requestPrevGames();
-			if(isInstructor()){
-				changeDisplay(['#signout', '#gameCreation'], ["#authorize"]);
-			} else {
-				changeDisplay(['#join', '#gameCreation'], ["#authorize"]);
-				$("#roomId").val(roomURL);
-			}
-			break;
-		//State where user has connected to a game
-		case "WAITING_ROOM":
-			$('.gameName').text(state.gameName);
-			if(isInstructor()){
-				changeDisplay(['#gameManagement', '#questionFile'], ['#gameCreation', '#playerResults']);
-				getRightButtons(roomState);
-			} else {
+function changeState(newState, roomState) {
+	closeAlert();
+  if (newState != "LOGIN" && newState == state.currentState) {
+    getRightButtons(roomState);
+  } else {
+    switch (newState) {
+      //State where user is prompted to log in
+      case "LOGIN":
+        if (isInstructor()) {
+          changeDisplay(["#authorize"], ['#signout', "#gameCreation", "#gameManagement"]);
+        } else {
+          changeDisplay(["#authorize"], ['#join', '#waitingRoom', '#stage']);
+        }
+        break;
+        //State after user has logged in and has not connected to a game
+      case "MAIN_SCREEN":
+        requestPrevGames();
+        if (isInstructor()) {
+          changeDisplay(['#signout', '#gameCreation'], ["#authorize", '#gameManagement']);
+        } else {
+          changeDisplay(['#join', '#gameCreation'], ["#authorize", '#waitingRoom', '#stage']);
+          $("#roomId").val(roomURL);
+        }
+        break;
+        //State where user has connected to a game
+      case "WAITING_ROOM":
+				$('#playerList').empty();
+				state.roomSize = 0;
 
-			}
-			break;
-		case "WAITING_ROOM_FILE_READY":
-			$('.gameName').text(state.gameName);
-			changeDisplay(['#gameManagement', '#startGame', '#downloadReport'], ['#gameCreation', '#questionFile', '#playerResults', '#stopGame']);
-			getRightButtons(roomState);
-			break;
-		case "PLAYING":
-			if(isInstructor()){
-				changeDisplay(['#playerResults', '#stopGame'], ['#startGame', "#playerList"]);
-			} else {
-
-			}
-			break;
-	}
-	state.state = newState;
+        if (isInstructor()) {
+					$('.gameName').text(state.gameName);
+          changeDisplay(['#gameManagement', '#questionFile'], ['#gameCreation', '#playerResults']);
+          getRightButtons(roomState);
+        } else {
+					state.nickname = $('#nickname').val();
+	        state.gameName = $('#roomId').val();
+					$('.gameName').text(state.gameName);
+					changeDisplay(['#waitingRoom'], ['#join']);
+        }
+        break;
+      case "WAITING_ROOM_FILE_READY":
+        $('.gameName').text(state.gameName);
+        changeDisplay(['#gameManagement', '#startGame', '#downloadReport'], ['#gameCreation', '#questionFile', '#playerResults', '#stopGame']);
+        getRightButtons(roomState);
+        break;
+      case "PLAYING":
+        if (isInstructor()) {
+          changeDisplay(['#playerResults', '#stopGame'], ['#startGame', "#playerList"]);
+        } else {
+					changeDisplay(['#stage'], ['#waitingRoom']);
+				  $('.answer').removeClass('rightAnswer wrongAnswer');
+        }
+        break;
+    }
+    state.state = newState;
+  }
 }
 
-function isInstructor(){
-	return location.href.split("/")[3] == "instructor";
+function isInstructor() {
+  return location.href.split("/")[3] == "instructor";
 }
 
-function getRightButtons(roomState){
-	//Make sure the right one is displayed
-	if(roomState == 'open'){
-		changeDisplay(["#closeGame"], ["#openGame"]);
-	} else if(roomState == 'closed') {
-		changeDisplay(["#openGame"], ["#closeGame"]);
-	}
+function getRightButtons(roomState) {
+  //Make sure the right one is displayed
+  if (roomState == 'open') {
+    changeDisplay(["#closeGame"], ["#openGame"]);
+  } else if (roomState == 'closed') {
+    changeDisplay(["#openGame"], ["#closeGame"]);
+  }
 }
