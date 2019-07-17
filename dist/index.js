@@ -55,7 +55,7 @@ function logUser(email, firstName, lastName) {
 }
 
 function displayPrevGames(games) {
-  if (games.length == 0) {
+  if (!games || games.length == 0) {
     $('#rejoin ul').html('No previous games');
   } else {
     for (game of games) {

@@ -54,7 +54,6 @@ http.listen(8090, function() {
 // Fix the 1 question delay on score & rank changes
 // Allow student to join a game while playing
 // Add kick functionality for the instructor
-// Implement server mismatch
 
 
 io.on('connection', function(socket) {
@@ -185,15 +184,18 @@ io.on('connection', function(socket) {
   //////////////////
 
   socket.on('checkAnswer', (choice, time, email) => {
-    checkAnswer(socket, choice, time, email);
+    if(errorCheck(socket, [socket.room, roomList[socket.room], roomList[socket.room].questions], "MAIN_SCREEN"))
+      checkAnswer(socket, choice, time, email);
   });
 
   socket.on('leaveGame', (email) => {
-    leaveGame(socket, email);
+    if(errorCheck(socket, [socket.room, roomList[socket.room], roomList[socket.room].noResponse], "MAIN_SCREEN"))
+      leaveGame(socket, email);
   });
 
   socket.on('stopGame', ()=>{
-    stopGame(socket);
+    if(errorCheck(socket, [socket.room], "MAIN_SCREEN"))
+      stopGame(socket);
   });
 });
 
@@ -457,7 +459,7 @@ function stopGame(socket){
 function closeGameStep(socket) {
   socket.to(socket.room).emit('roomClosed');
   //Stop wasting server time
-  if (roomList[socket.room]['interval']) {
+  if (roomList[socket.room].interval) {
     clearTimeout(roomList[socket.room].interval);
   }
   //Kick everyone from the room except instructor
