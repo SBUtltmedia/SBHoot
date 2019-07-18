@@ -387,7 +387,7 @@ function joinGame(socket, room, email, name, nickname, callback) {
 
           //All tests have been passed
           if(!result3 || result3.length == 0 || result3[0].PersonID == personId){
-            callback(false, '');
+            callback(false);
 
             socket.join(room);
             socket.room = room;
@@ -565,11 +565,18 @@ function kahootUpload(socket, questions, callback){
 }
 
 function getNickname(email, game, callback) {
-  con.query('SELECT NickName FROM Player WHERE RoomID = (SELECT RoomID FROM Room WHERE Name = ? LIMIT 1) AND PersonID = (SELECT PersonID FROM Person WHERE Email = ? LIMIT 1) LIMIT 1', [game, email], (err, result)=>{
+  con.query('SELECT NickName, RoomID FROM Player WHERE RoomID = (SELECT RoomID FROM Room WHERE Name = ? LIMIT 1) AND PersonID = (SELECT PersonID FROM Person WHERE Email = ? LIMIT 1) LIMIT 1', [game, email], (err, result)=>{
     if(!result || result.length == 0){
       callback("bill");
     } else {
-      callback(result[0].NickName);
+      player = result[0];
+      con.query('SELECT State FROM Room WHERE RoomID = ?', [player.RoomID], (err, result)=>{
+        if(result[0].State != "closed"){
+          callback(player.NickName, true);
+        } else {
+          callback(player.NickName);
+        }
+      });
     }
   });
 }

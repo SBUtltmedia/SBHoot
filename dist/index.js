@@ -17,6 +17,7 @@ function closeAlert() {
 
 //Socket functions
 function roomListUpdate(people) {
+  console.log(people);
   $('#playerList').empty();
   state.roomSize = people.length;
   for (person of people) {
@@ -95,11 +96,7 @@ function changeState(newState, roomState) {
         if (isInstructor()) {
           changeDisplay(['#signout', '#gameCreation'], ["#authorize", '#gameManagement']);
         } else {
-          console.log(email, roomURL);
-          socket.emit('getNickname', email, roomURL, (nickname)=>{
-            console.log(nickname);
-            $("#nickname").val(nickname);
-          });
+          //When a user logs in, add them to the game if possible
           changeDisplay(['#join', '#gameCreation'], ["#authorize", '#waitingRoom', '#stage']);
           $("#roomId").val(roomURL);
         }
@@ -134,7 +131,7 @@ function changeState(newState, roomState) {
         }
         break;
     }
-    state.state = newState;
+    state.currentState = newState;
   }
 }
 

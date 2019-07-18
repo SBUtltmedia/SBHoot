@@ -50,14 +50,17 @@ function leaveGame() {
   changeState("MAIN_SCREEN");
 }
 
-function rejoinGame() {
+function rejoinGame(room) {
   if (socket.connected) {
-    socket.emit('joinGame', this.id, email, name, $('#nickname').val(), (isError) => {
+    if(typeof room != "string"){
+      room = this.id;
+    }
+    socket.emit('joinGame', room, email, name, $('#nickname').val(), (isError, msg) => {
       if (!isError) {
         changeState("WAITING_ROOM");
       } else {
         requestPrevGames();
-        sendAlert('Error: Room is closed or does not exist');
+        sendAlert(msg);
       }
     });
   } else {

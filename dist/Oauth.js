@@ -80,6 +80,13 @@ function makeApiCall() {
     firstName = resp.result.names[0].givenName;
     lastName = resp.result.names[0].familyName;
     $('#greeting').text('Hello, ' + name + '!');
-    changeState("MAIN_SCREEN");
+    socket.emit('getNickname', email, roomURL, (nickname, isOpen)=>{
+      $("#nickname").val(nickname);
+      if(isOpen){
+        rejoinGame(roomURL);
+      } else {
+        changeState("MAIN_SCREEN");
+      }
+    });
   });
 }
