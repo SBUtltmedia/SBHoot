@@ -52,7 +52,7 @@ function leaveGame() {
 
 function rejoinGame() {
   if (socket.connected) {
-    socket.emit('rejoinGameStudent', this.id, email, name, $('#nickname').val(), (isError) => {
+    socket.emit('joinGame', this.id, email, name, $('#nickname').val(), (isError) => {
       if (!isError) {
         changeState("WAITING_ROOM");
       } else {

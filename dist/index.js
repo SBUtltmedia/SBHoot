@@ -75,6 +75,7 @@ function displayPrevGames(games) {
   }
 }
 
+//Handles all UI state changes in Oauth.js, instructor.js, & student.js
 function changeState(newState, roomState) {
   if (newState != "LOGIN" && newState == state.currentState) {
     getRightButtons(roomState);
@@ -94,6 +95,11 @@ function changeState(newState, roomState) {
         if (isInstructor()) {
           changeDisplay(['#signout', '#gameCreation'], ["#authorize", '#gameManagement']);
         } else {
+          console.log(email, roomURL);
+          socket.emit('getNickname', email, roomURL, (nickname)=>{
+            console.log(nickname);
+            $("#nickname").val(nickname);
+          });
           changeDisplay(['#join', '#gameCreation'], ["#authorize", '#waitingRoom', '#stage']);
           $("#roomId").val(roomURL);
         }
@@ -133,7 +139,8 @@ function changeState(newState, roomState) {
 }
 
 function isInstructor() {
-  return location.href.split("/")[3] == "instructor";
+  items = location.href.split("/");
+  return items[items.length-1].split("#")[0] == "instructor";
 }
 
 function getRightButtons(roomState) {

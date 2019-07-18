@@ -174,10 +174,9 @@ io.on('connection', function(socket) {
     rejoinGame(socket, email, game, callback);
   });
 
-  socket.on('rejoinGameStudent', (room, email, name, nickname, callback) => {
-    joinGame(socket, room, email, name, nickname, callback);
+  socket.on('getNickname', (email, game, callback) => {
+    getNickname(email, game, callback);
   });
-
 
   //////////////////
   // GAME PLAYING //
@@ -509,7 +508,7 @@ function rejoinGame(socket, email, game, callback) {
       case 'open'://TODO: handle this case seperately
       default:
         state = result[0].State;
-        roomList[game] = {
+        roomList[game] = {//TODO: Take from DB, differentiate between existed & connected
           players: {},
           noResponse: [],
           masterSocketId: socket.id
@@ -562,6 +561,16 @@ function kahootUpload(socket, questions, callback){
       callback();
     }
     else console.log(err);
+  });
+}
+
+function getNickname(email, game, callback) {
+  con.query('SELECT NickName FROM Player WHERE RoomID = (SELECT RoomID FROM Room WHERE Name = ? LIMIT 1) AND PersonID = (SELECT PersonID FROM Person WHERE Email = ? LIMIT 1) LIMIT 1', [game, email], (err, result)=>{
+    if(!result || result.length == 0){
+      callback("bill");
+    } else {
+      callback(result[0].NickName);
+    }
   });
 }
 
