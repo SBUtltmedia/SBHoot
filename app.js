@@ -50,8 +50,8 @@ http.listen(8090, function() {
 //  - hash link quick game setup
 //  - Auto join or auto create if possible
 //  - Link for instructor
-//  - Auto fill student name?
 // Fix the 1 question delay on score & rank changes
+// Make timer count down
 // Allow student to join a game while playing
 // Add kick functionality for the instructor
 
@@ -116,17 +116,17 @@ io.on('connection', function(socket) {
   });
 
   socket.on('downloadReport', ()=>{
-    if(errorCheck(socket, [socket.room], "MAIN_SCREEN"))
+    if(errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
       sendReport(socket);
   });
 
   socket.on('useDefaultQuestions', (callback)=>{
-    if(errorCheck(socket, [socket.room], "MAIN_SCREEN"))
+    if(errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
       useDefaultQuestions(socket, callback);
   });
 
   socket.on('kahootUpload', (questions, callback) =>{
-    if(errorCheck(socket, [socket.room], "MAIN_SCREEN"))
+    if(errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
       kahootUpload(socket, questions, callback);
   });
 
@@ -144,22 +144,23 @@ io.on('connection', function(socket) {
   });
 
   socket.on('changeGameState', (state) => {
-    if(errorCheck(socket, [socket.room, socket.masterId], "MAIN_SCREEN"))
+    if(errorCheck(socket, [socket.room, socket.masterId], [], "MAIN_SCREEN"))
       changeGameState(socket, state);
   });
 
   socket.on('deleteGame', () => {
-    if(errorCheck(socket, [socket.room], "MAIN_SCREEN"))
+    if(errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
       deleteGame(socket);
   });
 
   socket.on('startGame', () => {
-    if(errorCheck(socket, [socket.room], "MAIN_SCREEN"))
+    if(errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
       startGame(socket);
   });
 
   socket.on('logUser', (email, firstName, lastName) => {
-    con.query(`INSERT INTO Person (Email, FirstName, LastName) SELECT ?, ? , ? WHERE NOT EXISTS(SELECT * FROM Person WHERE Email=?)`, [email, firstName, lastName, email]);
+    if(errorCheck(socket, [email, firstName, lastName], [], "MAIN_SCREEN"))
+      con.query(`INSERT INTO Person (Email, FirstName, LastName) SELECT ?, ? , ? WHERE NOT EXISTS(SELECT * FROM Person WHERE Email=?)`, [email, firstName, lastName, email]);
   });
 
   socket.on('requestPreviousGames', (email) => {
@@ -183,17 +184,17 @@ io.on('connection', function(socket) {
   //////////////////
 
   socket.on('checkAnswer', (choice, time, email) => {
-    if(errorCheck(socket, [socket.room, roomList[socket.room], roomList[socket.room].questions], "MAIN_SCREEN"))
+    if(errorCheck(socket, [socket.room, roomList[socket.room]], ['questions'], "MAIN_SCREEN"))
       checkAnswer(socket, choice, time, email);
   });
 
   socket.on('leaveGame', (email) => {
-    if(errorCheck(socket, [socket.room, roomList[socket.room], roomList[socket.room].noResponse], "MAIN_SCREEN"))
+    if(errorCheck(socket, [socket.room, roomList[socket.room]], ['noResponse'], "MAIN_SCREEN"))
       leaveGame(socket, email);
   });
 
   socket.on('stopGame', ()=>{
-    if(errorCheck(socket, [socket.room], "MAIN_SCREEN"))
+    if(errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
       stopGame(socket);
   });
 });
@@ -204,60 +205,67 @@ io.on('connection', function(socket) {
 
 //Sends questions to students
 function sendQuestion(socket) {
-  //Score remaining & refill noResponse
-  scoreLeftovers(socket);
+  //Refill noResponse array
+  roomList[socket.room]['noResponse'] = getMapAttr(roomList[socket.room]['players'], ['email']);
 
-  questions = roomList[socket.room]['questions'];
-
-  //Save information thus far
   //Shuffle list if necessary
   if (!roomList[socket.room].questionShuffleList || roomList[socket.room].questionShuffleList.length==0) {
-    roomList[socket.room].questionShuffleList = shuffle(questions.length);
+    roomList[socket.room].questionShuffleList = shuffle(roomList[socket.room]['questions'].length);
   }
+
   //Get next question
   var questionIndex = roomList[socket.room].questionShuffleList.pop();
   roomList[socket.room].questionIndex = questionIndex;
-  var question = questions[questionIndex];
+  var question = roomList[socket.room].questions[questionIndex];
 
   //Save last answer & set new answer
-  var pastAnswer = roomList[socket.room]['answer'];
-  roomList[socket.room]['answer'] = question.correct;
-  //delete question.correct;
-  roomList[socket.room]['question'] = question;
+  roomList[socket.room].answer = question.correct;
+  roomList[socket.room].question = question;
   roomList[socket.room].answerTime = question.time;
 
-  if (roomList[socket.room]['interval'] == 0) { //First run
-    io.to(socket.room).emit('sendQuestion', question);
-  } else {
-    sendAnswerAndPoints(socket, pastAnswer);
-    setTimeout(() => {
-      io.to(socket.room).emit('sendQuestion', question);
-    }, 2000);
-  }
+  io.to(socket.room).emit('sendQuestion', question, question.time);
 }
 
 //Resets the waiting interval once all players have answered
 function responsesIn(socket) {
-  clearTimeout(roomList[socket.room].interval);
-  sendQuestion(socket);
-  roomList[socket.room].interval = setTimeout(()=>{
-    sendQuestion(socket);
-  }, roomList[socket.room].answerTime);
+  var answerReadTime = 2000;
+
+  clearInterval(roomList[socket.room].interval);
+  clearTimeout(roomList[socket.room].timeoutTemp);
+  sendAnswerAndPoints(socket);
+
+  //Send question immediately on the first run,
+  //but wait for the answer every time thereafter
+  if(roomList[socket.room].timeoutTemp)
+    setTimeout(() => sendQuestion(socket), answerReadTime);
+  else sendQuestion(socket);
+
+  //Since the first question has already handled the answer delay,
+  //we should only wait for the actual answer time
+  roomList[socket.room].timeoutTemp = setTimeout(() => {
+    sendAnswerAndPoints(socket);
+    setTimeout(() => sendQuestion(socket), answerReadTime);
+
+    //Wait the full time + time to read the answer
+    roomList[socket.room].interval = setInterval(()=>{
+      sendAnswerAndPoints(socket);
+      setTimeout(() => sendQuestion(socket), answerReadTime);
+    }, (roomList[socket.room].answerTime * 1000) + answerReadTime);
+  }, (roomList[socket.room].answerTime * 1000));
 }
 
 //Checks a student submitted answerand updates the DB to reflect how they did
 function checkAnswer(socket, choice, time, email) {
-  //var question = roomList[socket.room]['question'];
   var player = roomList[socket.room].players[email];
   //Store who answered & what
   var score = getPoints(socket, time, choice);
-
+  console.log("Player scored", score)
   //Record score
   questionIndex = roomList[socket.room].questionIndex;
 
   //Update DB
   if (score > 0) {
-    con.query(`SELECT Score FROM Answer WHERE QuestionID = ? AND PlayerID = ?`,
+    con.query(`SELECT Score FROM Answer WHERE QuestionID = ? AND PlayerID = ? LIMIT 1`,
     [questionIndex, player.playerID], (err, result)=>{
       oldScore = result[0] ? result[0].Score : 0;
       if(score > oldScore){
@@ -265,9 +273,9 @@ function checkAnswer(socket, choice, time, email) {
           SET NumberAnswered = NumberAnswered + 1, NumberCorrect = NumberCorrect + 1, Score = Score + ?
           WHERE PlayerID = ?`, [score-oldScore, player.playerID]);
         player.score += score - oldScore;
+        console.log("Score replaced", oldScore, score);
         //Insert new score
-        con.query(`REPLACE INTO Answer VALUES(?,?,?);`,
-        [player.playerID, questionIndex, score]);
+        con.query('REPLACE INTO Answer VALUES(?,?,?);', [player.playerID, questionIndex, score]);
       } else {
         con.query(`UPDATE Player
           SET NumberAnswered = NumberAnswered + 1, NumberCorrect = NumberCorrect + 1
@@ -284,19 +292,14 @@ function checkAnswer(socket, choice, time, email) {
   }
 }
 
-// Refills noResponse array
-function scoreLeftovers(socket) {
-  roomList[socket.room]['noResponse'] = getMapAttr(roomList[socket.room]['players'], ['email']);
-}
-
-function sendAnswerAndPoints(socket, answer) {
-  //Only calculate once
+function sendAnswerAndPoints(socket) {
   results = getMapAttr(roomList[socket.room]['players'], ['nickname', 'score']);
 
   //Send specifically to each connected player
   for (var key in roomList[socket.room].players) {
     var player = roomList[socket.room].players[key];
-    io.to(player.socketId).emit('sendAnswer', answer, player.score, results);
+    console.log("Score sent", player.score);
+    io.to(player.socketId).emit('sendAnswer', roomList[socket.room].answer, player.score, results);
   }
 
   //Send results to instructor
@@ -373,10 +376,10 @@ function makeGame(socket, room, email, callback) {
 //Handles a student joining the game
 function joinGame(socket, room, email, name, nickname, callback) {
   //Check if the room is open and exists
-  con.query(`SELECT * FROM Room WHERE Name = ? AND State = 'open' LIMIT 1`, [room], (err, result1) => {
+  con.query(`SELECT RoomID, State FROM Room WHERE Name = ? AND State != 'closed' LIMIT 1`, [room], (err, result1) => {
     exists = result1 != undefined && result1.length > 0;
     if(!exists){
-      callback(true, 'Error: Room is closed or does not exist');
+      callback({isError: true, error: 'Error: Room is closed or does not exist'});
     } else {
       //Get PersonID
       con.query(`SELECT PersonID FROM Person WHERE Email = ? LIMIT 1`, [email], (err, result2) => {
@@ -387,7 +390,11 @@ function joinGame(socket, room, email, name, nickname, callback) {
 
           //All tests have been passed
           if(!result3 || result3.length == 0 || result3[0].PersonID == personId){
-            callback(false);
+            if(result1[0].State == 'playing'){
+              callback({isError: false, state:"PLAYING"});
+            } else{
+              callback({isError: false, state:"WAITING_ROOM"});
+            }
 
             socket.join(room);
             socket.room = room;
@@ -403,10 +410,11 @@ function joinGame(socket, room, email, name, nickname, callback) {
 
             //Send nicknames to waiting rooms
             io.to(socket.room).emit('roomListUpdate', getMapAttr(roomList[room].players, ['nickname']));
-            //Add player to DB
+
             roomList[room].roomId = roomId;
             roomList[room].players[email].personId = personId;
 
+            //Add player to DB
             con.query(`INSERT INTO Player (PersonID, RoomID) SELECT ?, ? WHERE NOT EXISTS(SELECT * FROM Player WHERE PersonID = ? AND RoomID = ?)`,
             [personId, roomId, personId, roomId], (err, result) => {
               //Get PlayerID if player is new
@@ -418,8 +426,11 @@ function joinGame(socket, room, email, name, nickname, callback) {
             });
             //Update nickname seperately so rejoin can use this function too
             con.query('UPDATE Player SET NickName = ? WHERE PersonID = ? AND RoomID = ?', [nickname, personId, roomId]);
+
+
+
           } else {
-            callback(true, 'Error: NickName is already taken');
+            callback({isError: true, error: 'Error: NickName is already taken'});
           }
         });
       });
@@ -459,7 +470,8 @@ function closeGameStep(socket) {
   socket.to(socket.room).emit('roomClosed');
   //Stop wasting server time
   if (roomList[socket.room].interval) {
-    clearTimeout(roomList[socket.room].interval);
+    clearInterval(roomList[socket.room].interval);
+    clearTimeout(roomList[socket.room].timeoutTemp);
   }
   //Kick everyone from the room except instructor
   io.of('/').in(socket.room).clients((error, socketIds) => {
@@ -586,9 +598,15 @@ function getNickname(email, game, callback) {
 ///////////////////////
 
 //Checks for a lack of room info, may be changed later
-function errorCheck(socket, needed, state){
+function errorCheck(socket, needed, neededRL, state){
   for(item of needed){
     if(!item){
+      io.to(socket.id).emit('serverMismatch', "Error: Server information does not reflect current client state", state);
+      return false;
+    }
+  }
+  for(item of neededRL){
+    if(!roomList[socket.room][item]){
       io.to(socket.id).emit('serverMismatch', "Error: Server information does not reflect current client state", state);
       return false;
     }

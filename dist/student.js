@@ -1,5 +1,13 @@
 state.questionTime = 0;
 state.questionInterval = 0;
+state.playerScore = 0;
+
+//Take a user out ofthe game when they close the screen,
+//server will ignore if they are not in a game
+window.onbeforeunload = () => {
+  leaveGame();
+  return null;
+};
 
 $(".answer").on(listeners, checkAnswer);
 $("#joinGame").on(listeners, joinGame);
@@ -26,11 +34,11 @@ function joinGame() {
     //Add player to DB if not exists
     logUser(email, firstName, lastName);
 
-    socket.emit('joinGame', $('#roomId').val(), email, name, $('#nickname').val(), (isError, reason) => {
-      if (!isError) {
-        changeState("WAITING_ROOM");
+    socket.emit('joinGame', $('#roomId').val(), email, name, $('#nickname').val(), (returnVal) => {
+      if (!returnVal.isError) {
+        changeState(returnVal.state);
       } else {
-        sendAlert(reason);
+        sendAlert(returnVal.error);
       }
     });
   } else {
@@ -55,12 +63,12 @@ function rejoinGame(room) {
     if(typeof room != "string"){
       room = this.id;
     }
-    socket.emit('joinGame', room, email, name, $('#nickname').val(), (isError, msg) => {
-      if (!isError) {
-        changeState("WAITING_ROOM");
+    socket.emit('joinGame', room, email, name, $('#nickname').val(), (returnVal) => {
+      if (!returnVal.isError) {
+        changeState(returnVal.state);
       } else {
         requestPrevGames();
-        sendAlert(msg);
+        sendAlert(returnVal.error);
       }
     });
   } else {
@@ -68,15 +76,18 @@ function rejoinGame(room) {
   }
 }
 
-function sendQuestion(myJson) {
+function sendQuestion(myJson, timeGiven) {
+  $(".answer").removeClass("rightAnswer wrongAnswer");
   clearInterval(state.questionInterval);
   state.questionTime = 0;
   state.questionInterval = setInterval(() => {
     state.questionTime++;
+    time = timeGiven - state.questionTime;
+    if(time >= 0)
+      $("#timer").html(timeGiven - state.questionTime);
   }, 1000);
   state.pickedAnswer = -1;
 
-  //changeBodyBg();
   changeState("PLAYING");
   $("#question").text(myJson.question);
   for (var i = 0; i < myJson.answers.length; i++) {
@@ -90,13 +101,18 @@ function roomClosed() {
 }
 
 function sendAnswer(answer, points, players) {
-  $('#pointCounter').text(points);
-  $('#answer_' + answer).addClass("rightAnswer");
-  if (answer != state.pickedAnswer) {
-    $('#answer_' + state.pickedAnswer).addClass("wrongAnswer");
+  if(points > state.playerScore)
+    state.playerScore = points;
+  $('#pointCounter').text(state.playerScore);
+
+  if(answer){
+    $('#answer_' + answer).addClass("rightAnswer");
+    if (answer != state.pickedAnswer) {
+      $('#answer_' + state.pickedAnswer).addClass("wrongAnswer");
+    }
+    //Prevent player from answering after receiving
+    state.pickedAnswer = -2;
   }
-  //Prevent player from answering after receiving
-  state.pickedAnswer = -2;
 
   //Bubblesort player standings
   for (var i = 0; i < players.length - 1; i++) {
@@ -116,11 +132,6 @@ function sendAnswer(answer, points, players) {
       $("#rank").text(state.rank);
       break;
     }
-  }
-
-  //Show top 5
-  for (var i = 0; i < players.length && i < 5; i++) {
-    $('#topRanked_' + i).text(players[i][0] + "\t\t" + players[i][1]);
   }
 }
 

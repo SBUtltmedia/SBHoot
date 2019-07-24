@@ -17,7 +17,6 @@ function closeAlert() {
 
 //Socket functions
 function roomListUpdate(people) {
-  console.log(people);
   $('#playerList').empty();
   state.roomSize = people.length;
   for (person of people) {
@@ -126,7 +125,7 @@ function changeState(newState, roomState) {
         if (isInstructor()) {
           changeDisplay(['#playerResults', '#stopGame'], ['#startGame', "#playerList"]);
         } else {
-					changeDisplay(['#stage'], ['#waitingRoom']);
+					changeDisplay(['#stage'], ['#waitingRoom', '#join']);
 				  $('.answer').removeClass('rightAnswer wrongAnswer');
         }
         break;
