@@ -266,28 +266,24 @@ function checkAnswer(socket, choice, time, email) {
   //Record score
   questionIndex = roomList[socket.room].questionIndex;
 
-  //Update DB
-  if (score > 0) {
-    con.query(`SELECT Score FROM Answer WHERE QuestionID = ? AND PlayerID = ? LIMIT 1`,
-      [questionIndex, player.playerID], (err, result) => {
-        oldScore = result[0] ? result[0].Score : 0;
-        if (score > oldScore) {
-          con.query(`UPDATE Player
-          SET NumberAnswered = NumberAnswered + 1, NumberCorrect = NumberCorrect + 1, Score = Score + ?
-          WHERE PlayerID = ?`, [score - oldScore, player.playerID]);
-          player.score += score - oldScore;
-          //Insert new score
-          con.query('REPLACE INTO Answer VALUES(?,?,?);', [player.playerID, questionIndex, score]);
-        } else {
-          con.query(`UPDATE Player
-          SET NumberAnswered = NumberAnswered + 1, NumberCorrect = NumberCorrect + 1
-          WHERE PlayerID = ?`, [player.playerID]);
-        }
-      });
+  if(score > 0){
+    if(!player.answers[questionIndex] || player.answers[questionIndex] < score){//Player exceeded their current top score
+      if(!player.answers[questionIndex])
+        player.answers[questionIndex] = 0;
+      player.score += score - player.answers[questionIndex];
+
+      con.query(`UPDATE Player SET NumberAnswered = NumberAnswered + 1, NumberCorrect = NumberCorrect + 1, Score = Score + ? WHERE PlayerID = ?`, [score - player.answers[questionIndex], player.playerID]);
+      con.query('REPLACE INTO Answer VALUES(?,?,?);', [player.playerID, questionIndex, score]);
+      player.answers[questionIndex] = score
+    } else {//Player matched or did the same
+      con.query(`UPDATE Player SET NumberAnswered = NumberAnswered + 1, NumberCorrect = NumberCorrect + 1 WHERE PlayerID = ?`, [player.playerID]);
+    }
+  } else {
+    con.query(`UPDATE Player SET NumberAnswered = NumberAnswered + 1 WHERE PlayerID = ?`, [player.playerID]);
   }
 
-  var room = socket.room;
   //Remove answered player
+  var room = socket.room;
   roomList[room]['noResponse'].splice(roomList[room]['noResponse'].indexOf(email), 1);
   if (roomList[room]['noResponse'].length == 0) {
     responsesIn(socket);
