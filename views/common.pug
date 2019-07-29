@@ -27,12 +27,13 @@
     <button id="authorize-button">Authorize</button>
   </div>
   
+  <div id="dialog" title="">
+    <p id="dialogText"></p>
+  </div>
+  
 if clientType=='instructor'
   include instructor.pug
 else
   include student.pug
 
-  <div id="dialog" title="">
-    <p id="dialogText"></p>
-  </div>
 </html>

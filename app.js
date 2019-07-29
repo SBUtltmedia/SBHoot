@@ -48,10 +48,8 @@ http.listen(8090, function() {
 // TODO:
 // Add kick functionality for the instructor
 // Break up app.js into seperate files for clarity
-// Deep linking https://github.com/asual/jquery-address, http://www.asual.com/jquery/address/
 // Fix queries to take advantage of multiple execution
 //  - Link for instructor
-// Fix sendReport a la roomList[socket.room].roomId
 
 io.on('connection', function(socket) {
 
@@ -338,26 +336,52 @@ function startGame(socket) {
 
 //Makes a game with the creator acting as an instructor
 function makeGame(socket, room, email, callback) {
-  con.query(`SELECT * FROM Person WHERE Email = ? LIMIT 1`, [email], (err, result) => {
-    socket.masterId = result[0].PersonID;
-    con.query(`SELECT * FROM Room WHERE Name = ? LIMIT 1`, [room], (err, result) => {
-      failed = result != undefined && result.length > 0;
-      callback(failed);
-      if (!failed) {
-        socket.join(room);
-        socket.room = room;
-        roomList[room] = {
-          players: {},
-          noResponse: [],
-          masterId: socket.id
-        };
-        con.query(`INSERT INTO Room (InstructorID, Name) VALUES (?, ?);SELECT RoomID FROM Room WHERE Name = ? LIMIT 1;`,
-        [socket.masterId, room, room], (err, result) => {
-          //Get RoomID to make subsequent references easier
-          roomList[room].roomId = result[1][0].RoomID;
-        });
-      }
-    });
+  // con.query(`SELECT * FROM Person WHERE Email = ? LIMIT 1`, [email], (err, result) => {
+  //   socket.masterId = result[0].PersonID;
+  //   con.query(`SELECT * FROM Room WHERE Name = ? LIMIT 1`, [room], (err, result) => {
+  //     failed = result != undefined && result.length > 0;
+  //     callback(failed);
+  //     if (!failed) {
+  //       socket.join(room);
+  //       socket.room = room;
+  //       roomList[room] = {
+  //         players: {},
+  //         noResponse: [],
+  //         masterId: socket.id
+  //       };
+  //       con.query(`INSERT INTO Room (InstructorID, Name) VALUES (?, ?);SELECT RoomID FROM Room WHERE Name = ? LIMIT 1;`,
+  //       [socket.masterId, room, room], (err, result) => {
+  //         //Get RoomID to make subsequent references easier
+  //         roomList[room].roomId = result[1][0].RoomID;
+  //       });
+  //     }
+  //   });
+  // });
+
+  //Get PersonID & Check if a room w/ that name exists
+  con.query(`SELECT PersonID FROM Person WHERE Email = ? LIMIT 1;
+             SELECT RoomID FROM ROOM WHERE Name = ? LIMIT 1;`, [email, room], (err, result) =>{
+               console.log(result);
+    failed = result[1] == undefined || result[1].length == 0;
+    callback(failed);
+    if(!failed){
+      socket.masterId = result[0][0].PersonID;
+
+      socket.join(room);
+      socket.room = room;
+      roomList[room] = {
+        players: {},
+        noResponse: [],
+        masterId: socket.id
+      };
+
+      //Add room to DB and set RoomID for the future
+      con.query(`INSERT INTO Room (InstructorID, Name) VALUES (?, ?); SELECT RoomID FROM Room WHERE Name = ? LIMIT 1;`,
+      [socket.masterId, room, room], (err, result) => {
+        //Get RoomID to make subsequent references easier
+        roomList[room].roomId = result[1][0].RoomID;
+      });
+    }
   });
 }
 
@@ -395,8 +419,8 @@ function joinGame(socket, room, email, name, nickname, callback) {
             socketId: socket.id
           };
           //Get previous score & PlayerID if exists
-          roomList[room].players[email].score = result2[1] ? result2[1][0].Score : 0;
-          roomList[room].players[email].playerID = result2[1] ? result2[1][0].PlayerID : undefined;
+          roomList[room].players[email].score = result2[1] ?  0 : result2[1][0].Score;
+          roomList[room].players[email].playerID = result2[1] ? undefined : result2[1][0].PlayerID;
 
           //Send nicknames to waiting rooms
           io.to(socket.room).emit('roomListUpdate', getMapAttr(roomList[room].players, ['nickname']));
@@ -527,7 +551,7 @@ function rejoinGame(socket, email, game, callback) {
 
 function sendReport(socket) {
   room = roomList[socket.room].roomId;
-  
+
   con.query(`SELECT Player.PersonID, Answer.QuestionID, Answer.Score FROM Player, Answer
     WHERE Player.PlayerID=Answer.PlayerID and Player.RoomID = ?;
     SELECT p.PersonID, p.Email, p.FirstName, p.LastName, pl.NickName, pl.NumberAnswered, pl.NumberCorrect
