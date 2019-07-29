@@ -51,15 +51,7 @@ http.listen(8090, function() {
 // Deep linking https://github.com/asual/jquery-address, http://www.asual.com/jquery/address/
 // Fix queries to take advantage of multiple execution
 //  - Link for instructor
-// Fix the 1 question delay on score & rank changes
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-// Pull all questions when someone joins & alter in temporary memory. Push changes to DB in batches
-// questions = {//Dict by QID
-//   0: {isChanged: false, score: 0},
-//   1: {isChanged: false, score: 65}
-// }
-
-
+// Fix sendReport a la roomList[socket.room].roomId
 
 io.on('connection', function(socket) {
 
@@ -296,7 +288,6 @@ function sendAnswerAndPoints(socket) {
   //Send specifically to each connected player
   for (var key in roomList[socket.room].players) {
     var player = roomList[socket.room].players[key];
-    console.log("Score sent", player.score);
     io.to(player.socketId).emit('sendAnswer', roomList[socket.room].answer, player.score, results);
   }
 
@@ -360,11 +351,10 @@ function makeGame(socket, room, email, callback) {
           noResponse: [],
           masterId: socket.id
         };
-        con.query(`INSERT INTO Room (InstructorID, Name) VALUES (?, ?);`, [socket.masterId, room], (err, result) => {
+        con.query(`INSERT INTO Room (InstructorID, Name) VALUES (?, ?);SELECT RoomID FROM Room WHERE Name = ? LIMIT 1;`,
+        [socket.masterId, room, room], (err, result) => {
           //Get RoomID to make subsequent references easier
-          con.query("SELECT RoomID FROM Room WHERE Name = ? LIMIT 1", [room], (err, result) => {
-            roomList[room].roomId = result[0].RoomID;
-          })
+          roomList[room].roomId = result[1][0].RoomID;
         });
       }
     });
@@ -500,14 +490,14 @@ function rejoinGame(socket, email, game, callback) {
   //Initialize roomList to avoid synchronicity errors
   roomList[game] = roomList[game] ? roomList[game] : {};
 
-  con.query('SELECT State, RoomID, InstructorID, State FROM Room WHERE Name = ? LIMIT 1', [game], (err, result) => {
+  con.query('SELECT State, RoomID, InstructorID FROM Room WHERE Name = ? LIMIT 1', [game], (err, result) => {
     //Get RoomID & InstructorID to make subsequent references easier
     roomList[game].roomId = result[0].RoomID;
+
     socket.masterId = result[0].InstructorID;
 
     socket.join(game);
     socket.room = game;
-
     switch (result[0].State) {
       //Shouldn't pile a new game onto a running one
       case 'playing':
@@ -519,11 +509,10 @@ function rejoinGame(socket, email, game, callback) {
       case 'open': //TODO: handle this case seperately
       default:
         state = result[0].State;
-        roomList[game] = { //TODO: Take from DB, differentiate between existed & connected
-          players: {},
-          noResponse: [],
-          masterSocketId: socket.id
-        };
+        //TODO: Take from DB, differentiate between existed & connected
+        roomList[game].players = {};
+        roomList[game].noResponse = [];
+        roomList[game].masterSocketId = socket.id;
 
         //See whether or not we need to display file drop
         if (fs.existsSync('quizzes/' + game + '.json')) {
@@ -537,20 +526,15 @@ function rejoinGame(socket, email, game, callback) {
 }
 
 function sendReport(socket) {
-  room = socket.room;
-  //Gets answers with identifying PersonID
-  con.query(`SELECT Player.PersonID,Answer.QuestionID, Answer.Score
-    FROM Player,Answer
-    WHERE Player.PlayerID=Answer.PlayerID and Player.RoomID = ?;`, [roomList[room].roomId], (err1, r1) => {
-    //Gets all necessary info about people
-    con.query(`SELECT p.PersonID, p.Email, p.FirstName, p.LastName, pl.NickName, pl.NumberAnswered, pl.NumberCorrect
-        FROM Person p
-        INNER JOIN
-        (SELECT * FROM Player WHERE Player.RoomID = ?) pl
-        ON p.PersonID = pl.PersonID;`, [roomList[room].roomId], (err2, r2) => {
-      io.to(socket.id).emit('sendReport', r1, r2, roomList[room].questions);
+  room = roomList[socket.room].roomId;
+  
+  con.query(`SELECT Player.PersonID, Answer.QuestionID, Answer.Score FROM Player, Answer
+    WHERE Player.PlayerID=Answer.PlayerID and Player.RoomID = ?;
+    SELECT p.PersonID, p.Email, p.FirstName, p.LastName, pl.NickName, pl.NumberAnswered, pl.NumberCorrect
+    FROM Person p INNER JOIN (SELECT * FROM Player WHERE Player.RoomID = ?) pl ON p.PersonID = pl.PersonID;`,
+    [room, room], (err, result) => {
+      io.to(socket.id).emit('sendReport', result[0], result[1], roomList[socket.room].questions);
     });
-  });
 }
 
 function useDefaultQuestions(socket, callback) {
@@ -574,7 +558,7 @@ function kahootUpload(socket, questions, callback) {
 }
 
 function getNickname(email, game, callback) {
-  con.query('SELECT NickName, RoomID FROM Player WHERE RoomID = (SELECT RoomID FROM Room WHERE Name = ? LIMIT 1) AND PersonID = (SELECT PersonID FROM Person WHERE Email = ? LIMIT 1) LIMIT 1', [game, email], (err, result) => {
+  con.query('SELECT NickName, RoomID FROM Player WHERE RoomID = (SELECT RoomID FROM Room WHERE Name = ? LIMIT 1) AND PersonID = (SELECT PersonID FROM Person WHERE Email = ? LIMIT 1) LIMIT 1;', [game, email], (err, result) => {
     if (!result || result.length == 0) {
       callback("bill");
     } else {
