@@ -175,6 +175,10 @@ button:active {
   padding: 2rem;
 }
 
+
+td, th {
+    padding: 2rem;
+}
 #greeting {
   font-size: 4rem;
   text-align: center;
@@ -235,29 +239,41 @@ li{
   align-content: center;
 }
 
-#rank {
-  font-size: 2rem;
+#rank #score{
+  font-size: 4rem;
 }
 
 #stage {
   background-color: #B3B3B3;
+  height: 100%;
 }
 
 #header {
+  display: grid;
+  /*grid-template-columns: repeat(3, 1fr);*/
+  grid-gap: 1rem;
+  grid-auto-rows: minmax(2rem, auto);
   font-family: Helvetica;
-  font-size: 32pt;
+  font-size: 4rem;
   color: white;
   height:22rem;
   min-height:22rem;
-  text-align: center;
+  /*text-align: center;*/
   overflow:hidden;
   /*background-color: rgba(255, 255, 255, 0.3);*/
   background-color: #C1272D;
+  padding: 2rem;
 	/*-webkit-box-shadow: 0 8px  #8E8EA5;
 	   -moz-box-shadow: 0 8px  #8E8EA5;
 	        box-shadow: 0 8px  #8E8EA5;*/
 
 }
+
+#score{
+  grid-column: 1/3;
+  grid-row: 1;
+}
+
 
 #code {
   display:none;
@@ -265,15 +281,25 @@ li{
 }
 
 #timer {
-  position: fixed;
+  grid-column: 1;
+  /*position: fixed;
   top: 0;
   right: 0;
   text-align: right;
-  font-size: 50px;
+  /*font-size: 50px;
   width: 80px;
   height: 80px;
-  /*background: #D3D3EA;*/
-  background-color: rgba(0, 160, 120, 0.2);
+  background: #D3D3EA;
+  background-color: rgba(0, 160, 120, 0.2);*/
+}
+
+#question {
+
+  grid-column: 2 / 4;
+  grid-row: 1;
+  text-align: center;
+  padding: 2rem;
+  font-size: 4.5rem;
 }
 
 #submit {
@@ -340,12 +366,12 @@ background-color: #ffffc0*/
   33% {font-size: 60px;}
   66% {font-size: 50px;}
 }
-@media only screen and (min-width: 768px) {
+@media only screen and (max-width: 768px) {
   body{
     /*background: green;*/
   }
 .answer {
 
-    font-size: 5rem;
+    font-size: 8rem;
   }
 }
