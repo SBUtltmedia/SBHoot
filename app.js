@@ -48,8 +48,9 @@ http.listen(8090, function() {
 // TODO:
 // Add kick functionality for the instructor
 // Break up app.js into seperate files for clarity
-// Fix queries to take advantage of multiple execution
 //  - Link for instructor
+// Fix score for student
+// Waiting screen when student joins inbetween questions
 
 io.on('connection', function(socket) {
 
@@ -183,8 +184,7 @@ io.on('connection', function(socket) {
   });
 
   socket.on('leaveGame', (email) => {
-    if (errorCheck(socket, [socket.room, roomList[socket.room]], ['noResponse'], "MAIN_SCREEN"))
-      leaveGame(socket, email);
+    leaveGame(socket, email);
   });
 
   socket.on('stopGame', () => {
@@ -311,9 +311,10 @@ function sendProfResults(socket) {
   var socketList = io.sockets.server.eio.clients;
   //Only send instructor data if connected
   if (!(socketList[roomList[socket.room].masterSocketId] === undefined)) {
-    con.query('SELECT NickName, Score FROM Player WHERE RoomID = ?', [roomList[socket.room].roomId], (err, result) => {
-      io.to(roomList[socket.room].masterSocketId).emit('playerResults', result);
-    });
+    // con.query('SELECT NickName, Score FROM Player WHERE RoomID = ?', [roomList[socket.room].roomId], (err, result) => {
+    //   io.to(roomList[socket.room].masterSocketId).emit('playerResults', result);
+    // });
+    io.to(socket.id).emit('playerResults', getMapAttr(roomList[socket.room].players, ['nickname', 'score']));
   }
 }
 
@@ -336,28 +337,6 @@ function startGame(socket) {
 
 //Makes a game with the creator acting as an instructor
 function makeGame(socket, room, email, callback) {
-  // con.query(`SELECT * FROM Person WHERE Email = ? LIMIT 1`, [email], (err, result) => {
-  //   socket.masterId = result[0].PersonID;
-  //   con.query(`SELECT * FROM Room WHERE Name = ? LIMIT 1`, [room], (err, result) => {
-  //     failed = result != undefined && result.length > 0;
-  //     callback(failed);
-  //     if (!failed) {
-  //       socket.join(room);
-  //       socket.room = room;
-  //       roomList[room] = {
-  //         players: {},
-  //         noResponse: [],
-  //         masterId: socket.id
-  //       };
-  //       con.query(`INSERT INTO Room (InstructorID, Name) VALUES (?, ?);SELECT RoomID FROM Room WHERE Name = ? LIMIT 1;`,
-  //       [socket.masterId, room, room], (err, result) => {
-  //         //Get RoomID to make subsequent references easier
-  //         roomList[room].roomId = result[1][0].RoomID;
-  //       });
-  //     }
-  //   });
-  // });
-
   //Get PersonID & Check if a room w/ that name exists
   con.query(`SELECT PersonID FROM Person WHERE Email = ? LIMIT 1;
              SELECT RoomID FROM ROOM WHERE Name = ? LIMIT 1;`, [email, room], (err, result) =>{
@@ -453,12 +432,16 @@ function joinGame(socket, room, email, name, nickname, callback) {
 
 //Handles a student leaving the game
 function leaveGame(socket, email) {
-  //Make sure nobody is waiting for them to answer
-  roomList[socket.room].noResponse.splice(roomList[socket.room].noResponse.indexOf(email), 1);
-  delete roomList[socket.room].players[email];
-
-  io.to(socket.room).emit('roomListUpdate', getMapAttr(roomList[socket.room]['players'], ['nickname']));
-  socket.leave(socket.room);
+  //Since leave is called whenever a page is left, we need to check if they were actually in a game
+  if(socket.room){
+    io.to(socket.room).emit('roomListUpdate', getMapAttr(roomList[socket.room]['players'], ['nickname']));
+    socket.leave(socket.room);
+    if(roomList[socket.room] && roomList[socket.room].players){
+      //Make sure nobody is waiting for them to answer
+      roomList[socket.room].noResponse.splice(roomList[socket.room].noResponse.indexOf(email), 1);
+      delete roomList[socket.room].players[email];
+    }
+  }
 }
 
 function changeGameState(socket, state) {
@@ -528,13 +511,13 @@ function rejoinGame(socket, email, game, callback) {
         roomList[game].masterSocketId = socket.id;
         callback("running");
         sendProfResults(socket);
-        io.to(socket.id).emit('playerResults', getMapAttr(roomList[game].players, ['nickname']));
+        io.to(socket.id).emit('playerResults', getMapAttr(roomList[game].players, ['nickname', 'score']));
         break;
       case 'open': //TODO: handle this case seperately
       default:
         state = result[0].State;
         //TODO: Take from DB, differentiate between existed & connected
-        roomList[game].players = {};
+        roomList[game].players = roomList[game].players ? roomList[game].players : {};
         roomList[game].noResponse = [];
         roomList[game].masterSocketId = socket.id;
 

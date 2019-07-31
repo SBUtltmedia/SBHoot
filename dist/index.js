@@ -54,6 +54,20 @@ function logUser(email, firstName, lastName) {
   socket.emit('logUser', email, firstName, lastName);
 }
 
+function clearTextbox(){
+  $(this).val("");
+}
+
+//Resets the default textbox value if nothing was entered
+function resetDefaultTextbox(tagId, defaultText, optional) {
+  if($(tagId).val() == ""){
+    if(optional)
+      $(tagId).val(optional);
+    else
+      $(tagId).val(defaultText);
+  }
+}
+
 function displayPrevGames(games) {
   if (!games || games.length == 0) {
     $('#rejoin ul').html('No previous games');
@@ -123,7 +137,9 @@ function changeState(newState, roomState) {
         break;
       case "PLAYING":
         if (isInstructor()) {
-          changeDisplay(['#playerResults', '#stopGame'], ['#startGame', "#playerList"]);
+          $('.gameName').text(game.Name);
+          console.log("Changing display...")
+          changeDisplay(['#playerResults','#gameManagement', '#stopGame'], ['#gameCreation', '#questionFile', '#startGame', "#playerList"]);
         } else {
 					changeDisplay(['#stage'], ['#waitingRoom', '#join']);
 				  $('.answer').removeClass('rightAnswer wrongAnswer');

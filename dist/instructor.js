@@ -8,6 +8,9 @@ $("#leaveGame").on(listeners, leaveGame);
 $("#downloadReport").on(listeners, downloadReport);
 $("#useDefaultQuestions").on(listeners, useDefaultQuestions);
 $("#uploadKahoot").on(listeners, uploadFromKahoot);
+$("#roomId").on("focus", clearTextbox);
+$("#roomId").on("focusout", ()=>{resetDefaultTextbox("#roomId", "yourClass")}));
+
 
 // Allows a user to upload a file
 var siofu = new SocketIOFileUpload(socket);
@@ -160,12 +163,12 @@ function playerResults(results) {
   if ($('#playerResults tr').length == 0) {
     $('#playerResults').append('<tr><th>Nickname</th><th>Score</th></tr>');
     for (player of results) {
-      tr = '<tr id="' + getSelector(player.NickName) + '"><td>' + player.NickName + '</td><td class="score">' + player.Score + '</td></tr>';
+      tr = '<tr id="' + getSelector(player[0]) + '"><td>' + player[0] + '</td><td class="score">' + player[1] + '</td></tr>';
       $('#playerResults').append(tr);
     }
   } else {
       for (player of results) {
-        $("#" + getSelector(player.NickName) + ' td.score').text(player.Score);
+        $("#" + getSelector(player[0]) + ' td.score').text(player[1]);
       }
   }
 }
