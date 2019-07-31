@@ -107,6 +107,7 @@ function roomClosed() {
 }
 
 function sendAnswer(answer, points, players) {
+  clearInterval(state.questionInterval);
   if (points > state.playerScore)
     state.playerScore = points;
   $('#pointCounter').text(state.playerScore);

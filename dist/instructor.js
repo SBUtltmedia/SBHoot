@@ -9,7 +9,7 @@ $("#downloadReport").on(listeners, downloadReport);
 $("#useDefaultQuestions").on(listeners, useDefaultQuestions);
 $("#uploadKahoot").on(listeners, uploadFromKahoot);
 $("#roomId").on("focus", clearTextbox);
-$("#roomId").on("focusout", ()=>{resetDefaultTextbox("#roomId", "yourClass")}));
+$("#roomId").on("focusout", ()=>{resetDefaultTextbox("#roomId", "yourClass")});
 
 
 // Allows a user to upload a file
