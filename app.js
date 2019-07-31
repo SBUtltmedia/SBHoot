@@ -339,8 +339,8 @@ function startGame(socket) {
 function makeGame(socket, room, email, callback) {
   //Get PersonID & Check if a room w/ that name exists
   con.query(`SELECT PersonID FROM Person WHERE Email = ? LIMIT 1;
-             SELECT RoomID FROM ROOM WHERE Name = ? LIMIT 1;`, [email, room], (err, result) =>{
-    failed = result[1] != undefined && result[1].length != 0;
+             SELECT RoomID FROM Room WHERE Name = ? LIMIT 1;`, [email, room], (err, result) =>{
+    failed = result[1].length != 0;
     callback(failed);
     if(!failed){
       socket.masterId = result[0][0].PersonID;
