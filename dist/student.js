@@ -84,22 +84,22 @@ function rejoinGame(room) {
 
 function sendQuestion(myJson, timeGiven) {
   $(".answer").removeClass("rightAnswer wrongAnswer");
-  clearInterval(state.questionInterval);
   state.questionTime = 0;
+  $("#timer").html(timeGiven);
   state.questionInterval = setInterval(() => {
     state.questionTime++;
     time = timeGiven - state.questionTime;
     if (time >= 0)
-      $("#timer").html(timeGiven - state.questionTime);
+      $("#timer").html(time);
   }, 1000);
   state.pickedAnswer = -1;
 
-  changeState("PLAYING");
   $("#question").text(myJson.question);
   for (var i = 0; i < myJson.answers.length; i++) {
     $("#answer_" + i).text(myJson.answers[i]);
   }
   resizeWindow();
+  changeState("PLAYING");
 }
 
 function roomClosed() {
