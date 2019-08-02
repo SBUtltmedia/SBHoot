@@ -14,22 +14,29 @@
   </div>
 
   <div id="gameManagement" style="display:none;">
-    <h3>Students, please join room <span class="gameName"/></h3>
-    <button id="downloadReport" type="button" name="button" style="display: none;">Download Game Report</button>
-    <button id="openGame" type="button" name="button" style="display: none;">Open</button>
-    <button id="closeGame" type="button" name="button">Close</button>
-    <button id="leaveGame" type="button" name="button">Leave</button>
-    <button id="deleteGame"type="button" name="button">Delete</button>
-    <button id="startGame" type="button" name="button" style="display: none;">Start</button>
-    <button id="stopGame" type="button" name="button" style="display: none;">Stop</button>
-    <div id="questionFile">
-      <div id="file_drop" dropzone="copy" title="drop files for upload">Drop Question File to Start</div>
-      <span>Or</span><br>
-      <span>Upload from a Kahoot URL<br>
-        <input type="text" id="kahootURL" value=""><button id="uploadKahoot" type="button" name="button">Upload</button>
-      </span><br>
-      <span>Or</span><br>
-      <button id="useDefaultQuestions" type="button" name="button">Use default question file</button>
+    <h3><span id="room-message">Students, please join room </span><span class="gameName"/></h3>
+    <div id="buttons">
+      <div id="non-essential-buttons">
+        <select name="options" id="options">
+          <option value="">Game Options</option>
+          <option value="downloadReport" id="downloadReport" style="display: none;">Download Game Report</option>
+          <option value="openGame" id="openGame" style="display: none;">Open</option>
+          <option value="closeGame" id="closeGame">Close</option>
+          <option value="leaveGame" id="leaveGame">Leave</option>
+          <option value="deleteGame" id="deleteGame">Delete</option>
+        </select>
+      </div>
+      <button id="startGame" type="button" name="button" style="display: none;">Start</button>
+      <button id="stopGame" type="button" name="button" style="display: none;">Stop</button>
+      <div id="questionFile">
+        <div id="file_drop" dropzone="copy" title="drop files for upload">Drop Question File to Start</div>
+        <span>Or</span><br>
+        <span>Upload from a Kahoot URL<br>
+          <input type="text" id="kahootURL" value=""><button id="uploadKahoot" type="button" name="button">Upload</button>
+        </span><br>
+        <span>Or</span><br>
+        <button id="useDefaultQuestions" type="button" name="button">Use default question file</button>
+      </div>
     </div>
     <ul id="playerList"></ul>
     <table id="playerResults" style="display: none;"/>

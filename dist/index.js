@@ -9,7 +9,6 @@ var state = {
 socket.on('roomListUpdate', roomListUpdate);
 socket.on('sendAlert', sendAlert);
 socket.on('serverMismatch', serverMismatch);
-//socket.on('reconnect', handleReconnect);
 
 function closeAlert() {
   $('#dialog').dialog('close');
@@ -138,7 +137,6 @@ function changeState(newState, roomState) {
       case "PLAYING":
         if (isInstructor()) {
           $('.gameName').text(game.Name);
-          console.log("Changing display...")
           changeDisplay(['#playerResults','#gameManagement', '#stopGame'], ['#gameCreation', '#questionFile', '#startGame', "#playerList"]);
         } else {
 					changeDisplay(['#stage'], ['#waitingRoom', '#join']);

@@ -539,14 +539,14 @@ function rejoinGame(socket, email, game, callback) {
 
           roomList[game].players = roomList[game].players ? roomList[game].players : {};
           roomList[game].noResponse = [];
-
+          changeGameState('open');
 
           //See whether or not we need to display file drop
           if (fs.existsSync('quizzes/' + game + '.json')) {
-            callback("file drop", state);
+            callback("file drop", 'open');
             parseJSON(socket, 'quizzes/' + game + '.json');
           } else {
-            callback("", state);
+            callback("", 'open');
           }
       }
     });

@@ -1,16 +1,19 @@
 $("#makeGame").on(listeners, makeGame);
-$("#openGame").on(listeners, openGame);
-$("#closeGame").on(listeners, closeGame);
-$("#deleteGame").on(listeners, deleteGame);
 $("#startGame").on(listeners, startGame);
 $("#stopGame").on(listeners, stopGame);
-$("#leaveGame").on(listeners, leaveGame);
-$("#downloadReport").on(listeners, downloadReport);
 $("#useDefaultQuestions").on(listeners, useDefaultQuestions);
 $("#uploadKahoot").on(listeners, uploadFromKahoot);
 $("#roomId").on("focus", clearTextbox);
 $("#roomId").on("focusout", ()=>{resetDefaultTextbox("#roomId", "yourClass")});
 
+$("#options").on("change", routeOptions);
+
+function routeOptions(){
+  if($(this).val() != ""){
+    (new Function($(this).val() + "()"))();
+    $(this).val("");
+  }
+}
 
 // Allows a user to upload a file
 var siofu = new SocketIOFileUpload(socket);
@@ -124,11 +127,13 @@ function makeGame() {
 
 function openGame() {
   socket.emit('changeGameState', 'open');
+  $("#room-message").text("Students, please join room ");
   changeState(state.currentState, 'open');
 }
 
 function closeGame() {
   socket.emit('changeGameState', 'closed');
+  $("#room-message").text("");
   changeState(state.currentState, 'closed');
 }
 
@@ -156,7 +161,9 @@ function stopGame() {
 }
 
 function leaveGame(){
-  changeState("MAIN_SCREEN");
+  if(confirm("Are you sure you want to leave? All your data will be saved")){
+    changeState("MAIN_SCREEN");
+  }
 }
 
 function playerResults(results) {

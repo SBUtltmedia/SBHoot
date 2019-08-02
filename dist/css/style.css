@@ -1,84 +1,94 @@
 body {
   user-select: none;
-font-family: 'PT Sans'!important;
+  font-family: 'PT Sans' !important;
   /* margin: 10%; */
   /* font-family: 'Pangolin', cursive; */
   font-size: 30px;
 }
 
-#authorize{
+#buttons {
+  text-align: center;
+}
+
+#non-essential-buttons {
+  text-align: left;
+  top: 5%;
+  left: 5%;
+}
+
+#authorize {
   text-align: center;
   margin: 4rem;
 }
 
-#join img{
+#join img {
   width: 20%;
   height: 20%;
   margin: auto;
-  display:flex;
- align-self: center;
+  display: flex;
+  align-self: center;
 }
+
 ul {
   list-style: none;
 }
+
 .item1 {
   grid-column: 1/2;
 }
 
-#waitingRoom{
+#waitingRoom {
   font-size: 4rem;
   margin: 6rem;
 }
 
-#waitingRoom h5{
+#waitingRoom h5 {
   font-size: 2rem;
   margin: 1rem;
   color: #C1272D;
 }
 
-#waitingRoom h6{
+#waitingRoom h6 {
   font-size: 2rem;
 }
 
-#waitingRoom img{
+#waitingRoom img {
   width: 20%;
   height: 20%;
   margin: auto;
-  display:flex;
+  display: flex;
 }
 
-
-.BGhighlight{
-  color:#EEEEEE;
+.BGhighlight {
+  color: #EEEEEE;
   background-color: #C1272D;
 }
 
 @import url('https://fonts.googleapis.com/css?family=PT+Sans&display=swap');
-#join{
 
-    margin:auto;
-max-width:100%;
-min-width:100%;
-
-border-style: solid;
-border-width: 4rem;
-border-color: white;}
+#join {
+  margin: auto;
+  max-width: 100%;
+  min-width: 100%;
+  border-style: solid;
+  border-width: 4rem;
+  border-color: white;
+}
 
 button {
-
-    display: inline-block;
-    padding: .2rem .75rem;
-    margin: 0;
-    border-radius:1rem;
-    text-decoration: none;
-    background: #C1272D;
-    color: #ffffff;
-    font-size: 2rem!important;
-    text-align: center;
-    transition: background 250ms ease-in-out,
-                transform 150ms ease;
-    -webkit-appearance: none;
-    -moz-appearance: none;
+  display: inline-block;
+  padding: .2rem .75rem;
+  margin: 0;
+  border-radius: 1rem;
+  text-decoration: none;
+  background: #C1272D;
+  color: #ffffff;
+  font-size: 2rem !important;
+  text-align: center;
+  transition: background 250ms ease-in-out,
+    transform 150ms ease;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
 /*button:hover,
@@ -88,14 +98,13 @@ button:focus {
 }
 
 button:focus {
-    outline: 1px solid #fff;
-    outline-offset: -4px;
+  outline: 1px solid #fff;
+  outline-offset: -4px;
 }
 
 button:active {
-    transform: scale(0.99);
+  transform: scale(0.99);
 }
-
 
 /*
 .grid-container {
@@ -114,10 +123,11 @@ button:active {
  padding: 20px 0;
  font-size: 30px;
 } */
-#border{
+#border {
   border-style: solid;
   border-width: 4rem;
-  border-color: #C1272D;}
+  border-color: #C1272D;
+}
 }
 
 #signout-button {
@@ -131,54 +141,55 @@ button:active {
   margin: 2rem;
 }
 
-#signout .rejoinGame{
+#signout .rejoinGame {
   Background-color: #C1272D;
   color: #EEEEEE;
 }
 
-#signout #roomId{
+#signout #roomId {
   text-align: center;
   font-size: 2rem;
   background-color: #C1272D;
   color: #EEEEEE;
 }
 
-#signout img{
+#signout img {
   width: 30%;
   height: 30%;
   margin: auto;
   padding: 1rem;
-  display:flex;
- align-self: center;
+  display: flex;
+  align-self: center;
 }
 
-#authorize img{
+#authorize img {
   width: 60%;
   height: 60%;
   margin: auto;
   padding: 1rem;
-  display:flex;
- align-self: center;
+  display: flex;
+  align-self: center;
 }
 
-#previousGames{
+#previousGames {
   margin: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-#questionFile{
-  padding: 2rem;
-}
-#gameManagement{
+#questionFile {
   padding: 2rem;
 }
 
+#gameManagement {
+  padding: 2rem;
+}
 
 td, th {
-    padding: 2rem;
+  padding: 2rem;
 }
+
 #greeting {
   font-size: 4rem;
   text-align: center;
@@ -186,30 +197,30 @@ td, th {
   margin-bottom: 4rem;
 }
 
-#joinOptions{
+#joinOptions {
   padding: 1rem;
   margin-top: 4rem;
 }
 
-h3{
+h3 {
   text-align: center;
   font-size: 2.5rem;
 }
 
-h5{
+h5 {
   text-align: center;
 }
 
-input{
+input {
   color: black;
   margin: 1rem;
 }
 
-li{
+li {
   margin: 1rem;
 }
 
-#Nickname{
+#Nickname {
   color: black;
 }
 
@@ -222,16 +233,14 @@ li{
 
 .rejoinGame {
   color: #C1272D;
-  background-color:white;
+  background-color: white;
 }
 
 .row {
   display: flex;
   align-self: center;
   /* */
-
 }
-
 
 .column {
   flex: 50%;
@@ -239,7 +248,7 @@ li{
   align-content: center;
 }
 
-#rank #score{
+#rank #score {
   font-size: 4rem;
 }
 
@@ -256,27 +265,25 @@ li{
   font-family: Helvetica;
   font-size: 4rem;
   color: white;
-  height:22rem;
-  min-height:22rem;
+  height: 22rem;
+  min-height: 22rem;
   /*text-align: center;*/
-  overflow:hidden;
+  overflow: hidden;
   /*background-color: rgba(255, 255, 255, 0.3);*/
   background-color: #C1272D;
   padding: 2rem;
-	/*-webkit-box-shadow: 0 8px  #8E8EA5;
+  /*-webkit-box-shadow: 0 8px  #8E8EA5;
 	   -moz-box-shadow: 0 8px  #8E8EA5;
 	        box-shadow: 0 8px  #8E8EA5;*/
-
 }
 
-#score{
+#score {
   grid-column: 1/3;
   grid-row: 1;
 }
 
-
 #code {
-  display:none;
+  display: none;
   padding: 10px 10px 10px 10px;
 }
 
@@ -294,7 +301,6 @@ li{
 }
 
 #question {
-
   grid-column: 2 / 4;
   grid-row: 1;
   text-align: center;
@@ -317,9 +323,7 @@ li{
   box-shadow: 0px 10px #4E936E !important;
 }
 
-@keyframes rightAnswer {
-
-}
+@keyframes rightAnswer {}
 
 .wrongAnswer {
   background-color: #FF4848 !important;
@@ -328,50 +332,66 @@ li{
 
 .answer {
   font-family: Helvetica;
-  float:center
-  width: 800px;
+  float: center width: 800px;
   height: 120px;
   background-color: #F2F1EB;
   margin: 50px;
   text-align: center;
-  font-size:56pt;
+  font-size: 56pt;
   border-radius: 0.5em;
   box-shadow: 0px 10px #C6C4B9;
-  animation: answerOff  1s forwards;
+  animation: answerOff 1s forwards;
 }
 
 /* .answer:hover {
   animation: answerHover 2s infinite;
 
 background-color: #ffffc0*/
-
-.answer:active{
+.answer:active {
   background-color: #E0DED7;
   box-shadow: inset 0px 10px #B2AFA3
-
 }
 
 @keyframes answerHover {
-  0% {transform:  scale(1);}
-  100% {transform:  scale(1.1);}
+  0% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(1.1);
+  }
 }
 
 @keyframes answerOff {
-  from {transform: scale(1.1);}
-  to {transform: scale(1);}
+  from {
+    transform: scale(1.1);
+  }
+
+  to {
+    transform: scale(1);
+  }
 }
 
 @keyframes lowTime {
-  0% {font-size: 50px;}
-  33% {font-size: 60px;}
-  66% {font-size: 50px;}
+  0% {
+    font-size: 50px;
+  }
+
+  33% {
+    font-size: 60px;
+  }
+
+  66% {
+    font-size: 50px;
+  }
 }
+
 @media only screen and (max-width: 768px) {
-  body{
+  body {
     /*background: green;*/
   }
-.answer {
 
+  .answer {
     font-size: 8rem;
   }
 }
