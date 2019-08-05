@@ -95,8 +95,13 @@ function sendQuestion(myJson, timeGiven) {
   state.pickedAnswer = -1;
 
   $("#question").text(myJson.question);
+  //Hide irrelevant answers
+  for(var i = myJson.answers.length; i < 4; i++){
+    $("#answer_" + i).hide();
+  }
   for (var i = 0; i < myJson.answers.length; i++) {
     $("#answer_" + i).text(myJson.answers[i]);
+    $("#answer_" + i).show();
   }
   resizeWindow();
   changeState("PLAYING");

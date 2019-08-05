@@ -283,9 +283,6 @@ function checkAnswer(socket, choice, time, email) {
 }
 
 function sendAnswerAndPoints(socket) {
-  // results = getMapAttr(roomList[socket.room].players, ['nickname', 'score']);
-  //roomList[socket.room].allScores
-
   var dict = roomList[socket.room].allScores;
   var results = Object.keys(dict).map((key) => {return [dict[key].nickname, dict[key].score]});
 
@@ -355,7 +352,8 @@ function makeGame(socket, room, email, callback) {
       roomList[room] = {
         players: {},
         noResponse: [],
-        masterSocketId: socket.id
+        masterSocketId: socket.id,
+        allScores: {}
       };
 
       //Add room to DB and set RoomID for the future
@@ -412,11 +410,16 @@ function joinGame(socket, room, email, name, nickname, callback) {
           con.query(`INSERT INTO Player (PersonID, RoomID, NickName) VALUES(?, ?, ?) ON DUPLICATE KEY UPDATE NickName = ?;
           SELECT QuestionID, Score FROM Answer WHERE PersonID ? AND RoomID = ?;`,
           [personId, roomId, nickname, nickname, personId, roomId], (err, result)=>{
-            if(result[1] && !roomList[room].allScores[answer.PersonID]){
+            //Only create if it doesn't exist
+            if(!roomList[room].allScores[personId]){
+              //In case there is no info
               roomList[room].allScores[personId] = {score: 0, nickname: nickname};
-              for(answer of result[1]){
-                roomList[game].allScores[personId][answer.QuestionID] = answer.Score;
-                roomList[game].allScores[personId].score += answer.Score;
+
+              if(result[1]){
+                for(answer of result[1]){
+                  roomList[game].allScores[personId][answer.QuestionID] = answer.Score;
+                  roomList[game].allScores[personId].score += answer.Score;
+                }
               }
             }
           });

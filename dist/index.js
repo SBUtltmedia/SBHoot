@@ -131,6 +131,7 @@ function changeState(newState, roomState) {
         break;
       case "WAITING_ROOM_FILE_READY":
         $('.gameName').text(state.gameName);
+        $('#kahootURL').val("");
         changeDisplay(['#gameManagement', '#startGame', '#downloadReport'], ['#gameCreation', '#questionFile', '#playerResults', '#stopGame']);
         getRightButtons(roomState);
         break;

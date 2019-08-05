@@ -33,9 +33,19 @@ function useDefaultQuestions(){
 function uploadFromKahoot() {
   url = $("#kahootURL")[0].value.split("/");
   id = url[url.length - 1];
+
+  if(id == ""){
+    sendAlert("Error: Invalid URL Entered");
+    return;
+  }
+
   sendAlert("Uploading file from Kahoot...");
   try {
     $.get(`http://proxy.fenetik.com?url=${id}`,(data)=>{
+      if(data == ""){
+        sendAlert("Error: Invalid URL Entered");
+        return;
+      }
       //Parse on client side to reduce server load
       var questions = JSON.parse(data).questions;
       var parsedQuestions = [];
@@ -44,7 +54,7 @@ function uploadFromKahoot() {
         parsedQuestion = {
           question: question.question,
           answers: [],
-          time: question.time
+          time: question.time / 1000
         };
         for(var j = 0; j < question.choices.length; j++){
           choice = question.choices[j]
