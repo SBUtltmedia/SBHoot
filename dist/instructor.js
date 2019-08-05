@@ -20,9 +20,8 @@ var siofu = new SocketIOFileUpload(socket);
 siofu.listenOnDrop(document.getElementById("file_drop"));
 
 // Do something when a file is uploaded:
-siofu.addEventListener("complete", (event) => {
-  changeState("WAITING_ROOM_FILE_READY");
-});
+socket.on('uploadSuccessful', ()=>{changeState("WAITING_ROOM_FILE_READY");});
+socket.on('uploadFailed', sendAlert);
 
 function useDefaultQuestions(){
   socket.emit('useDefaultQuestions', ()=>{
@@ -248,12 +247,6 @@ function sendReport(questionResponses, people, questions) {
   for (var key in players) {
     data.push(players[key]);
   }
-  //Solution to download report taken from Stack Overflow: https://stackoverflow.com/a/29304414
-  var csvContent = '';
-  data.forEach(function(infoArray, index) {
-    dataString = infoArray.join(';');
-    csvContent += index < data.length ? dataString + '\n' : dataString;
-  });
 
   var download = function(content, fileName, mimeType) {
     var a = document.createElement('a');
@@ -275,6 +268,23 @@ function sendReport(questionResponses, people, questions) {
       location.href = 'data:application/octet-stream,' + encodeURIComponent(content); // only this mime type is supported
     }
   }
+  var finalVal = '';
 
-  download(csvContent, state.gameName + " Score Report.csv", 'text/csv;encoding:utf-8');
+for (var i = 0; i < data.length; i++) {
+    var value = data[i];
+
+    for (var j = 0; j < value.length; j++) {
+        var innerValue = value[j].toString();
+        var result = innerValue.replace(/"/g, '""');
+        if (result.search(/("|,|\n)/g) >= 0)
+            result = '"' + result + '"';
+        if (j > 0)
+            finalVal += ',';
+        finalVal += result;
+    }
+
+    finalVal += '\n';
+}
+
+  download(finalVal, state.gameName + " Score Report.csv", 'text/csv;encoding:utf-8');
 }

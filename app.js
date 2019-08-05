@@ -79,6 +79,7 @@ io.on('connection', function(socket) {
 
     //Try to parse the file to our JSON format. If it fails, we know the formatting is invalid
     try {
+      var issue = false;
       csv().fromFile(event.file.pathName).then((jsonObj) => {
         questionList = [];
         for (obj in jsonObj) {
@@ -87,21 +88,29 @@ io.on('connection', function(socket) {
               question: question.Question,
               correct: parseInt(question["Correct Answer"]) - 1
             };
-            newQuestion.answers = [question["Answer 1"], question["Answer 2"], question["Answer 3"], question["Answer 4"]]; //Object.keys(question).map(function(v) { return question[v] });
+            newQuestion.answers = [question["Answer 1"], question["Answer 2"], question["Answer 3"], question["Answer 4"]];
             newQuestion.time = question["Question Time"] * 1000; //Assume the user entered a time in seconds
+
+            if(!newQuestion.answers[0] || !newQuestion.time || !newQuestion.correct){//TODO: Don't waste previous time on invalid files
+              io.to(socket.id).emit("uploadFailed", "Error: File dos not conform to standard");
+              issue = true;
+            }
             return newQuestion;
           })[0]);
         }
-        roomList[socket.room]['questions'] = questionList;
-        //Create new file as JSON
-        fs.writeFile(`quizzes/${socket.room}.json`, JSON.stringify(questionList), 'utf8', callback);
+        if(!issue){
+          roomList[socket.room]['questions'] = questionList;
+          //Create new file as JSON
+          fs.writeFile(`quizzes/${socket.room}.json`, JSON.stringify(questionList), 'utf8', callback);
+          io.to(socket.id).emit("uploadSuccessful");
+        }
+
         //Delete file
         fs.unlink(event.file.pathName, callback);
       });
     } catch (err) {
-      sendAlert(socket, "Error: The file is not in the proper format. Please reupload a properly formatted file.");
-      //Delete file
       fs.unlink(event.file.pathName, callback);
+      io.to(socket.id).emit("uploadFailed", "Error: File dos not conform to standard");
     }
   });
 
