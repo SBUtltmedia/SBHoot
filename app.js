@@ -78,34 +78,40 @@ io.on('connection', function(socket) {
 
     //Try to parse the file to our JSON format. If it fails, we know the formatting is invalid
     try {
-      var issue = false;
       csv().fromFile(event.file.pathName).then((jsonObj) => {
-        questionList = [];
-        for (obj in jsonObj) {
-          questionList.push(jsonObj.map((question) => {
-            var newQuestion = {
-              question: question.Question,
-              correct: parseInt(question["Correct Answer"]) - 1
-            };
-            newQuestion.answers = [question["Answer 1"], question["Answer 2"], question["Answer 3"], question["Answer 4"]];
-            newQuestion.time = question["Question Time"] * 1000; //Assume the user entered a time in seconds
+        //Delete old file
+        fs.unlink(event.file.pathName, callback);
 
-            if(!newQuestion.answers[0] || !newQuestion.time || !newQuestion.correct){//TODO: Don't waste previous time on invalid files
-              io.to(socket.id).emit("uploadFailed", "Error: File dos not conform to standard");
-              issue = true;
-            }
-            return newQuestion;
-          })[0]);
+        questionList = [];
+        for (question of jsonObj) {
+          var newQuestion = {
+            question: question.Question,
+            correct: parseInt(question["Correct Answer"]) - 1
+          };
+          newQuestion.answers = [question["Answer 1"], question["Answer 2"], question["Answer 3"], question["Answer 4"]].filter((answer) => { return answer != ""});
+          newQuestion.time = question["Question Time"] * 1000; //Assume the user entered a time in seconds
+
+          if(!newQuestion.answers[0] || !newQuestion.answers[1] || !newQuestion.time || isNaN(newQuestion.correct)){//TODO: Don't waste previous time on invalid files
+            io.to(socket.id).emit("uploadFailed", "Error: File dos not conform to standard");
+            return;
+          }
+
+          // Send specific error messages
+          if(newQuestion.time < 1){
+            io.to(socket.id).emit("uploadFailed", "Error: Question time cannot be less than a second");
+            return;
+          }
+          if(!newQuestion.answers[newQuestion.correct]){
+            io.to(socket.id).emit("uploadFailed", "Error: Correct answer exceeds answer list");
+            return;
+          }
+
+          questionList.push(newQuestion);
         }
-        if(!issue){
           roomList[socket.room]['questions'] = questionList;
           //Create new file as JSON
           fs.writeFile(`quizzes/${socket.room}.json`, JSON.stringify(questionList), 'utf8', callback);
           io.to(socket.id).emit("uploadSuccessful");
-        }
-
-        //Delete file
-        fs.unlink(event.file.pathName, callback);
       });
     } catch (err) {
       fs.unlink(event.file.pathName, callback);
@@ -479,6 +485,8 @@ function closeGameStep(socket) {
   //Stop wasting server time
   if (roomList[socket.room].interval) {
     clearInterval(roomList[socket.room].interval);
+  }
+  if(roomList[socket.room].timeoutTemp){
     clearTimeout(roomList[socket.room].timeoutTemp);
   }
   //Kick everyone from the room except instructor
