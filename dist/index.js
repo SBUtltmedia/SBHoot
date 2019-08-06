@@ -137,7 +137,7 @@ function changeState(newState, roomState) {
         break;
       case "PLAYING":
         if (isInstructor()) {
-          $('.gameName').text(game.Name);
+          $('.gameName').text(state.gameName);
           changeDisplay(['#playerResults','#gameManagement', '#stopGame'], ['#gameCreation', '#questionFile', '#startGame', "#playerList"]);
         } else {
 					changeDisplay(['#stage'], ['#waitingRoom', '#join']);

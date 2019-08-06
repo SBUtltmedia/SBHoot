@@ -165,6 +165,7 @@ function startGame() {
 
 function stopGame() {
   socket.emit('stopGame');
+  $("#room-message").text("");
   state.roomSize = 0;
   changeState("WAITING_ROOM_FILE_READY", 'closed');
 }

@@ -50,7 +50,6 @@ http.listen(8090, function() {
 // Break up app.js into seperate files for clarity
 //  - Link for instructor
 // Waiting screen when student joins inbetween questions
-// Move instrutor buttons
 
 io.on('connection', function(socket) {
 
@@ -458,11 +457,11 @@ function leaveGame(socket, email) {
 }
 
 function changeGameState(socket, state) {
-  con.query(`UPDATE Room SET State = ? WHERE Name = ? AND InstructorID = ?`, [state, socket.room, socket.masterId]);
+  con.query(`UPDATE Room SET State = ? WHERE Name = ?`, [state, socket.room]);
 }
 
 function deleteGame(socket) {
-  con.query(`DELETE FROM Room WHERE Name = ? AND InstructorID = ?`, [socket.room, socket.masterId]);
+  con.query(`DELETE FROM Room WHERE Name = ?`, [socket.room]);
   closeGameStep(socket);
   if (fs.existsSync("quizzes/" + socket.room + ".json")) {
     fs.unlinkSync("quizzes/" + socket.room + ".json");
@@ -551,7 +550,7 @@ function rejoinGame(socket, email, game, callback) {
 
           roomList[game].players = roomList[game].players ? roomList[game].players : {};
           roomList[game].noResponse = [];
-          changeGameState('open');
+          changeGameState(socket, 'open');
 
           //See whether or not we need to display file drop
           if (fs.existsSync('quizzes/' + game + '.json')) {
