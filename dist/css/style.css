@@ -10,6 +10,32 @@ body {
   text-align: center;
 }
 
+.loading-screen {
+  display: none;
+  text-align: center;
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-right: -50%;
+  transform: translate(-50%, -50%);
+}
+
+.owl {
+  width: 19em;
+  height: 24em;
+  animation: play 1.5s steps(3) infinite;
+  background-size: 300%;
+  background-repeat: no-repeat;
+  background-image: url('loading animation.svg');
+}
+
+@keyframes play {
+  100% {
+    background-position: -57em 0;
+  }
+}
+
 #non-essential-buttons {
   text-align: left;
   top: 5%;
@@ -106,23 +132,6 @@ button:active {
   transform: scale(0.99);
 }
 
-/*
-.grid-container {
-  display: grid;
-    grid-template-areas:
-      'header header header header header header'
-      'menu main main main right right'
-      'menu footer footer footer footer footer';
-    grid-gap: 10px;
-    background-color: #C1272D;
-    padding: 10px;
-}
-.grid-container > div {
-  background-color: rgba(255, 255, 255, 0.8);
- text-align: center;
- padding: 20px 0;
- font-size: 30px;
-} */
 #border {
   border-style: solid;
   border-width: 4rem;

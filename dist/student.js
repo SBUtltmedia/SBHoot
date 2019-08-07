@@ -83,6 +83,7 @@ function rejoinGame(room) {
 }
 
 function sendQuestion(myJson, timeGiven) {
+  clearInterval(state.questionInterval);
   $(".answer").removeClass("rightAnswer wrongAnswer");
   state.questionTime = 0;
   $("#timer").html(timeGiven);

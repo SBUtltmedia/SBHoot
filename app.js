@@ -46,10 +46,9 @@ http.listen(8090, function() {
 
 
 // TODO:
-// Add kick functionality for the instructor
-// Break up app.js into seperate files for clarity
-//  - Link for instructor
 // Waiting screen when student joins inbetween questions
+// Halted state when nobody is in the room, but it is designated as playing
+// - Check on joinGame & leaveGame
 
 io.on('connection', function(socket) {
 
@@ -89,9 +88,9 @@ io.on('connection', function(socket) {
             correct: parseInt(question["Correct Answer"]) - 1
           };
           newQuestion.answers = [question["Answer 1"], question["Answer 2"], question["Answer 3"], question["Answer 4"]].filter((answer) => { return answer != ""});
-          newQuestion.time = question["Question Time"] * 1000; //Assume the user entered a time in seconds
+          newQuestion.time = question["Question Time"]; //Assume the user entered a time in seconds
 
-          if(!newQuestion.answers[0] || !newQuestion.answers[1] || !newQuestion.time || isNaN(newQuestion.correct)){//TODO: Don't waste previous time on invalid files
+          if(!newQuestion.answers[0] || !newQuestion.answers[1] || !newQuestion.time || isNaN(newQuestion.correct)){
             io.to(socket.id).emit("uploadFailed", "Error: File dos not conform to standard");
             return;
           }
@@ -102,7 +101,7 @@ io.on('connection', function(socket) {
             return;
           }
           if(!newQuestion.answers[newQuestion.correct]){
-            io.to(socket.id).emit("uploadFailed", "Error: Correct answer exceeds answer list");
+            io.to(socket.id).emit("uploadFailed", "Error: Correct answer exceeds size of answer list");
             return;
           }
 
@@ -303,6 +302,10 @@ function sendAnswerAndPoints(socket) {
   //Send specifically to each connected player
   for (var key in roomList[socket.room].players) {
     var player = roomList[socket.room].players[key];
+
+    if(!player.personId)
+      continue;
+
     var score = roomList[socket.room].allScores[player.personId].score;
     io.to(player.socketId).emit('sendAnswer', roomList[socket.room].answer, score, results);
   }
@@ -382,6 +385,9 @@ function makeGame(socket, room, email, callback) {
 
 //Handles a student joining the game
 function joinGame(socket, room, email, name, nickname, callback) {
+  //Check for an empty room the moment the functionis called
+  var wasEmpty = roomList[room] && roomList[room].players ? Object.keys(roomList[room].players).length == 0 : null;
+
   //Check if the room is open and exists
   con.query("SELECT RoomID, State FROM Room WHERE Name = ? AND State != 'closed' LIMIT 1", [room], (err, result1) => {
     exists = result1 != undefined && result1.length > 0;
@@ -413,6 +419,11 @@ function joinGame(socket, room, email, name, nickname, callback) {
             nickname: nickname,
             socketId: socket.id
           };
+
+          if(Object.keys(roomList[socket.room].players).length == 1 && result1[0].State == "playing"){
+            //Un halt room
+            alterHalting(socket, wasEmpty);
+          }
 
           //Send nicknames to waiting rooms
           io.to(socket.room).emit('roomListUpdate', getMapAttr(roomList[room].players, ['nickname']));
@@ -458,6 +469,11 @@ function leaveGame(socket, email) {
       //Make sure nobody is waiting for them to answer
       roomList[socket.room].noResponse.splice(roomList[socket.room].noResponse.indexOf(email), 1);
       delete roomList[socket.room].players[email];
+
+      if(Object.keys(roomList[socket.room].players).length == 0){
+        //Room is empty
+        alterHalting(socket);
+      }
     }
   }
 }
@@ -619,6 +635,20 @@ function getNickname(email, game, callback) {
       });
     }
   });
+}
+
+//Starts or stops the flow of questions, such as if a room is empty
+function alterHalting(socket, open){
+  room = roomList[socket.room];
+
+  if(room.interval)
+    clearInterval(room.interval);
+  if(room.timeoutTemp)
+    clearTimeout(room.timeoutTemp);
+
+  if(open){
+    responsesIn(socket);
+  }
 }
 
 ///////////////////////
