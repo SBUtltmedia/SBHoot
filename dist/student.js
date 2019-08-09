@@ -22,11 +22,6 @@ socket.on('sendQuestion', sendQuestion);
 socket.on('roomClosed', roomClosed);
 socket.on('sendAnswer', sendAnswer);
 socket.on('returnPreviousGamesStudent', displayPrevGames);
-//socket.on('disconnect', handleDisconnect);
-
-function handleDisconnect() {
-  leaveRoom("Error: Disconnected from server");
-}
 
 function requestPrevGames() {
   $("#previousGames").empty();

@@ -83,12 +83,6 @@ function uploadFromKahoot() {
 socket.on('playerResults', playerResults);
 socket.on('returnPreviousGames', displayPrevGames);
 socket.on('sendReport', sendReport);
-//socket.on('disconnect', handleDisconnect);
-
-function handleDisconnect() {
-  changeDisplay(['#gameCreation'], ['#gameManagement']);
-  sendAlert("Error: Disconnected from server");
-}
 
 function requestPrevGames() {
   $('#previousGames').empty();

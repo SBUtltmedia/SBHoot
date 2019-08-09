@@ -385,7 +385,7 @@ function makeGame(socket, room, email, callback) {
 
 //Handles a student joining the game
 function joinGame(socket, room, email, name, nickname, callback) {
-  //Check for an empty room the moment the functionis called
+  //Check for an empty room the moment the function is called
   var wasEmpty = roomList[room] && roomList[room].players ? Object.keys(roomList[room].players).length == 0 : null;
 
   //Check if the room is open and exists
@@ -420,7 +420,7 @@ function joinGame(socket, room, email, name, nickname, callback) {
             socketId: socket.id
           };
 
-          if(Object.keys(roomList[socket.room].players).length == 1 && result1[0].State == "playing"){
+          if(wasEmpty && result1[0].State == "playing"){
             //Un halt room
             alterHalting(socket, wasEmpty);
           }
