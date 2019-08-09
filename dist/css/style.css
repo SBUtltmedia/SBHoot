@@ -15,6 +15,7 @@ body {
 }
 
 .loading-screen {
+  display: none;
   height: 100%;
   width: 100%;
   background: white;
@@ -34,6 +35,7 @@ body {
   background-repeat: no-repeat;
   background-image: url('loading animation.svg');
 }
+
 @keyframes play {
   100% { background-position: -114em 0; }
 }
