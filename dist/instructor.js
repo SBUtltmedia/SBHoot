@@ -148,13 +148,8 @@ function deleteGame() {
 }
 
 function startGame() {
-  //Must have at least 1 player to start
-  if (state.roomSize > 0) {
-    socket.emit('startGame');
-    changeState('PLAYING');
-  } else {
-    sendAlert("Error: cannot start a game with no players");
-  }
+  socket.emit('startGame');
+  changeState('PLAYING');
 }
 
 function stopGame() {

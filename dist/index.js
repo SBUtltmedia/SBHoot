@@ -149,6 +149,15 @@ function changeState(newState, roomState) {
   }
 }
 
+//This is a function in case things change / become more complicated
+function loadingScreenState(state){
+  if(state == 'on'){
+    $(".loading-screen").show();
+  } else {
+    $(".loading-screen").hide();
+  }
+}
+
 function isInstructor() {
   items = location.href.split("/");
   return items[items.length-1].split("#")[0] == "instructor";

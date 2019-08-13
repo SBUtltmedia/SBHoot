@@ -350,8 +350,12 @@ function startGame(socket) {
 
   roomList[socket.room]['noResponse'] = [];
   roomList[socket.room]['interval'] = 0;
-  responsesIn(socket);
-  sendProfResults(socket);
+
+  //Only send questions if people are around to get them
+  if(Object.keys(roomList[room].players).length != 0){
+    responsesIn(socket);
+    sendProfResults(socket);
+  }
 }
 
 //Makes a game with the creator acting as an instructor

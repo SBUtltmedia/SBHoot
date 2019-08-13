@@ -10,11 +10,8 @@ body {
   text-align: center;
 }
 
-.loading-screen h1 {
-  font-size: 5em;
-}
-
 .loading-screen {
+  z-index: 1;
   display: none;
   height: 100%;
   width: 100%;
@@ -28,8 +25,8 @@ body {
 
 .owl {
   margin: auto;
-  width: 38em;
-  height: 48em;
+  width: 19em;
+  height: 24em;
   animation: play 1.5s steps(3) infinite;
   background-size: 300%;
   background-repeat: no-repeat;
@@ -37,7 +34,7 @@ body {
 }
 
 @keyframes play {
-  100% { background-position: -114em 0; }
+  100% { background-position: -57em 0; }
 }
 
 #non-essential-buttons {

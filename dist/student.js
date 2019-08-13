@@ -67,6 +67,7 @@ function rejoinGame(room) {
       if (!returnVal.isError) {
         changeState(returnVal.state);
         window.location.hash = '#' + room;
+        loadingScreenState('on');
       } else {
         requestPrevGames();
         sendAlert(returnVal.error);
@@ -78,8 +79,9 @@ function rejoinGame(room) {
 }
 
 function sendQuestion(myJson, timeGiven) {
-  clearInterval(state.questionInterval);
   $(".answer").removeClass("rightAnswer wrongAnswer");
+  clearInterval(state.questionInterval);
+
   state.questionTime = 0;
   $("#timer").html(timeGiven);
   state.questionInterval = setInterval(() => {
@@ -101,6 +103,7 @@ function sendQuestion(myJson, timeGiven) {
   }
   resizeWindow();
   changeState("PLAYING");
+  loadingScreenState('off');
 }
 
 function roomClosed() {
