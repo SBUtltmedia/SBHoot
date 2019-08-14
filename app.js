@@ -234,31 +234,20 @@ function sendQuestion(socket) {
 }
 
 //Resets the waiting interval once all players have answered
-function responsesIn(socket) {
-  var answerReadTime = 2000;
+function responsesIn(socket, restart) {
+  // Should not wait to send question if no previous question was present
+  var answerReadTime = restart ? 0 : 2000;
+  
+  clearTimeout(roomList[socket.room].timeout);
 
-  clearInterval(roomList[socket.room].interval);
-  clearTimeout(roomList[socket.room].timeoutTemp);
   sendAnswerAndPoints(socket);
 
-  //Send question immediately on the first run,
-  //but wait for the answer every time thereafter
-  if (roomList[socket.room].timeoutTemp)
-    setTimeout(() => sendQuestion(socket), answerReadTime);
-  else sendQuestion(socket);
-
-  //Since the first question has already handled the answer delay,
-  //we should only wait for the actual answer time
-  roomList[socket.room].timeoutTemp = setTimeout(() => {
-    sendAnswerAndPoints(socket);
-    setTimeout(() => sendQuestion(socket), answerReadTime);
-
-    //Wait the full time + time to read the answer
-    roomList[socket.room].interval = setInterval(() => {
-      sendAnswerAndPoints(socket);
-      setTimeout(() => sendQuestion(socket), answerReadTime);
-    }, (roomList[socket.room].answerTime * 1000) + answerReadTime);
-  }, (roomList[socket.room].answerTime * 1000));
+  roomList[socket.room].timeout = setTimeout(() => {
+    sendQuestion(socket);
+    roomList[socket.room].timeout = setTimeout(() => {
+      responsesIn(socket);
+    }, roomList[socket.room].answerTime * 1000);
+  }, answerReadTime);
 }
 
 //Checks a student submitted answerand updates the DB to reflect how they did
@@ -349,11 +338,10 @@ function startGame(socket) {
   parseJSON(socket, `quizzes/${socket.room}.json`); //Parse question file
 
   roomList[socket.room]['noResponse'] = [];
-  roomList[socket.room]['interval'] = 0;
 
   //Only send questions if people are around to get them
-  if(Object.keys(roomList[room].players).length != 0){
-    responsesIn(socket);
+  if(Object.keys(roomList[socket.room].players).length != 0){
+    responsesIn(socket, true);
     sendProfResults(socket);
   }
 }
@@ -503,11 +491,8 @@ function stopGame(socket) {
 function closeGameStep(socket) {
   socket.to(socket.room).emit('roomClosed');
   //Stop wasting server time
-  if (roomList[socket.room].interval) {
-    clearInterval(roomList[socket.room].interval);
-  }
-  if(roomList[socket.room].timeoutTemp){
-    clearTimeout(roomList[socket.room].timeoutTemp);
+  if(roomList[socket.room].timeout){
+    clearTimeout(roomList[socket.room].timeout);
   }
   //Kick everyone from the room except instructor
   io.of('/').in(socket.room).clients((error, socketIds) => {
@@ -645,13 +630,11 @@ function getNickname(email, game, callback) {
 function alterHalting(socket, open){
   room = roomList[socket.room];
 
-  if(room.interval)
-    clearInterval(room.interval);
-  if(room.timeoutTemp)
-    clearTimeout(room.timeoutTemp);
+  if(room.timeout)
+    clearTimeout(room.timeout);
 
   if(open){
-    responsesIn(socket);
+    responsesIn(socket, true);
   }
 }
 

@@ -67,7 +67,9 @@ function rejoinGame(room) {
       if (!returnVal.isError) {
         changeState(returnVal.state);
         window.location.hash = '#' + room;
-        loadingScreenState('on');
+        if(returnVal.state == 'PLAYING'){
+          loadingScreenState('on');
+        }
       } else {
         requestPrevGames();
         sendAlert(returnVal.error);
