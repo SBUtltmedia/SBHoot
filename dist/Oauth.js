@@ -79,6 +79,10 @@ function makeApiCall() {
     email = resp.result.emailAddresses[0].value;
     firstName = resp.result.names[0].givenName;
     lastName = resp.result.names[0].familyName;
+
+    //Some users may not have a set 'first' or 'last' name
+    lastName = lastName ? lastName : "";
+    firstName = firstName ? firstName : "";
     $('#greeting').text('Hello, ' + name + '!');
     socket.emit('getNickname', email, roomURL, (nickname, isOpen)=>{
       $("#nickname").val(nickname);

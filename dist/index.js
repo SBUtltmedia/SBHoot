@@ -97,7 +97,7 @@ function changeState(newState, roomState) {
       //State where user is prompted to log in
       case "LOGIN":
         if (isInstructor()) {
-          changeDisplay(["#authorize"], ['#signout', "#gameCreation", "#gameManagement", '#signout-button']);
+          changeDisplay(["#authorize"], ['#signout', "#gameCreation", "#gameManagement"]);
         } else {
           changeDisplay(["#authorize"], ['#join', '#waitingRoom', '#stage', '#signout-button']);
         }
@@ -140,7 +140,7 @@ function changeState(newState, roomState) {
           $('.gameName').text(state.gameName);
           changeDisplay(['#playerResults','#gameManagement', '#stopGame'], ['#gameCreation', '#questionFile', '#startGame', "#playerList"]);
         } else {
-					changeDisplay(['#stage'], ['#waitingRoom', '#join']);
+					changeDisplay(['#stage'], ["#authorize", '#waitingRoom', '#join']);
 				  $('.answer').removeClass('rightAnswer wrongAnswer');
         }
         break;
