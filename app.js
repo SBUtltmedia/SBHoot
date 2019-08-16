@@ -44,11 +44,8 @@ http.listen(8090, function() {
   console.log('listening on *:8090');
 });
 
-
-// TODO:
-// Waiting screen when student joins inbetween questions
-// Halted state when nobody is in the room, but it is designated as playing
-// - Check on joinGame & leaveGame
+//TODO:
+// Fix 40 char limit
 
 io.on('connection', function(socket) {
 
@@ -237,7 +234,7 @@ function sendQuestion(socket) {
 function responsesIn(socket, restart) {
   // Should not wait to send question if no previous question was present
   var answerReadTime = restart ? 0 : 2000;
-  
+
   clearTimeout(roomList[socket.room].timeout);
 
   sendAnswerAndPoints(socket);

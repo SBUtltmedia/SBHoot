@@ -4,8 +4,8 @@
   <img src="/dist/img/SBhootlogo.svg"/>
   <div id="joinOptions" class="BGhighlight">
     <h3>Join a game!</h3>
-    <h5>Nickname: <input id="nickname" type="text" name="nickname" value="bill">
-    <br/>Room ID: <input id="roomId" type="text" name="" value="yourClass"><br/>
+    <h5>Nickname: <input id="nickname" type="text" maxlength="40" name="nickname" value="bill">
+    <br/>Room ID: <input id="roomId" type="text" maxlength="40" name="" value="yourClass"><br/>
       <button id="joinGame" type="button" name="button">Join Game!</button><span id="joinGameError"></span>
     </h5>
     <h3>Rejoin a game!</h3>
@@ -13,25 +13,17 @@
   </div>
 </div>
 
-<div id="waitingRoom" style="display: none;">
+<div id="waitingRoom">
   <img src="/dist/img/SBhootlogo.svg"/>
   <h5>Joined room <class="gameName" span></span></h5>
   <ul id="playerList"></ul>
   <button id="leaveRoom" type="button" name="button">Leave Room</button>
 </div>
 
-<div id="stage" style="display: none;" class="screen">
+<div id="stage" class="screen">
   <div id="header">
     <div>Score: <span id="pointCounter"/></div>
     <div id="rankcontainer">Rank: <span id="rank"/></div>
-    <div id="container" style="display: none;">
-      <div id="topRanked_0" class="topRanked"></div>
-      <div id="topRanked_1" class="topRanked"></div>
-      <div id="topRanked_2" class="topRanked"></div>
-      <div id="topRanked_3" class="topRanked"></div>
-      <div id="topRanked_4" class="topRanked"></div>
-    </div>
-    <div id="code"></div>
     <div id="question"></div>
     <div id="timer"></div>
   </div>

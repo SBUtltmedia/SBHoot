@@ -1,13 +1,18 @@
 body {
   user-select: none;
   font-family: 'PT Sans' !important;
-  /* margin: 10%; */
-  /* font-family: 'Pangolin', cursive; */
   font-size: 30px;
 }
 
 #buttons {
   text-align: center;
+}
+
+#downloadReport, #openGame,
+#startGame, #stopGame,
+#playerResults, #signout,
+#waitingRoom, #joinOptions{
+  display: none;
 }
 
 .loading-screen {
@@ -141,6 +146,7 @@ button:active {
 }
 
 #signout-button {
+  display: none;
   Background-color: #C1272D;
   color: #EEEEEE;
 }
@@ -193,6 +199,7 @@ button:active {
 }
 
 #gameManagement {
+  display: none;
   padding: 2rem;
 }
 
@@ -263,6 +270,7 @@ li {
 }
 
 #stage {
+  display: none;
   background-color: #B3B3B3;
   height: 100%;
 }

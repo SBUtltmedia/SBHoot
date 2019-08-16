@@ -97,19 +97,19 @@ function changeState(newState, roomState) {
       //State where user is prompted to log in
       case "LOGIN":
         if (isInstructor()) {
-          changeDisplay(["#authorize"], ['#signout', "#gameCreation", "#gameManagement"]);
+          changeDisplay(["#authorize"], ['#signout', "#gameCreation", "#gameManagement", '#signout-button']);
         } else {
-          changeDisplay(["#authorize"], ['#join', '#waitingRoom', '#stage']);
+          changeDisplay(["#authorize"], ['#join', '#waitingRoom', '#stage', '#signout-button']);
         }
         break;
         //State after user has logged in and has not connected to a game
       case "MAIN_SCREEN":
         requestPrevGames();
         if (isInstructor()) {
-          changeDisplay(['#signout', '#gameCreation'], ["#authorize", '#gameManagement']);
+          changeDisplay(['#signout', '#gameCreation', '#signout-button'], ["#authorize", '#gameManagement']);
         } else {
           //When a user logs in, add them to the game if possible
-          changeDisplay(['#join', '#gameCreation'], ["#authorize", '#waitingRoom', '#stage']);
+          changeDisplay(['#join', '#gameCreation', '#joinOptions', '#signout-button'], ["#authorize", '#waitingRoom', '#stage']);
           $("#roomId").val(roomURL);
         }
         break;
