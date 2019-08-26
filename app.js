@@ -40,12 +40,21 @@ app.get('*', function(req, res) {
     clientType: url
   })
 });
-http.listen(8090, function() {
-  console.log('listening on *:8090');
-});
+if(http){
+  http.listen(8090, function() {
+    console.log('listening on *:8090');
+  });
+} else {
+  console.log(window)
+}
+
 
 //TODO:
-// Fix 40 char limit
+// Allow professors to edit question files
+// Question refresh limit / non endless mode
+// Change rejoin rooms to dropdown
+// Fix resizing issues for large questions (Max question length?)
+
 
 io.on('connection', function(socket) {
 

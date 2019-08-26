@@ -13,9 +13,14 @@ $(".answer").on(listeners, checkAnswer);
 $("#joinGame").on(listeners, joinGame);
 $("#leaveRoom").on(listeners, leaveGame);
 $("#previousGames").on("show", requestPrevGames);
-$("#roomId").on("focus", clearTextbox);
-$("#nickname").on("focus", clearTextbox);
-$("#roomId").on("focusout", ()=>{resetDefaultTextbox("#roomId", "yourClass", window.location.hash.replace('#', ''))});
+$("#roomId").on("focus", ()=>{
+  hash = window.location.hash.replace('#', '');
+  clearTextbox("#roomId", hash ? hash : "yourClass")});
+$("#nickname").on("focus", ()=>{clearTextbox("#nickname", "bill")});
+$("#roomId").on("focusout", ()=>{
+  hash = window.location.hash.replace('#', '');
+  resetDefaultTextbox("#roomId", hash ? hash : "yourClass");
+});
 $("#nickname").on("focusout", ()=>{resetDefaultTextbox("#nickname", "bill")});
 
 socket.on('sendQuestion', sendQuestion);
@@ -33,10 +38,12 @@ function joinGame() {
     //Add player to DB if not exists
     logUser(email, firstName, lastName);
 
-    socket.emit('joinGame', $('#roomId').val(), email, name, $('#nickname').val(), (returnVal) => {
+    room = $('#roomId').val().replace(/ /g, "_").toUpperCase();
+
+    socket.emit('joinGame', room, email, name, $('#nickname').val(), (returnVal) => {
       if (!returnVal.isError) {
         changeState(returnVal.state);
-        window.location.hash = '#' + $('#roomId').val();
+        window.location.hash = '#' + room;
       } else {
         sendAlert(returnVal.error);
       }
@@ -63,6 +70,9 @@ function rejoinGame(room) {
     if (typeof room != "string") {
       room = this.id;
     }
+
+    room = room.replace(/ /g, "_").toUpperCase();
+
     socket.emit('joinGame', room, email, name, $('#nickname').val(), (returnVal) => {
       if (!returnVal.isError) {
         changeState(returnVal.state);

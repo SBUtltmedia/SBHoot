@@ -3,7 +3,9 @@ $("#startGame").on(listeners, startGame);
 $("#stopGame").on(listeners, stopGame);
 $("#useDefaultQuestions").on(listeners, useDefaultQuestions);
 $("#uploadKahoot").on(listeners, uploadFromKahoot);
-$("#roomId").on("focus", clearTextbox);
+$("#roomId").on("focus", ()=>{
+  hash = window.location.hash.replace('#', '');
+  clearTextbox("#roomId", hash ? hash : "yourClass")});
 $("#roomId").on("focusout", ()=>{resetDefaultTextbox("#roomId", "yourClass")});
 
 $("#options").on("change", routeOptions);
@@ -115,9 +117,12 @@ function rejoinGame() {
 function makeGame() {
   if (socket.connected) {
     logUser(email, firstName, lastName);
-    socket.emit('makeGame', $('#roomId').val(), email, (error) => {
+
+    room = $('#roomId').val().replace(/ /g, "_").toUpperCase();
+
+    socket.emit('makeGame', room, email, (error) => {
       if (!error) {
-        state.gameName = $('#roomId').val();
+        state.gameName = room;
         changeState("WAITING_ROOM");
       } else {
         sendAlert('Error: Game already exists!');

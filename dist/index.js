@@ -53,17 +53,16 @@ function logUser(email, firstName, lastName) {
   socket.emit('logUser', email, firstName, lastName);
 }
 
-function clearTextbox(){
-  $(this).val("");
+function clearTextbox(tagId, defaultText){
+  if($(tagId).val() == defaultText){
+    $(tagId).val("");
+  }
 }
 
 //Resets the default textbox value if nothing was entered
-function resetDefaultTextbox(tagId, defaultText, optional) {
+function resetDefaultTextbox(tagId, defaultText) {
   if($(tagId).val() == ""){
-    if(optional)
-      $(tagId).val(optional);
-    else
-      $(tagId).val(defaultText);
+    $(tagId).val(defaultText);
   }
 }
 
