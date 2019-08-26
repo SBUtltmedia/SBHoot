@@ -113,8 +113,9 @@ function sendQuestion(myJson, timeGiven) {
     $("#answer_" + i).html(myJson.answers[i]);
     $("#answer_" + i).show();
   }
-  resizeWindow();
   changeState("PLAYING");
+  setQuestionTextSize();
+  // resizeWindow();
   loadingScreenState('off');
 }
 

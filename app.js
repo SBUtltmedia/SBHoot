@@ -53,7 +53,6 @@ if(http){
 // Allow professors to edit question files
 // Question refresh limit / non endless mode
 // Change rejoin rooms to dropdown
-// Fix resizing issues for large questions (Max question length?)
 
 
 io.on('connection', function(socket) {

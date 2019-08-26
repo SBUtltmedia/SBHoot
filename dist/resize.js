@@ -25,15 +25,25 @@ function resizeWindow() {
   // Set "screen" object width and height to stageWidth and stageHeight, and center screen
   $("html").css({
     "font-size": stageWidth / 100 + "px",
-
   });
   //setQuestionTextSize()
 }
 resizeWindow()
 
 function setQuestionTextSize() {
-  if ($('#question').length) {
-    var questionLength = $('#question').html().length;
-    console.log(questionLength)
-  }
+  var questionLength = $('#question').html().length;
+
+  var maxLength = 90;
+  var scalingFactor=.8;
+  var startingFontSize=3;
+  var largestAnswer = 0;
+  $('.answer').each(function(el){
+    largestAnswer = largestAnswer > $(this).html().length ? largestAnswer : $(this).html().length;
+  })
+
+  console.log(largestAnswer)
+  console.log(startingFontSize*(maxLength/largestAnswer))
+  $('.answer').css({"font-size": Math.min(startingFontSize, startingFontSize*(maxLength/(largestAnswer*scalingFactor)))+"rem"})
+
+  $('#question').css({"font-size": Math.min(startingFontSize, startingFontSize*(maxLength/(questionLength*scalingFactor)))*1.5+"rem"})
 }
