@@ -19,6 +19,7 @@ var con = mysql.createConnection({
   password: DBInfo.password,
   multipleStatements: true
 });
+console.log("Started at", Date());
 con.connect(function(err) {
   if (err) {
     console.error('Error connecting: ' + err.stack);
@@ -52,7 +53,6 @@ if(http){
 //TODO:
 // Allow professors to edit question files
 // Question refresh limit / non endless mode
-// Change rejoin rooms to dropdown
 
 
 io.on('connection', function(socket) {

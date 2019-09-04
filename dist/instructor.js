@@ -118,7 +118,7 @@ function makeGame() {
   if (socket.connected) {
     logUser(email, firstName, lastName);
 
-    room = $('#roomId').val().replace(/ /g, "_").toUpperCase();
+    room = standardizeRoomName($('#roomId').val());
 
     socket.emit('makeGame', room, email, (error) => {
       if (!error) {

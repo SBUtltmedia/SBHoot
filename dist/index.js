@@ -48,6 +48,10 @@ function changeDisplay(show, noShow) {
   }
 }
 
+function standardizeRoomName(room){
+  return room.replace(/ /g, "_").toUpperCase();
+}
+
 //Add player to DB if not exists
 function logUser(email, firstName, lastName) {
   socket.emit('logUser', email, firstName, lastName);
@@ -68,21 +72,25 @@ function resetDefaultTextbox(tagId, defaultText) {
 
 function displayPrevGames(games) {
   if (!games || games.length == 0) {
-    $('#rejoin ul').html('No previous games');
+    $('#rejoin').html('No previous games');
   } else {
-    for (game of games) {
-      var li = $('<li/>', {
-        "html": game.Name
-      });
-      var button = $('<button/>', {
-        "class": "rejoinGame",
-        "id": game.Name,
-        "type": "button",
-        "html": "Join"
-      });
+    $('#rejoin').empty();
 
-      $('#previousGames').append(li.prepend(button));
+    var prevGames = $('<select/>', {"name": "previousGames", "id":"previousGames"});
+    var joinButton = $('<button/>', {"class": "rejoinGame", "type": "button", "html": "Join"});
+
+    $('#rejoin').append(prevGames);
+    $('#rejoin').append(joinButton);
+
+    for (game of games) {
+      var option = $('<option/>', {
+        "value": game.Name,
+        "class": "gameOption"}).text(game.Name);
+      $('#previousGames').append(option);
     }
+    $(".rejoinGame").prop('id', $("#previousGames").val());
+    $("#previousGames").on("change", $(".rejoinGame").prop('id', $("#previousGames").val()));
+
     $(".rejoinGame").on(listeners, rejoinGame);
   }
 }

@@ -38,7 +38,7 @@ function joinGame() {
     //Add player to DB if not exists
     logUser(email, firstName, lastName);
 
-    room = $('#roomId').val().replace(/ /g, "_").toUpperCase();
+    room = standardizeRoomName($('#roomId').val());
 
     socket.emit('joinGame', room, email, name, $('#nickname').val(), (returnVal) => {
       if (!returnVal.isError) {
@@ -71,7 +71,7 @@ function rejoinGame(room) {
       room = this.id;
     }
 
-    room = room.replace(/ /g, "_").toUpperCase();
+    room = standardizeRoomName(room);
 
     socket.emit('joinGame', room, email, name, $('#nickname').val(), (returnVal) => {
       if (!returnVal.isError) {
