@@ -51,8 +51,10 @@ if(http){
 
 
 //TODO:
-// Allow professors to edit question files
+// Allow professors to re-upload question files?
 // Question refresh limit / non endless mode
+//  Questions left
+// Aggregate scores for percentage?
 
 
 io.on('connection', function(socket) {
@@ -221,8 +223,12 @@ function sendQuestion(socket) {
   roomList[socket.room]['noResponse'] = getMapAttr(roomList[socket.room]['players'], ['email']);
 
   //Shuffle list if necessary
-  if (!roomList[socket.room].questionShuffleList || roomList[socket.room].questionShuffleList.length == 0) {
+  if (!roomList[socket.room].questionShuffleList) {
     roomList[socket.room].questionShuffleList = shuffle(roomList[socket.room]['questions'].length);
+  } else {
+    //Quiz is over
+    //TODO: Show final score
+    stopGame(socket);
   }
 
   //Get next question
