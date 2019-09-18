@@ -54,6 +54,10 @@ if(http){
 // Allow professors to re-upload question files?
 // Question refresh limit / non endless mode
 //  Questions left
+//  On Complete:
+//    Allow restart? (What about players who already finished?)
+//    What do players see?
+//    What does the instructor see?
 // Aggregate scores for percentage?
 
 
@@ -226,9 +230,8 @@ function sendQuestion(socket) {
   if (!roomList[socket.room].questionShuffleList) {
     roomList[socket.room].questionShuffleList = shuffle(roomList[socket.room]['questions'].length);
   } else {
-    //Quiz is over
-    //TODO: Show final score
-    stopGame(socket);
+
+
   }
 
   //Get next question
@@ -242,6 +245,31 @@ function sendQuestion(socket) {
   roomList[socket.room].answerTime = question.time;
 
   io.to(socket.room).emit('sendQuestion', question, question.time);
+}
+
+function gameFinished(socket) {
+  //Quiz is over
+  if(roomList[socket.room].timeout){
+    clearTimeout(roomList[socket.room].timeout);
+  }
+
+  var dict = roomList[socket.room].allScores;
+  var results = Object.keys(dict).map((key) => {return [dict[key].nickname, dict[key].score]});
+
+  //TODO: Show players where they fall in the rankings
+
+  //Send specifically to each connected player
+  for (var key in roomList[socket.room].players) {
+    var player = roomList[socket.room].players[key];
+
+    if(!player.personId)
+      continue;
+
+    var score = roomList[socket.room].allScores[player.personId].score;
+    io.to(player.socketId).emit('gameFinished', score, results);
+  }
+
+  //TODO: Send gameFinished to instructor
 }
 
 //Resets the waiting interval once all players have answered
