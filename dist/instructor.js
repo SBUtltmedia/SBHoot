@@ -59,7 +59,7 @@ function uploadFromKahoot() {
           time: question.time / 1000
         };
         for(var j = 0; j < question.choices.length; j++){
-          choice = question.choices[j]//
+          choice = question.choices[j]
           if(choice.correct){
             if(!parsedQuestion.correct){
               parsedQuestion.correct = j;
