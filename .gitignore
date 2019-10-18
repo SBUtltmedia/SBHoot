@@ -4,3 +4,5 @@ node_modules
 uploads
 quizzes
 mysql.sh
+._*
+.DS_Store
