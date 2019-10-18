@@ -42,7 +42,7 @@ function uploadFromKahoot() {
 
   sendAlert("Uploading file from Kahoot...");
   try {
-    $.get(`http://proxy.fenetik.com?url=${id}`,(data)=>{
+    $.get(`http://sbhoot.fenetik.com/uploader?url=https://create.kahoot.it/rest/kahoots/${id}`,(data)=>{
       if(data == ""){
         sendAlert("Error: Invalid URL Entered");
         return;

@@ -1,4 +1,4 @@
-socket = io(`${window.location.hostname}:8090`);
+socket = io(`${window.location.hostname}:80`);
 var listeners = "click";
 var state = {
   roomSize: 0,

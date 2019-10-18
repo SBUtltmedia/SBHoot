@@ -56,6 +56,7 @@ function joinGame() {
 function checkAnswer(evt) {
   if (state.pickedAnswer == -1) {
     state.pickedAnswer = evt.currentTarget.id.split('_')[1];
+      $('#answer_' + state.pickedAnswer).addClass("spin");
     socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1], state.questionTime, email);
   }
 }
@@ -91,7 +92,7 @@ function rejoinGame(room) {
 }
 
 function sendQuestion(myJson, timeGiven) {
-  $(".answer").removeClass("rightAnswer wrongAnswer");
+  $(".answer").removeClass("rightAnswerHide wrongAnswerHide spin");
   clearInterval(state.questionInterval);
 
   state.questionTime = 0;
@@ -112,7 +113,15 @@ function sendQuestion(myJson, timeGiven) {
   for (var i = 0; i < myJson.answers.length; i++) {
     $("#answer_" + i).html(myJson.answers[i]);
     $("#answer_" + i).show();
+
+  $('.answer').addClass("answerLoad");
   }
+  $('.answer').on("animationend", function(){
+    if($(this).hasClass("answerLoad")){
+    $(this).removeClass("answerLoad")
+    $(this).addClass("answerToggle")
+}
+  });
   changeState("PLAYING");
   setQuestionTextSize();
   // resizeWindow();
@@ -133,6 +142,9 @@ function sendAnswer(answer, points, players) {
   if (answer != state.pickedAnswer) {
     $('#answer_' + state.pickedAnswer).addClass("wrongAnswer");
   }
+  $('.answer').removeClass("answerToggle");
+
+
   //Prevent player from answering after receiving
   state.pickedAnswer = -2;
 

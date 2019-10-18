@@ -42,6 +42,15 @@ body {
   100% { background-position: -57em 0; }
 }
 
+@keyframes spin {
+  100% {   transform: rotateX(180deg);}
+}
+
+.spin{
+    animation: spin 1.5s 1;
+}
+
+
 #non-essential-buttons {
   text-align: left;
   top: 5%;
@@ -271,8 +280,9 @@ li {
 
 #stage {
   display: none;
-  background-color: #B3B3B3;
-  height: 100%;
+  background-color: #b3ccb6;
+  background-size: 100%;
+  padding-bottom: 10px;
 }
 
 #header {
@@ -288,7 +298,7 @@ li {
   /*text-align: center;*/
   overflow: hidden;
   /*background-color: rgba(255, 255, 255, 0.3);*/
-  background-color: #C1272D;
+  background-color: #504771;
   padding: 2rem;
   /*-webkit-box-shadow: 0 8px  #8E8EA5;
 	   -moz-box-shadow: 0 8px  #8E8EA5;
@@ -341,8 +351,6 @@ li {
   box-shadow: 0px 10px #4E936E !important;
 }
 
-@keyframes rightAnswer {}
-
 .wrongAnswer {
   background-color: #FF4848 !important;
   box-shadow: 0px 10px #BC646B !important;
@@ -350,15 +358,28 @@ li {
 
 .answer {
   font-family: Helvetica;
-  float: center width: 800px;
+  perspective: 23rem;
+  perspective-origin: bottom right;
   height: 120px;
+  padding-top: 45px;
   background-color: #F2F1EB;
   margin: 50px;
   text-align: center;
   font-size: 56pt;
   border-radius: 0.5em;
   box-shadow: 0px 10px #C6C4B9;
-  animation: answerOff 1s forwards;
+}
+.answerLoad{
+animation: answerLoadAnimation .5s forwards 1;
+}
+.answerToggle {
+  animation: answerToggle .6s ease-in-out forwards infinite;
+}
+
+@keyframes answerToggle {
+  0% {  transform: rotate(.4deg);}
+  50% {  transform: rotate(-.4deg);}
+  100% {   transform: rotate(.4deg);}
 }
 
 /* .answer:hover {
@@ -380,7 +401,7 @@ background-color: #ffffc0*/
   }
 }
 
-@keyframes answerOff {
+@keyframes answerLoadAnimation {
   from {
     transform: scale(1.1);
   }

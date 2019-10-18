@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo $PWD
+
+#Kill previous runs
+sudo kill -9 $(ps aux | grep -v grep | grep "/home/ubuntu/SBHoot/app.js" | awk '{print $2}')
+
+cd /home/ubuntu/SBHoot/
+sudo /home/ubuntu/.nvm/versions/node/v12.11.1/bin/node /home/ubuntu/SBHoot/app.js

@@ -1,5 +1,6 @@
 const path = require('path');
 var express = require('express');
+const { Curl } = require('node-libcurl');
 var SocketIOFileUpload = require('socketio-file-upload');
 var app = express().use(SocketIOFileUpload.router);
 var mysql = require('mysql');
@@ -35,14 +36,33 @@ var roomList = {};
 
 app.use('/dist', express.static('dist'));
 
+app.get('/uploader', function(req, res) {
+
+  const curl = new Curl();
+  curl.setOpt('URL', req.url.split("url=")[1]);
+  // curl.setOpt('FOLLOWLOCATION', true);
+
+  curl.on('end', function(statusCode, data, headers) {
+  res.send(data);
+    this.close();
+  })
+  curl.on('error', curl.close.bind(curl));
+
+
+  curl.perform();
+  // const { statusCode, data, headers } = await curly.get()
+
+});
+
+
 app.get('*', function(req, res) {
   var url = req.url.split("/")[1]
   res.render('common', {
     clientType: url
   })
 });
-if(http){
-  http.listen(8090, function() {
+if (http) {
+  http.listen(80, function() {
     console.log('listening on *:8090');
   });
 } else {
@@ -98,30 +118,32 @@ io.on('connection', function(socket) {
             question: question.Question,
             correct: parseInt(question["Correct Answer"]) - 1
           };
-          newQuestion.answers = [question["Answer 1"], question["Answer 2"], question["Answer 3"], question["Answer 4"]].filter((answer) => { return answer != ""});
+          newQuestion.answers = [question["Answer 1"], question["Answer 2"], question["Answer 3"], question["Answer 4"]].filter((answer) => {
+            return answer != ""
+          });
           newQuestion.time = question["Question Time"]; //Assume the user entered a time in seconds
 
-          if(!newQuestion.answers[0] || !newQuestion.answers[1] || !newQuestion.time || isNaN(newQuestion.correct)){
+          if (!newQuestion.answers[0] || !newQuestion.answers[1] || !newQuestion.time || isNaN(newQuestion.correct)) {
             io.to(socket.id).emit("uploadFailed", "Error: File dos not conform to standard");
             return;
           }
 
           // Send specific error messages
-          if(newQuestion.time < 1){
+          if (newQuestion.time < 1) {
             io.to(socket.id).emit("uploadFailed", "Error: Question time cannot be less than a second");
             return;
           }
-          if(!newQuestion.answers[newQuestion.correct]){
+          if (!newQuestion.answers[newQuestion.correct]) {
             io.to(socket.id).emit("uploadFailed", "Error: Correct answer exceeds size of answer list");
             return;
           }
 
           questionList.push(newQuestion);
         }
-          roomList[socket.room]['questions'] = questionList;
-          //Create new file as JSON
-          fs.writeFile(`quizzes/${socket.room}.json`, JSON.stringify(questionList), 'utf8', callback);
-          io.to(socket.id).emit("uploadSuccessful");
+        roomList[socket.room]['questions'] = questionList;
+        //Create new file as JSON
+        fs.writeFile(`quizzes/${socket.room}.json`, JSON.stringify(questionList), 'utf8', callback);
+        io.to(socket.id).emit("uploadSuccessful");
       });
     } catch (err) {
       fs.unlink(event.file.pathName, callback);
@@ -249,12 +271,14 @@ function sendQuestion(socket) {
 
 function gameFinished(socket) {
   //Quiz is over
-  if(roomList[socket.room].timeout){
+  if (roomList[socket.room].timeout) {
     clearTimeout(roomList[socket.room].timeout);
   }
 
   var dict = roomList[socket.room].allScores;
-  var results = Object.keys(dict).map((key) => {return [dict[key].nickname, dict[key].score]});
+  var results = Object.keys(dict).map((key) => {
+    return [dict[key].nickname, dict[key].score]
+  });
 
   //TODO: Show players where they fall in the rankings
 
@@ -262,7 +286,7 @@ function gameFinished(socket) {
   for (var key in roomList[socket.room].players) {
     var player = roomList[socket.room].players[key];
 
-    if(!player.personId)
+    if (!player.personId)
       continue;
 
     var score = roomList[socket.room].allScores[player.personId].score;
@@ -300,13 +324,13 @@ function checkAnswer(socket, choice, time, email) {
   //Record score
   questionIndex = roomList[room].questionIndex;
 
-  if(score > 0){
+  if (score > 0) {
     con.query(`UPDATE Player SET NumberAnswered = NumberAnswered + 1, NumberCorrect = NumberCorrect + 1 WHERE PersonID = ?`, [player.personId]);
     //Set to 0 if question hasn't been answered yet before
     person[questionIndex] = person[questionIndex] ? person[questionIndex] : 0;
 
     //Player exceeded their current top score
-    if(person[questionIndex] < score){
+    if (person[questionIndex] < score) {
       person.score += score - person[questionIndex];
 
       con.query('REPLACE INTO Answer VALUES(?,?,?,?);', [player.personId, roomList[room].roomId, questionIndex, score]);
@@ -325,13 +349,15 @@ function checkAnswer(socket, choice, time, email) {
 
 function sendAnswerAndPoints(socket) {
   var dict = roomList[socket.room].allScores;
-  var results = Object.keys(dict).map((key) => {return [dict[key].nickname, dict[key].score]});
+  var results = Object.keys(dict).map((key) => {
+    return [dict[key].nickname, dict[key].score]
+  });
 
   //Send specifically to each connected player
   for (var key in roomList[socket.room].players) {
     var player = roomList[socket.room].players[key];
 
-    if(!player.personId)
+    if (!player.personId)
       continue;
 
     var score = roomList[socket.room].allScores[player.personId].score;
@@ -361,7 +387,9 @@ function sendProfResults(socket) {
   //Only send instructor data if connected
   if (!(socketList[roomList[socket.room].masterSocketId] === undefined)) {
     var dict = roomList[socket.room].allScores;
-    io.to(roomList[socket.room].masterSocketId).emit('playerResults', Object.keys(dict).map((key) => {return [dict[key].nickname, dict[key].score]}));
+    io.to(roomList[socket.room].masterSocketId).emit('playerResults', Object.keys(dict).map((key) => {
+      return [dict[key].nickname, dict[key].score]
+    }));
   }
 }
 
@@ -379,7 +407,7 @@ function startGame(socket) {
   roomList[socket.room]['noResponse'] = [];
 
   //Only send questions if people are around to get them
-  if(Object.keys(roomList[socket.room].players).length != 0){
+  if (Object.keys(roomList[socket.room].players).length != 0) {
     responsesIn(socket, true);
     sendProfResults(socket);
   }
@@ -389,10 +417,10 @@ function startGame(socket) {
 function makeGame(socket, room, email, callback) {
   //Get PersonID & Check if a room w/ that name exists
   con.query(`SELECT PersonID FROM Person WHERE Email = ? LIMIT 1;
-             SELECT RoomID FROM Room WHERE Name = ? LIMIT 1;`, [email, room], (err, result) =>{
+             SELECT RoomID FROM Room WHERE Name = ? LIMIT 1;`, [email, room], (err, result) => {
     failed = result[1].length != 0;
     callback(failed);
-    if(!failed){
+    if (!failed) {
       socket.masterId = result[0][0].PersonID;
 
       socket.join(room);
@@ -406,10 +434,10 @@ function makeGame(socket, room, email, callback) {
 
       //Add room to DB and set RoomID for the future
       con.query(`INSERT INTO Room (InstructorID, Name) VALUES (?, ?); SELECT RoomID FROM Room WHERE Name = ? LIMIT 1;`,
-      [socket.masterId, room, room], (err, result) => {
-        //Get RoomID to make subsequent references easier
-        roomList[room].roomId = result[1][0].RoomID;
-      });
+        [socket.masterId, room, room], (err, result) => {
+          //Get RoomID to make subsequent references easier
+          roomList[room].roomId = result[1][0].RoomID;
+        });
     }
   });
 }
@@ -437,9 +465,15 @@ function joinGame(socket, room, email, name, nickname, callback) {
         if (!result2[1] || result2[1].length == 0 || result2[1][0].PersonID == personId) {
           //All tests have been passed
           if (result1[0].State == 'playing') {
-            callback({isError: false, state: "PLAYING"});
+            callback({
+              isError: false,
+              state: "PLAYING"
+            });
           } else {
-            callback({isError: false, state: "WAITING_ROOM"});
+            callback({
+              isError: false,
+              state: "WAITING_ROOM"
+            });
           }
 
           socket.join(room);
@@ -451,7 +485,7 @@ function joinGame(socket, room, email, name, nickname, callback) {
             socketId: socket.id
           };
 
-          if(wasEmpty && result1[0].State == "playing"){
+          if (wasEmpty && result1[0].State == "playing") {
             //Un halt room
             alterHalting(socket, wasEmpty);
           }
@@ -465,20 +499,23 @@ function joinGame(socket, room, email, name, nickname, callback) {
           //Add player to DB or update nickname, Get Previously answered questions
           con.query(`INSERT INTO Player (PersonID, RoomID, NickName) VALUES(?, ?, ?) ON DUPLICATE KEY UPDATE NickName = ?;
           SELECT QuestionID, Score FROM Answer WHERE PersonID ? AND RoomID = ?;`,
-          [personId, roomId, nickname, nickname, personId, roomId], (err, result)=>{
-            //Only create if it doesn't exist
-            if(!roomList[room].allScores[personId]){
-              //In case there is no info
-              roomList[room].allScores[personId] = {score: 0, nickname: nickname};
+            [personId, roomId, nickname, nickname, personId, roomId], (err, result) => {
+              //Only create if it doesn't exist
+              if (!roomList[room].allScores[personId]) {
+                //In case there is no info
+                roomList[room].allScores[personId] = {
+                  score: 0,
+                  nickname: nickname
+                };
 
-              if(result[1]){
-                for(answer of result[1]){
-                  roomList[game].allScores[personId][answer.QuestionID] = answer.Score;
-                  roomList[game].allScores[personId].score += answer.Score;
+                if (result[1]) {
+                  for (answer of result[1]) {
+                    roomList[game].allScores[personId][answer.QuestionID] = answer.Score;
+                    roomList[game].allScores[personId].score += answer.Score;
+                  }
                 }
               }
-            }
-          });
+            });
         } else {
           callback({
             isError: true,
@@ -493,15 +530,15 @@ function joinGame(socket, room, email, name, nickname, callback) {
 //Handles a student leaving the game
 function leaveGame(socket, email) {
   //Since leave is called whenever a page is left, we need to check if they were actually in a game
-  if(socket.room){
+  if (socket.room) {
     io.to(socket.room).emit('roomListUpdate', getMapAttr(roomList[socket.room]['players'], ['nickname']));
     socket.leave(socket.room);
-    if(roomList[socket.room] && roomList[socket.room].players){
+    if (roomList[socket.room] && roomList[socket.room].players) {
       //Make sure nobody is waiting for them to answer
       roomList[socket.room].noResponse.splice(roomList[socket.room].noResponse.indexOf(email), 1);
       delete roomList[socket.room].players[email];
 
-      if(Object.keys(roomList[socket.room].players).length == 0){
+      if (Object.keys(roomList[socket.room].players).length == 0) {
         //Room is empty
         alterHalting(socket);
       }
@@ -530,7 +567,7 @@ function stopGame(socket) {
 function closeGameStep(socket) {
   socket.to(socket.room).emit('roomClosed');
   //Stop wasting server time
-  if(roomList[socket.room].timeout){
+  if (roomList[socket.room].timeout) {
     clearTimeout(roomList[socket.room].timeout);
   }
   //Kick everyone from the room except instructor
@@ -572,47 +609,50 @@ function rejoinGame(socket, email, game, callback) {
     //TODO: Take from DB, differentiate between existed & connected
     con.query(`SELECT pl.PersonID, pl.NickName, per.Email FROM Person per LEFT JOIN Player pl ON pl.PersonID = per.PersonID WHERE RoomID = ?;
       SELECT PersonID, QuestionID, Score FROM Answer WHERE RoomID = ?;`,
-    [roomList[game].roomId, roomList[game].roomId], (err, result)=>{
+      [roomList[game].roomId, roomList[game].roomId], (err, result) => {
 
-      //May not be any previous players
-      if(result[0] && !roomList[game].allScores){
-        roomList[game].allScores = {};
-        //Set up player dicts
-        for(person of result[0]){
-          roomList[game].allScores[person.PersonID] = {score: 0, nickname: person.NickName};
-        }
-        //May not be any previous scores
-        if(result[1]){
-          for(answer of result[1]){
-            roomList[game].allScores[answer.PersonID][answer.QuestionID] = answer.Score;
-            roomList[game].allScores[answer.PersonID].score += answer.Score;
+        //May not be any previous players
+        if (result[0] && !roomList[game].allScores) {
+          roomList[game].allScores = {};
+          //Set up player dicts
+          for (person of result[0]) {
+            roomList[game].allScores[person.PersonID] = {
+              score: 0,
+              nickname: person.NickName
+            };
+          }
+          //May not be any previous scores
+          if (result[1]) {
+            for (answer of result[1]) {
+              roomList[game].allScores[answer.PersonID][answer.QuestionID] = answer.Score;
+              roomList[game].allScores[answer.PersonID].score += answer.Score;
+            }
           }
         }
-      }
-      roomList[game].masterSocketId = socket.id;
-      switch (state) {
-        //Shouldn't pile a new game onto a running one
-        case 'playing':
-          callback("running");
-          sendProfResults(socket);
-          io.to(socket.id).emit('playerResults', getMapAttr(roomList[game].players, ['nickname', 'score']));
-          break;
-        case 'open': //TODO: handle this case seperately
-        default:
+        roomList[game].masterSocketId = socket.id;
+        switch (state) {
+          //Shouldn't pile a new game onto a running one
+          case 'playing':
+            callback("running");
+            sendProfResults(socket);
+            io.to(socket.id).emit('playerResults', getMapAttr(roomList[game].players, ['nickname', 'score']));
+            break;
+          case 'open': //TODO: handle this case seperately
+          default:
 
-          roomList[game].players = roomList[game].players ? roomList[game].players : {};
-          roomList[game].noResponse = [];
-          changeGameState(socket, 'open');
+            roomList[game].players = roomList[game].players ? roomList[game].players : {};
+            roomList[game].noResponse = [];
+            changeGameState(socket, 'open');
 
-          //See whether or not we need to display file drop
-          if (fs.existsSync('quizzes/' + game + '.json')) {
-            callback("file drop", 'open');
-            parseJSON(socket, 'quizzes/' + game + '.json');
-          } else {
-            callback("", 'open');
-          }
-      }
-    });
+            //See whether or not we need to display file drop
+            if (fs.existsSync('quizzes/' + game + '.json')) {
+              callback("file drop", 'open');
+              parseJSON(socket, 'quizzes/' + game + '.json');
+            } else {
+              callback("", 'open');
+            }
+        }
+      });
   });
 }
 
@@ -666,13 +706,13 @@ function getNickname(email, game, callback) {
 }
 
 //Starts or stops the flow of questions, such as if a room is empty
-function alterHalting(socket, open){
+function alterHalting(socket, open) {
   room = roomList[socket.room];
 
-  if(room.timeout)
+  if (room.timeout)
     clearTimeout(room.timeout);
 
-  if(open){
+  if (open) {
     responsesIn(socket, true);
   }
 }
