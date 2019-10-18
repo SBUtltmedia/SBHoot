@@ -1,5 +1,0 @@
-#!/bin/sh
-
-cd /home/ubuntu/SBHoot
-
-while inotifywait -qr ./dist ./views ./app.js ; do { ../runhoot; }; done

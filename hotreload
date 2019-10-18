@@ -1,0 +1,9 @@
+#!/bin/sh
+
+cd /home/ubuntu/SBHoot
+
+#Start it first
+sudo systemctl start runhoot
+echo "Started at" $(date -u)
+
+while inotifywait -qqr ./dist ./views ./app.js ; do { sudo systemctl start runhoot; echo "Restarted at" $(date -u); }; done

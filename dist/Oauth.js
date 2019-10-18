@@ -89,7 +89,6 @@ function makeApiCall() {
       if(isOpen){
         rejoinGame(roomURL);
       } else {
-        console.log("sign in");
         changeState("MAIN_SCREEN");
       }
     });

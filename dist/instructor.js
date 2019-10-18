@@ -43,12 +43,13 @@ function uploadFromKahoot() {
   sendAlert("Uploading file from Kahoot...");
   try {
     $.get(`http://sbhoot.fenetik.com/uploader?url=https://create.kahoot.it/rest/kahoots/${id}`,(data)=>{
-      if(data == ""){
+      parsedData = JSON.parse(data);
+      if(parsedData.error){
         sendAlert("Error: Invalid URL Entered");
         return;
       }
       //Parse on client side to reduce server load
-      var questions = JSON.parse(data).questions;
+      var questions = parsedData.questions;
       var parsedQuestions = [];
       for(var i = 0; i < questions.length; i++){
         question = questions[i];
