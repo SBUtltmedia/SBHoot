@@ -41,8 +41,7 @@ function setQuestionTextSize() {
     largestAnswer = largestAnswer > $(this).html().length ? largestAnswer : $(this).html().length;
   })
 
-  console.log(largestAnswer)
-  console.log(startingFontSize*(maxLength/largestAnswer))
+
   $('.answer').css({"font-size": Math.min(startingFontSize, startingFontSize*(maxLength/(largestAnswer*scalingFactor)))+"rem"})
 
   $('#question').css({"font-size": Math.min(startingFontSize, startingFontSize*(maxLength/(questionLength*scalingFactor)))*1.5+"rem"})

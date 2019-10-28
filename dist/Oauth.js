@@ -56,6 +56,7 @@ function updateSigninStatus(isSignedIn) {
   if (isSignedIn) {
     makeApiCall();
   } else {
+    console.log("I'm calling change state");
     changeState("LOGIN");
   }
 }

@@ -71,6 +71,7 @@ if (http) {
 
 
 //TODO:
+// New DB user with less permissions?
 // Allow professors to re-upload question files?
 // Question refresh limit / non endless mode
 //  Questions left

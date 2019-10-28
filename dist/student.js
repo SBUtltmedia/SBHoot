@@ -53,10 +53,12 @@ function joinGame() {
   }
 }
 
-function checkAnswer(evt) {
+function checkAnswer(evt)
+{
+
   if (state.pickedAnswer == -1) {
     state.pickedAnswer = evt.currentTarget.id.split('_')[1];
-      $('#answer_' + state.pickedAnswer).addClass("spin");
+      //$('#answer_' + state.pickedAnswer).addClass("spin");
     socket.emit('checkAnswer', evt.currentTarget.id.split('_')[1], state.questionTime, email);
   }
 }
@@ -65,6 +67,26 @@ function leaveGame() {
   socket.emit('leaveGame', email);
   changeState("MAIN_SCREEN");
 }
+
+function addAnimation(el,animClass,afterClass=undefined){
+
+
+
+$(el).addClass(animClass)
+
+$(el).on("animationend",
+function() {
+  console.log("removing", animClass)
+    $(el).removeClass(animClass);
+
+    if (afterClass) {
+
+    el.addClass(afterClass)
+
+    }
+})
+}
+
 
 function rejoinGame(room) {
   if (socket.connected) {
@@ -92,7 +114,21 @@ function rejoinGame(room) {
 }
 
 function sendQuestion(myJson, timeGiven) {
-  $(".answer").removeClass("rightAnswerHide wrongAnswerHide spin");
+  $(".answer").removeClass("rightAnswer wrongAnswer spin");
+$('.answer').each(function(el)
+{
+  console.log(el)
+addAnimation($(this),"answerLoad","answerRock");
+
+
+}
+
+
+
+)
+
+
+
   clearInterval(state.questionInterval);
 
   state.questionTime = 0;
@@ -107,21 +143,23 @@ function sendQuestion(myJson, timeGiven) {
 
   $("#question").html(myJson.question);
   //Hide irrelevant answers
-  for(var i = myJson.answers.length; i < 4; i++){
-    $("#answer_" + i).hide();
-  }
+  // for(var i = myJson.answers.length; i < 4; i++){
+  //   $("#answer_" + i).hide();
+  // }
   for (var i = 0; i < myJson.answers.length; i++) {
     $("#answer_" + i).html(myJson.answers[i]);
     $("#answer_" + i).show();
 
-  $('.answer').addClass("answerLoad");
+
   }
-  $('.answer').on("animationend", function(){
-    if($(this).hasClass("answerLoad")){
-    $(this).removeClass("answerLoad")
-    $(this).addClass("answerToggle")
-}
-  });
+
+//   $('.answer').on("animationend", function(){
+//     $('.answer').removeClass("spin")
+//     if($(this).hasClass("answerLoad")){
+//     $(this).removeClass("answerLoad")
+//     $(this).addClass("answerRock")
+// }
+  //});
   changeState("PLAYING");
   setQuestionTextSize();
   // resizeWindow();
@@ -133,16 +171,32 @@ function roomClosed() {
 }
 
 function sendAnswer(answer, points, players) {
+    $('.answer').removeClass("answerRock");
   clearInterval(state.questionInterval);
   if (points > state.playerScore)
     state.playerScore = points;
   $('#pointCounter').text(state.playerScore);
+  var delayInMilliseconds = 1000;
 
-  $('#answer_' + answer).addClass("rightAnswer");
+
   if (answer != state.pickedAnswer) {
+    addAnimation($('#answer_' + state.pickedAnswer),"spinWrong");
     $('#answer_' + state.pickedAnswer).addClass("wrongAnswer");
+  //   setTimeout(function(){
+  // $('#answer_' + answer).addClass("rightAnswer");
+  //   },1500);
+
+  }else{
+    $('.answer').removeClass("spinWrong");
+      addAnimation($('#answer_' + state.pickedAnswer),"spinRight");
+  $('#answer_' + answer).addClass("rightAnswer");
   }
-  $('.answer').removeClass("answerToggle");
+
+  // setTimeout(function(){
+  //   $('.answer').removeClass("spinRight");
+  //   $('.answer').removeClass("spinWrong");
+  // },1500);
+
 
 
   //Prevent player from answering after receiving

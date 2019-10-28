@@ -40,6 +40,9 @@ function serverMismatch(reason, resetState){
 }
 
 function changeDisplay(show, noShow) {
+
+ //$('body').children().hide();
+
   for (item of noShow) {
     $(item).hide();
   }
@@ -97,6 +100,7 @@ function displayPrevGames(games) {
 
 //Handles all UI state changes in Oauth.js, instructor.js, & student.js
 function changeState(newState, roomState) {
+  
   if (newState != "LOGIN" && newState == state.currentState) {
     getRightButtons(roomState);
   } else {
