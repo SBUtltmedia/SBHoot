@@ -68,7 +68,7 @@
     ]
   },
   "dependencies": {
-    "csv-parse": "^4.4.3",
+    "csv-parse": "^4.4.6",
     "csvtojson": "^2.0.10",
     "express": "^4.17.1",
     "formidable": "^1.2.1",
