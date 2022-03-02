@@ -36,7 +36,7 @@
     "chai": "^4.2.0",
     "chai-shallow-deep-equal": "*",
     "ghpages": "0.0.10",
-    "karma": "^4.1.0",
+    "karma": "^6.3.16",
     "karma-browserify": "^6.0.0",
     "karma-chai-shallow-deep-equal": "*",
     "karma-chrome-launcher": "^2.2.0",
