@@ -55,7 +55,7 @@
     "sinon-chai": "^3.3.0",
     "snazzy": "^8.0.0",
     "uglify-es": "*",
-    "webpack": "^4.35.2"
+    "webpack": "^5.75.0"
   },
   "semistandard": {
     "globals": [
