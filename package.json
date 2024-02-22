@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "A trivia game",
   "main": "index.js",
-  "unpkg": "dist/aframe-websocket-component.min.js",
   "scripts": {
     "dev": "nodemon --watch index.js --watch dist/student.js --watch dist/instructor.js --watch app.js --watch common.pug --watch student.pug --watch instructor.pug --exec 'node app.js' ",
     "lint": "semistandard -v | snazzy",
@@ -30,7 +29,6 @@
   },
   "homepage": "https://github.com/SBUtltmedia/SBHoot",
   "devDependencies": {
-    "aframe": "^0.9.2",
     "browserify": "^16.2.3",
     "budo": "^11.6.2",
     "chai": "^4.2.0",
@@ -58,10 +56,6 @@
     "webpack": "^4.35.2"
   },
   "semistandard": {
-    "globals": [
-      "AFRAME",
-      "THREE"
-    ],
     "ignore": [
       "examples/build.js",
       "dist/**"
@@ -74,11 +68,12 @@
     "formidable": "^1.2.1",
     "mongodb-stitch": "^3.2.24",
     "mysql": "^2.17.1",
-    "node-libcurl": "^2.0.2",
+    "node-libcurl": "^4.0.0",
     "pm2": "^3.5.1",
     "pug": "^2.0.4",
     "socket.io": "*",
     "socketio-file-upload": "^0.7.0",
+    "sqlite3": "^5.1.7",
     "sqlstring": "^2.3.1"
   }
 }
