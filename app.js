@@ -78,7 +78,7 @@ app.use(bodyParser);
 app.post('*', function(req, res) {
   var body = (JSON.stringify(res.body))
   var url = req.url.split("/")[1]
-  res.render('common', { title: body, message: res.body.email})
+  res.render('common', { title: "FFFf", message: "sdfdsfsdf"})
 });
 if (http) {
   http.listen(PORT, function() {
