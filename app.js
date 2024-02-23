@@ -78,10 +78,7 @@ app.get("/",(req,res)=>{
 app.post('*', function(req, res) {
   var body = (JSON.stringify(req.body))
   var url = req.url.split("/")[1]
-  res.render('common', {
-    clientType: url,
-    resBody: body,
-  })
+  res.render('common', { title: 'Hey', message: 'Hello there!'})
 });
 if (http) {
   http.listen(PORT, function() {
