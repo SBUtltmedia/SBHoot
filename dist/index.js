@@ -1,4 +1,15 @@
-socket = io(`${window.location.hostname}:PORT`);
+socket = io();
+socket.on('connect', () => {
+  socket.emit('new user', socket.id);
+  console.log(lockInfo)
+  lockInfo.callback(lockInfo.lockId)
+})
+
+socket.on('new connection', (state) => {
+  // console.log("LOAD #2: RECEIEVE STATE");
+
+});
+
 var listeners = "click";
 var state = {
   roomSize: 0,

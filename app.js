@@ -20,7 +20,7 @@ import fs from "fs";
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 const csv = require('csvtojson');
-
+let role;
 
 const PORT = process.env.PORT || 8080;
 //Connect to Database
@@ -68,7 +68,8 @@ app.get('/uploader', function(req, res) {
 app.get("/",(req,res)=>{
 
   var url = req.url.split("/")[1]
-  res.render('login', {
+  role=url;
+  res.render('common', {
     clientType: url
   })
 });
@@ -100,164 +101,186 @@ if (http) {
 //    What does the instructor see?
 // Aggregate scores for percentage?
 
+io.on("connect_error", (err) => {
+  console.log(`connect_error due to ${err.message}`);
+  });
+io.on('connection', (socket) => {
+  //let gstate = this.serverStore.getState();
+  console.log("connection")
+  // User connects 
+  socket.once('new user', (id) => {
+    console.log("SERVER RECEIVES NEW USER:", id);
 
-io.on('connection', function(socket) {
-
-  /////////////////////
-  // FILE MANAGEMENT //
-  /////////////////////
-
-  //Uploaded CSV
-  var uploader = new SocketIOFileUpload();
-  uploader.dir = "uploads/";
-  uploader.listen(socket);
-
-  // Accepts only CSV files
-  uploader.uploadValidator = (event, callback) => {
-    if (event.file.name.split('.')[1] != "csv") {
-      sendAlert(socket, "Error: Only CSV files are accepted");
-      callback(false);
-    } else {
-      callback(true);
+  
+    if (typeof gstate !== 'undefined') {
+      //console.log("gstate", JSON.stringify(gstate))
+      io.to(id).emit('new connection', gstate)
     }
-  };
 
-  // Parse to JSON, check & change format
-  uploader.on("saved", function(event) {
-    callback = () => {};
-
-    //Try to parse the file to our JSON format. If it fails, we know the formatting is invalid
-    try {
-      csv().fromFile(event.file.pathName).then((jsonObj) => {
-        //Delete old file
-        fs.unlink(event.file.pathName, callback);
-
-        questionList = [];
-        for (question of jsonObj) {
-          var newQuestion = {
-            question: question.Question,
-            correct: parseInt(question["Correct Answer"]) - 1
-          };
-          newQuestion.answers = [question["Answer 1"], question["Answer 2"], question["Answer 3"], question["Answer 4"]].filter((answer) => {
-            return answer != ""
-          });
-          newQuestion.time = question["Question Time"]; //Assume the user entered a time in seconds
-
-          if (!newQuestion.answers[0] || !newQuestion.answers[1] || !newQuestion.time || isNaN(newQuestion.correct)) {
-            io.to(socket.id).emit("uploadFailed", "Error: File dos not conform to standard");
-            return;
-          }
-
-          // Send specific error messages
-          if (newQuestion.time < 1) {
-            io.to(socket.id).emit("uploadFailed", "Error: Question time cannot be less than a second");
-            return;
-          }
-          if (!newQuestion.answers[newQuestion.correct]) {
-            io.to(socket.id).emit("uploadFailed", "Error: Correct answer exceeds size of answer list");
-            return;
-          }
-
-          questionList.push(newQuestion);
-        }
-        roomList[socket.room]['questions'] = questionList;
-        //Create new file as JSON
-        fs.writeFile(`quizzes/${socket.room}.json`, JSON.stringify(questionList), 'utf8', callback);
-        io.to(socket.id).emit("uploadSuccessful");
-      });
-    } catch (err) {
-      fs.unlink(event.file.pathName, callback);
-      io.to(socket.id).emit("uploadFailed", "Error: File dos not conform to standard");
+  
+    else {
+      //console.log("Retrieving state from JSONFS", database.getData())
+      io.to(id).emit('new connection', {})
     }
-  });
+  })
+})
+// io.on('connection', function(socket) {
 
-  // Error handler:
-  uploader.on("error", function(event) {
-    console.log("Error from uploader", event);
-  });
+//   /////////////////////
+//   // FILE MANAGEMENT //
+//   /////////////////////
 
-  socket.on('downloadReport', () => {
-    if (errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
-      sendReport(socket);
-  });
+//   //Uploaded CSV
+//   var uploader = new SocketIOFileUpload();
+//   uploader.dir = "uploads/";
+//   uploader.listen(socket);
 
-  socket.on('useDefaultQuestions', (callback) => {
-    if (errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
-      useDefaultQuestions(socket, callback);
-  });
+//   // Accepts only CSV files
+//   uploader.uploadValidator = (event, callback) => {
+//     if (event.file.name.split('.')[1] != "csv") {
+//       sendAlert(socket, "Error: Only CSV files are accepted");
+//       callback(false);
+//     } else {
+//       callback(true);
+//     }
+//   };
 
-  socket.on('kahootUpload', (questions, callback) => {
-    if (errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
-      kahootUpload(socket, questions, callback);
-  });
+//   // Parse to JSON, check & change format
+//   uploader.on("saved", function(event) {
+//     callback = () => {};
+
+//     //Try to parse the file to our JSON format. If it fails, we know the formatting is invalid
+//     try {
+//       csv().fromFile(event.file.pathName).then((jsonObj) => {
+//         //Delete old file
+//         fs.unlink(event.file.pathName, callback);
+
+//         questionList = [];
+//         for (question of jsonObj) {
+//           var newQuestion = {
+//             question: question.Question,
+//             correct: parseInt(question["Correct Answer"]) - 1
+//           };
+//           newQuestion.answers = [question["Answer 1"], question["Answer 2"], question["Answer 3"], question["Answer 4"]].filter((answer) => {
+//             return answer != ""
+//           });
+//           newQuestion.time = question["Question Time"]; //Assume the user entered a time in seconds
+
+//           if (!newQuestion.answers[0] || !newQuestion.answers[1] || !newQuestion.time || isNaN(newQuestion.correct)) {
+//             io.to(socket.id).emit("uploadFailed", "Error: File dos not conform to standard");
+//             return;
+//           }
+
+//           // Send specific error messages
+//           if (newQuestion.time < 1) {
+//             io.to(socket.id).emit("uploadFailed", "Error: Question time cannot be less than a second");
+//             return;
+//           }
+//           if (!newQuestion.answers[newQuestion.correct]) {
+//             io.to(socket.id).emit("uploadFailed", "Error: Correct answer exceeds size of answer list");
+//             return;
+//           }
+
+//           questionList.push(newQuestion);
+//         }
+//         roomList[socket.room]['questions'] = questionList;
+//         //Create new file as JSON
+//         fs.writeFile(`quizzes/${socket.room}.json`, JSON.stringify(questionList), 'utf8', callback);
+//         io.to(socket.id).emit("uploadSuccessful");
+//       });
+//     } catch (err) {
+//       fs.unlink(event.file.pathName, callback);
+//       io.to(socket.id).emit("uploadFailed", "Error: File dos not conform to standard");
+//     }
+//   });
+
+//   // Error handler:
+//   uploader.on("error", function(event) {
+//     console.log("Error from uploader", event);
+//   });
+
+//   socket.on('downloadReport', () => {
+//     if (errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
+//       sendReport(socket);
+//   });
+
+//   socket.on('useDefaultQuestions', (callback) => {
+//     if (errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
+//       useDefaultQuestions(socket, callback);
+//   });
+
+//   socket.on('kahootUpload', (questions, callback) => {
+//     if (errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
+//       kahootUpload(socket, questions, callback);
+//   });
 
 
-  /////////////////////
-  // GAME MANAGEMENT //
-  /////////////////////
+//   /////////////////////
+//   // GAME MANAGEMENT //
+//   /////////////////////
 
-  socket.on('joinGame', (room, email, name, nickname, callback) => {
-    joinGame(socket, room, email, name, nickname, callback)
-  });
+//   socket.on('joinGame', (room, email, name, nickname, callback) => {
+//     joinGame(socket, room, email, name, nickname, callback)
+//   });
 
-  socket.on('makeGame', (room, email, callback) => {
-    makeGame(socket, room, email, callback);
-  });
+//   socket.on('makeGame', (room, email, callback) => {
+//     makeGame(socket, room, email, callback);
+//   });
 
-  socket.on('changeGameState', (state) => {
-    if (errorCheck(socket, [socket.room, socket.masterId], [], "MAIN_SCREEN"))
-      changeGameState(socket, state);
-  });
+//   socket.on('changeGameState', (state) => {
+//     if (errorCheck(socket, [socket.room, socket.masterId], [], "MAIN_SCREEN"))
+//       changeGameState(socket, state);
+//   });
 
-  socket.on('deleteGame', () => {
-    if (errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
-      deleteGame(socket);
-  });
+//   socket.on('deleteGame', () => {
+//     if (errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
+//       deleteGame(socket);
+//   });
 
-  socket.on('startGame', () => {
-    if (errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
-      startGame(socket);
-  });
+//   socket.on('startGame', () => {
+//     if (errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
+//       startGame(socket);
+//   });
 
-  socket.on('logUser', (email, firstName, lastName) => {
-    if (errorCheck(socket, [email, firstName, lastName], [], "MAIN_SCREEN"))
-      con.get(`INSERT INTO Person (Email, FirstName, LastName) SELECT ?, ? , ? WHERE NOT EXISTS(SELECT * FROM Person WHERE Email=?)`, [email, firstName, lastName, email]);
-  });
+//   socket.on('logUser', (email, firstName, lastName) => {
+//     if (errorCheck(socket, [email, firstName, lastName], [], "MAIN_SCREEN"))
+//       con.get(`INSERT INTO Person (Email, FirstName, LastName) SELECT ?, ? , ? WHERE NOT EXISTS(SELECT * FROM Person WHERE Email=?)`, [email, firstName, lastName, email]);
+//   });
 
-  socket.on('requestPreviousGames', (email) => {
-    requestPreviousGames(socket, email);
-  });
+//   socket.on('requestPreviousGames', (email) => {
+//     requestPreviousGames(socket, email);
+//   });
 
-  socket.on('requestPreviousGamesStudent', (email) => {
-    requestPreviousGamesStudent(socket, email);
-  });
+//   socket.on('requestPreviousGamesStudent', (email) => {
+//     requestPreviousGamesStudent(socket, email);
+//   });
 
-  socket.on('rejoinGame', (email, game, callback) => {
-    rejoinGame(socket, email, game, callback);
-  });
+//   socket.on('rejoinGame', (email, game, callback) => {
+//     rejoinGame(socket, email, game, callback);
+//   });
 
-  socket.on('getNickname', (email, game, callback) => {
-    getNickname(email, game, callback);
-  });
+//   socket.on('getNickname', (email, game, callback) => {
+//     getNickname(email, game, callback);
+//   });
 
-  //////////////////
-  // GAME PLAYING //
-  //////////////////
+//   //////////////////
+//   // GAME PLAYING //
+//   //////////////////
 
-  socket.on('checkAnswer', (choice, time, email) => {
-    if (errorCheck(socket, [socket.room, roomList[socket.room]], ['questions'], "MAIN_SCREEN"))
-      checkAnswer(socket, choice, time, email);
-  });
+//   socket.on('checkAnswer', (choice, time, email) => {
+//     if (errorCheck(socket, [socket.room, roomList[socket.room]], ['questions'], "MAIN_SCREEN"))
+//       checkAnswer(socket, choice, time, email);
+//   });
 
-  socket.on('leaveGame', (email) => {
-    leaveGame(socket, email);
-  });
+//   socket.on('leaveGame', (email) => {
+//     leaveGame(socket, email);
+//   });
 
-  socket.on('stopGame', () => {
-    if (errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
-      stopGame(socket);
-  });
-});
+//   socket.on('stopGame', () => {
+//     if (errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
+//       stopGame(socket);
+//   });
+// });
 
 ////////////////////////////
 // GAME PLAYING FUNCTIONS //
