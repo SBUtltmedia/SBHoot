@@ -73,9 +73,18 @@ app.get('/uploader', function(req, res) {
   // const { statusCode, data, headers } = await curly.get()
 
 });
+app.get("/",(req,res)=>{
+
+  var url = req.url.split("/")[1]
+  res.render('login', {
+    clientType: url
+  })
+});
 
 
-app.get('*', function(req, res) {
+
+app.post('*', function(req, res) {
+  console.log(JSON.stringify(req.body))
   var url = req.url.split("/")[1]
   res.render('common', {
     clientType: url

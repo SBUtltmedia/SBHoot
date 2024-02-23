@@ -34,7 +34,25 @@ $(function() {
 
 function handleClientLoad() {
   // Load the API client and auth2 library
-  gapi.load('client:auth2', initClient);
+  // gapi.load('client:auth2', initClient);
+  var p = document.createElement('p');
+  name = "heeeee";
+  email = "heeee@gggg";
+  firstName = "fff";
+  lastName = "ffffff";
+
+  //Some users may not have a set 'first' or 'last' name
+  lastName = lastName ? lastName : "";
+  firstName = firstName ? firstName : "";
+  $('#greeting').text('Hello, ' + name + '!');
+  socket.emit('getNickname', email, roomURL, (nickname, isOpen)=>{
+    $("#nickname").val(nickname);
+    if(isOpen){
+      rejoinGame(roomURL);
+    } else {
+      changeState("MAIN_SCREEN");
+    }
+  });
 }
 
 function initClient() {
