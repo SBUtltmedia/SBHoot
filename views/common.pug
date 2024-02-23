@@ -37,10 +37,12 @@
 h1= title
 h1= message 
 
-if clientType=='instructor'
-  include instructor.pug
-else
-  include student.pug
+include instructor.pug
+
+//- if clientType=='instructor'
+//-   include instructor.pug
+//- else
+//-   include student.pug
 
 
 </html>
