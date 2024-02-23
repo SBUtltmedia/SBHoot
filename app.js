@@ -3,7 +3,6 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 import path from 'path';
 import { fileURLToPath } from 'url';
-const bodyParser = require('body-parser');
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import express from 'express';
@@ -73,7 +72,7 @@ app.get("/",(req,res)=>{
   })
 });
 
-app.use(bodyParser);
+
 
 app.post('*', function(req, res) {
   var body = (JSON.stringify(res.body))
