@@ -11,6 +11,8 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 const csv = require('csvtojson');
 
+
+const PORT = process.env.PORT || 8080;
 //Connect to Database
 let DBInfo = JSON.parse(fs.readFileSync('DBConnect.json'));
 // var con = mysql.createConnection({
@@ -70,8 +72,8 @@ app.get('*', function(req, res) {
   })
 });
 if (http) {
-  http.listen(80, function() {
-    console.log('listening on *:8090');
+  http.listen(PORT, function() {
+    console.log('listening on *:' + PORT);
   });
 } else {
   console.log(window)
