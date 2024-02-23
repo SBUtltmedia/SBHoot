@@ -80,7 +80,7 @@ app.post('*', function(req, res) {
   var url = req.url.split("/")[1]
   res.render('common', {
     clientType: url,
-    resbody: body
+    resBody: body,
   })
 });
 if (http) {
