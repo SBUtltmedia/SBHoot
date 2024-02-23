@@ -40,7 +40,7 @@ let con = new sqlite3.Database('./sbhoot.db', (err) => {
   console.log('Connected to the chinook database.');
 });
 
-
+con.get(`INSERT INTO Person (Email, FirstName, LastName) SELECT ?, ? , ? WHERE NOT EXISTS(SELECT * FROM Person WHERE Email=?)`, ["dsfsdf", "DFDS", "Fsdfs", "dsfsdfsdf"]);
 //'Open' rooms w/out temp data causes issues
 con.get("UPDATE Room SET State = 'closed';");
 
