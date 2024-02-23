@@ -24,7 +24,7 @@ const csv = require('csvtojson');
 
 const PORT = process.env.PORT || 8080;
 //Connect to Database
-let DBInfo = JSON.parse(fs.readFileSync('DBConnect.json'));
+// let DBInfo = JSON.parse(fs.readFileSync('DBConnect.json'));
 // var con = mysql.createConnection({
 //   host: DBInfo.host,
 //   database: DBInfo.database,
