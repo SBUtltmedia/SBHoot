@@ -44,7 +44,7 @@ function changeDisplay(show, noShow) {
  //$('body').children().hide();
 
   for (item of noShow) {
-    $(item).hide();
+    $(item).show();
   }
   for (item of show) {
     $(item).show();
@@ -119,6 +119,7 @@ function changeState(newState, roomState) {
         if (isInstructor()) {
           changeDisplay(['#signout', '#gameCreation', '#signout-button'], ["#authorize", '#gameManagement']);
         } else {
+          console.log("cine gerere");
           //When a user logs in, add them to the game if possible
           changeDisplay(['#join', '#gameCreation', '#joinOptions', '#signout-button'], ["#authorize", '#waitingRoom', '#stage']);
           $("#roomId").val(roomURL);
