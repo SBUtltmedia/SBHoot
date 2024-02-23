@@ -40,14 +40,6 @@ let con = new sqlite3.Database('./sbhoot.db', (err) => {
   console.log('Connected to the chinook database.');
 });
 
-const filepath = "./fish.db";
-  const db = new sqlite3.Database(filepath, (error) => {
-    if (error) {
-      return console.error(error.message);
-    }
-  });
-  console.log("Connection with SQLite has been established");
-
 
 //'Open' rooms w/out temp data causes issues
 con.get("UPDATE Room SET State = 'closed';");
@@ -84,10 +76,11 @@ app.get("/",(req,res)=>{
 
 
 app.post('*', function(req, res) {
-  console.log(JSON.stringify(req.body))
+  var body = (JSON.stringify(req.body))
   var url = req.url.split("/")[1]
   res.render('common', {
-    clientType: url
+    clientType: url,
+    resbody: body
   })
 });
 if (http) {

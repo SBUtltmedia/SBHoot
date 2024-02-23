@@ -108,9 +108,9 @@ function changeState(newState, roomState) {
       //State where user is prompted to log in
       case "LOGIN":
         if (isInstructor()) {
-          changeDisplay(["#authorize",'#signout', "#gameCreation", "#gameManagement"], ['#signout', "#gameCreation", "#gameManagement"]);
+          changeDisplay(["#authorize"], ['#signout', "#gameCreation", "#gameManagement"]);
         } else {
-          changeDisplay(["#authorize",'#join', '#waitingRoom', '#stage', '#signout-button'], ['#join', '#waitingRoom', '#stage', '#signout-button']);
+          changeDisplay(["#authorize"], ['#join', '#waitingRoom', '#stage', '#signout-button']);
         }
         break;
         //State after user has logged in and has not connected to a game
