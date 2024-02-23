@@ -1,12 +1,22 @@
-const path = require('path');
-var express = require('express');
-const { Curl } = require('node-libcurl');
+//const path = require('path');
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import express from 'express';
+//const { Curl } = require('node-libcurl');
+import { Curl } from "node-libcurl"
 var SocketIOFileUpload = require('socketio-file-upload');
 var app = express().use(SocketIOFileUpload.router);
-const sqlite3 = require('sqlite3').verbose();
+//const sqlite3 = require('sqlite3').verbose();
+import sqlite3 from "sqlite3";
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
-const fs = require('fs');
+//const fs = require('fs');
+import fs from "fs";
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 const csv = require('csvtojson');
