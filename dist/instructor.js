@@ -117,10 +117,10 @@ function rejoinGame() {
 
 function makeGame() {
   if (socket.connected) {
+    console.log(email, firstName, lastName)
     logUser(email, firstName, lastName);
-
     room = standardizeRoomName($('#roomId').val());
-
+    console.log(email, firstName, lastName, room)
     socket.emit('makeGame', room, email, (error) => {
       if (!error) {
         state.gameName = room;

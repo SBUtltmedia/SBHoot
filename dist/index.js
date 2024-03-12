@@ -68,6 +68,7 @@ function standardizeRoomName(room){
 
 //Add player to DB if not exists
 function logUser(email, firstName, lastName) {
+  console.log(email, firstName, lastName)
   socket.emit('logUser', email, firstName, lastName);
 }
 
@@ -111,7 +112,7 @@ function displayPrevGames(games) {
 
 //Handles all UI state changes in Oauth.js, instructor.js, & student.js
 function changeState(newState, roomState) {
-  
+  console.log("entered here"+newState+roomState)
   if (newState != "LOGIN" && newState == state.currentState) {
     getRightButtons(roomState);
   } else {
@@ -127,7 +128,7 @@ function changeState(newState, roomState) {
         //State after user has logged in and has not connected to a game
       case "MAIN_SCREEN":
         requestPrevGames();
-        if (isInstructor()) {
+        if (isInstructor()||1) {
           changeDisplay(['#signout', '#gameCreation', '#signout-button'], ["#authorize", '#gameManagement']);
         } else {
           console.log("cine gerere");

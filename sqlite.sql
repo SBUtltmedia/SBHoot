@@ -1,5 +1,5 @@
 CREATE TABLE Room (
-   RoomID integer,
+   RoomID integer PRIMARY KEY,
    Name string,
    InstructorID integer,
    State string
@@ -19,7 +19,9 @@ CREATE TABLE answer(
 
 );
 CREATE TABLE Person (
-    personID integer,
-    email string
+    personID integer PRIMARY KEY,
+    email string,
+    firstName string,
+    lastName string
 );
 

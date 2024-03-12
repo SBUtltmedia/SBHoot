@@ -10,12 +10,14 @@
   <script  src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js" integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E=" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
       <link rel="stylesheet" type="text/css" title="Cool stylesheet" href="dist/css/style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.dev.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
   <link href="https://fonts.googleapis.com/css?family=Pangolin" rel="stylesheet">
   <script src="dist/index.js"></script>
   <script src="dist/Oauth.js"></script>
-  <script src="https://apis.google.com/js/api.js"></script>
-
+    <meta name="google-signin-scope" content="profile email">
+    <meta name="google-signin-client_id" content="460603856439-1nmrrnah7irukf06llicjgek10jktevj.apps.googleusercontent.com">
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+  
   <script src="/dist/resize.js"></script>
 
 </head>
@@ -25,7 +27,7 @@
   <div id="authorize">
     <img src="/dist/img/SBhootlogo.svg"/>
     <h1 id="mainHeader">Log in to continue:</h1>
-    <button id="authorize-button">Authorize</button>
+    <div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark"></div>
   </div>
   
   <div class="loading-screen">
