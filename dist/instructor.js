@@ -117,7 +117,7 @@ function rejoinGame() {
 
 function makeGame() {
   if (socket.connected) {
-    console.log(email, firstName, lastName)
+    console.log("sssssss", email, firstName, lastName)
     logUser(email, firstName, lastName);
     room = standardizeRoomName($('#roomId').val());
     console.log(email, firstName, lastName, room)
@@ -159,6 +159,7 @@ function startGame() {
 }
 
 function stopGame() {
+  console.log("stop game");
   socket.emit('stopGame');
   $("#room-message").text("");
   state.roomSize = 0;

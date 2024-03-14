@@ -83,10 +83,11 @@ app.get('/uploader', function(req, res) {
 
 
 app.get('*', function(req, res) {
-  var body = (JSON.stringify(res.body))
   var url = req.url.split("/")[1]
-  console.log(body)
-  res.render('common', { title: "FFFf", message: body,})
+  console.log(url);
+  res.render('common', {
+    clientType: url
+  })
 });
 
 if (http) {
@@ -252,6 +253,7 @@ io.on('connection', (socket) => {
 
   socket.on('logUser', (email, firstName, lastName) => {
     console.log("I can also do that")
+    console.log(email, firstName, lastName, email)
     if (errorCheck(socket, [email, firstName, lastName], [], "MAIN_SCREEN"))
       con.get(`INSERT INTO Person (Email, FirstName, LastName) SELECT ?, ? , ? WHERE NOT EXISTS(SELECT * FROM Person WHERE Email=?)`, [email, firstName, lastName, email]);
   });
@@ -286,8 +288,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('stopGame', () => {
-    if (errorCheck(socket, [socket.room], [], "MAIN_SCREEN"))
+    if (errorCheck(socket, [socket.room], [], "MAIN_SCREEN")) {
+      console.log(socket)
       stopGame(socket);
+    }
   });
 });
 
@@ -367,29 +371,34 @@ function responsesIn(socket, restart) {
 
 //Checks a student submitted answerand updates the DB to reflect how they did
 function checkAnswer(socket, choice, time, email) {
+  
   var room = socket.room;
   var player = roomList[room].players[email];
-  var person = roomList[room].allScores[player.personId];
+
+  var person = roomList[room].allScores[player.personID];
+  console.log(roomList, socket.room, email, choice, time, player, person)
 
   //Store who answered & what
   var score = getPoints(socket, time, choice);
   //Record score
-  questionIndex = roomList[room].questionIndex;
+  let questionIndex = roomList[room].questionIndex;
 
   if (score > 0) {
-    con.get(`UPDATE Player SET NumberAnswered = NumberAnswered + 1, NumberCorrect = NumberCorrect + 1 WHERE PersonID = ?`, [player.personId]);
+    let query= `UPDATE Player SET NumberAnswered = NumberAnswered + 1, NumberCorrect = NumberCorrect + 1 WHERE PersonID = ?`
+    con.get(query, [player.personId]);
     //Set to 0 if question hasn't been answered yet before
     person[questionIndex] = person[questionIndex] ? person[questionIndex] : 0;
 
     //Player exceeded their current top score
     if (person[questionIndex] < score) {
       person.score += score - person[questionIndex];
-
-      con.get('REPLACE INTO Answer VALUES(?,?,?,?);', [player.personId, roomList[room].roomId, questionIndex, score]);
+      let query ='REPLACE INTO Answer VALUES(?,?,?,?);'
+      con.get(query, [player.personId, roomList[room].roomId, questionIndex, score]);
       person[questionIndex] = score;
     }
   } else {
-    con.get(`UPDATE Player SET NumberAnswered = NumberAnswered + 1 WHERE PersonID = ?`, [player.personId]);
+    let query= `UPDATE Player SET NumberAnswered = NumberAnswered + 1 WHERE PersonID = ?`
+    con.get(query, [player.personId]);
   }
 
   //Remove answered player
@@ -424,7 +433,7 @@ function sendAnswerAndPoints(socket) {
 // if they answer the question correctly
 function getPoints(socket, time, choice) {
   if (roomList[socket.room]['answer'] == choice) {
-    answerTime = roomList[socket.room].answerTime;
+    let answerTime = roomList[socket.room].answerTime;
     time -= 1;
     if (time < 0)
       time = 0;
@@ -465,121 +474,176 @@ function startGame(socket) {
   }
 }
 
+function creatRoom(err, RoomID,PersonID, socket, room, callback)  {
+  let roomExist =  RoomID !=undefined;
+  callback(roomExist);
+  if (!roomExist) {
+    socket.masterId = PersonID;
+
+    socket.join(room);
+    socket.room = room;
+    roomList[room] = {
+      players: {},
+      noResponse: [],
+      masterSocketId: socket.id,
+      allScores: {}
+    };
+    console.log(socket.masterId, PersonID, "insert room")
+
+    //Add room to DB and set RoomID for the future
+    let query = `INSERT INTO Room (InstructorID, Name) VALUES (?, ?)`;
+    con.get(query, [socket.masterId, room], (err, result) => roomCreated(err, room));
+
+  }
+
+}
+
+function roomCreated(err, room){
+
+  if (err) {
+    console.log("Failed to insert room");
+  }
+
+  let query = `SELECT RoomID FROM Room WHERE Name = ? LIMIT 1;`;
+  con.get(query,
+  room, (err, result) => {
+     addRoomList(err, result?.roomID, room)
+
+  });
+
+
+}
+
+function addRoomList(err, roomID, room) {
+  //Get RoomID to make subsequent references easier
+   roomList[room].roomID = roomID;
+}
+
+function getRoom(err,PersonID, socket, room, callback){
+  console.log(PersonID, "getroom")
+let query = `SELECT RoomID FROM Room WHERE Name = '${PersonID}' LIMIT 1;`
+con.get(query, room, (err,result)=>{ creatRoom(err, result?.roomID, PersonID, socket, room, callback)})
+
+
+}
+
 //Makes a game with the creator acting as an instructor
 function makeGame(socket, room, email, callback) {
-  console.log(email, room)
+
   //Get PersonID & Check if a room w/ that name exists
-  con.get(`SELECT PersonID FROM Person WHERE Email = ? LIMIT 1;`, room, (err, result) => { console.log(err,result,"123")})
-  con.get(`SELECT PersonID FROM Person WHERE Email = ? LIMIT 1;
-             SELECT RoomID FROM Room WHERE Name = ? LIMIT 1;`, [email, room], (err, result) => {
-              console.log(result, err)
-    let failed = (result == null);
-    callback(failed);
-    if (!failed) {
-      socket.masterId = result[0][0].PersonID;
+  let query= `SELECT PersonID FROM Person WHERE Email = '${email}' LIMIT 1;`
+  con.get(query, (err,result)=>getRoom(err,result?.PersonID, socket, room, callback))
+  console.log(email, room, query, "make game")
+  //con.get(`SELECT RoomID FROM Room WHERE Name = ? LIMIT 1;`, room, (err, result) => { console.log(err,result,"123")})
 
-      socket.join(room);
-      socket.room = room;
-      roomList[room] = {
-        players: {},
-        noResponse: [],
-        masterSocketId: socket.id,
-        allScores: {}
-      };
 
-      //Add room to DB and set RoomID for the future
-      con.get(`INSERT INTO Room (InstructorID, Name) VALUES (?, ?); SELECT RoomID FROM Room WHERE Name = ? LIMIT 1;`,
-        [socket.masterId, room, room], (err, result) => {
-          //Get RoomID to make subsequent references easier
-          roomList[room].roomId = result[1][0].RoomID;
-        });
-    }
-  });
+
+
 }
 
 //Handles a student joining the game
 function joinGame(socket, room, email, name, nickname, callback) {
   //Check for an empty room the moment the function is called
   var wasEmpty = roomList[room] && roomList[room].players ? Object.keys(roomList[room].players).length == 0 : null;
-
+  let query=`SELECT RoomID, State FROM Room WHERE Name = '${room}' AND State != 'closed' LIMIT 1`
   //Check if the room is open and exists
-  con.get("SELECT RoomID, State FROM Room WHERE Name = ? AND State != 'closed' LIMIT 1", [room], (err, result1) => {
-    exists = result1 != undefined && result1.length > 0;
+  con.get(query,  (err, result) => {
+    let exists = result != undefined;
     if (!exists) {
       callback({
         isError: true,
         error: 'Error: Room is closed or does not exist'
       });
     } else {
-      roomId = result1[0].RoomID;
-      //Get
-      con.get("SELECT PersonID FROM Person WHERE Email = ? LIMIT 1; SELECT PersonID FROM Player WHERE NickName = ? AND RoomID = ? LIMIT 1;", [email, nickname, roomId], (err, result2) => {
-        personId = result2[0][0].PersonID;
+      let roomId = result.RoomID;
+      let query= `SELECT PersonID FROM Person WHERE Email = '${email}' LIMIT 1`;   
+      con.get(query, (err, result) => getPersonID(result?.PersonID, err, socket, room, email, name, nickname, callback,
+                      roomId, result.State, wasEmpty));
+    }});
+}
 
-        //Check if there is a player in the room already
-        if (!result2[1] || result2[1].length == 0 || result2[1][0].PersonID == personId) {
-          //All tests have been passed
-          if (result1[0].State == 'playing') {
-            callback({
-              isError: false,
-              state: "PLAYING"
-            });
-          } else {
-            callback({
-              isError: false,
-              state: "WAITING_ROOM"
-            });
-          }
 
-          socket.join(room);
-          socket.room = room;
+function getPersonID(PersonID, err, socket, room, email, name, nickname, callback, roomId, roomState, wasEmpty){
+  let query= `SELECT PersonID FROM Player WHERE NickName = '${nickname}' AND RoomID = '${roomId}' LIMIT 1`;
+  console.log(query);
+  con.get(query,(result,err)=>{;
+    console.log(result)
+     checkPlayerID(result?.PersonID, PersonID, err, socket, room, name, email, nickname, callback, roomId, roomState, wasEmpty);
+  });
+} 
 
-          roomList[room].players[email] = {
-            name: name,
-            nickname: nickname,
-            socketId: socket.id
-          };
 
-          if (wasEmpty && result1[0].State == "playing") {
-            //Un halt room
-            alterHalting(socket, wasEmpty);
-          }
+function checkPlayerID(PlayerPersonID, personId, err, socket, room, name, email, nickname, callback, roomId, roomState, wasEmpty){
+console.log(personId, PlayerPersonID)
 
-          //Send nicknames to waiting rooms
-          io.to(socket.room).emit('roomListUpdate', getMapAttr(roomList[room].players, ['nickname']));
-
-          roomList[room].roomId = roomId;
-          roomList[room].players[email].personId = personId;
-
-          //Add player to DB or update nickname, Get Previously answered questions
-          con.get(`INSERT INTO Player (PersonID, RoomID, NickName) VALUES(?, ?, ?) ON DUPLICATE KEY UPDATE NickName = ?;
-          SELECT QuestionID, Score FROM Answer WHERE PersonID ? AND RoomID = ?;`,
-            [personId, roomId, nickname, nickname, personId, roomId], (err, result) => {
-              //Only create if it doesn't exist
-              if (!roomList[room].allScores[personId]) {
-                //In case there is no info
-                roomList[room].allScores[personId] = {
-                  score: 0,
-                  nickname: nickname
-                };
-
-                if (result[1]) {
-                  for (answer of result[1]) {
-                    roomList[game].allScores[personId][answer.QuestionID] = answer.Score;
-                    roomList[game].allScores[personId].score += answer.Score;
-                  }
-                }
-              }
-            });
-        } else {
-          callback({
-            isError: true,
-            error: 'Error: NickName is already taken'
-          });
-        }
+  //Check if there is a player in the room already
+  if (PlayerPersonID == undefined || PlayerPersonID == personId) {
+    //All tests have been passed
+    if (roomState == 'playing') {
+      callback({
+        isError: false,
+        state: "PLAYING"
+      });
+    } else {
+      callback({
+        isError: false,
+        state: "WAITING_ROOM"
       });
     }
-  });
+
+    socket.join(room);
+    socket.room = room;
+console.log(email)
+    roomList[room].players[email] = {
+      name: name,
+      nickname: nickname,
+      socketId: socket.id,
+      personId: personId
+    };
+
+    if (wasEmpty && roomState == "playing") {
+      //Un halt room
+      alterHalting(socket, wasEmpty);
+    }
+
+    //Send nicknames to waiting rooms
+    io.to(socket.room).emit('roomListUpdate', getMapAttr(roomList[room].players, ['nickname']));
+
+    roomList[room].roomId = roomId;
+
+     
+    //Add player to DB or update nickname, Get Previously answered questions
+    let query = `INSERT INTO Player (PersonID, RoomID, NickName) VALUES('${personId}', '${roomId}', '${nickname}') ON DUPLICATE KEY UPDATE NickName = ?;`;
+    con.get(query, (err, result) => { getAnswerdQuestions(room, roomId, nickname, personId)});
+  } else {
+    callback({
+      isError: true,
+      error: 'Error: NickName is already taken'
+    });
+  }
+
+}
+
+function getAnswerdQuestions(room, nickname, roomId, personId) {
+  let query = `SELECT QuestionID, Score FROM Answer WHERE PersonID ? AND RoomID = ?;`;
+  con.get(query, [personId, roomId], (err, result) => {
+  //Only create if it doesn't exist
+  if (roomList[room].allScores == undefined || !roomList[room]?.allScores[personId]) {
+    //In case there is no info
+    roomList[room].allScores = roomList[room].allScores || {};
+    roomList[room].allScores[personId] = {
+      score: 0,
+      nickname: nickname
+    };
+
+    if (result) {
+      for (answer of result) {
+        roomList[game].allScores[personId][answer.QuestionID] = answer.Score;
+        roomList[game].allScores[personId].score += answer.Score;
+      }
+    }
+  }
+  })
 }
 
 //Handles a student leaving the game
@@ -626,7 +690,8 @@ function closeGameStep(socket) {
     clearTimeout(roomList[socket.room].timeout);
   }
   //Kick everyone from the room except instructor
-  io.of('/').in(socket.room).clients((error, socketIds) => {
+  console.log(socket.room)
+  io.of('/').in(socket.room).emits((error, socketIds) => {
     if (error) throw error;
     socketIds.forEach(socketId => {
       io.sockets.sockets[socketId].leave(socket.room);
@@ -636,7 +701,10 @@ function closeGameStep(socket) {
 
 //Sends back a list of games the instructor controls to instructor.js
 function requestPreviousGames(socket, email) {
-  con.get("SELECT Name FROM Room WHERE InstructorID = (SELECT PersonID FROM Person WHERE Email = ? LIMIT 1)", [email], (err, result) => {
+  let query = `SELECT Name FROM Room WHERE InstructorID = (SELECT PersonID FROM Person WHERE Email = '${email}' LIMIT 1);`
+
+  con.all(query, (err, result) => {
+    console.log(result, email, query, "prev")
     io.to(socket.id).emit('returnPreviousGames', result);
   });
 }
@@ -644,6 +712,7 @@ function requestPreviousGames(socket, email) {
 //Sends a list of games a student has played in that they can rejoin to client.js
 function requestPreviousGamesStudent(socket, email) {
   con.get("SELECT Name FROM Room WHERE RoomID IN (SELECT RoomID FROM Player WHERE PersonID = (SELECT PersonID FROM Person WHERE Email = ? LIMIT 1)) AND State = 'open'", [email], (err, result) => {
+    console.log(result);
     io.to(socket.id).emit('returnPreviousGamesStudent', result);
   });
 }
@@ -653,21 +722,25 @@ function rejoinGame(socket, email, game, callback) {
   //Initialize roomList to avoid synchronicity errors
   roomList[game] = roomList[game] ? roomList[game] : {};
 
-  con.get('SELECT State, RoomID, InstructorID FROM Room WHERE Name = ? LIMIT 1', [game], (err, result) => {
+  con.all('SELECT State, RoomID, InstructorID FROM Room WHERE Name = ? LIMIT 1', [game], (err, result) => {
     //Get RoomID & InstructorID to make subsequent references easier
+    console.log(result)
     roomList[game].roomId = result[0].RoomID;
-    state = result[0].State;
+    let state = result[0]?.State;
     socket.masterId = result[0].InstructorID;
 
     socket.join(game);
     socket.room = game;
     //TODO: Take from DB, differentiate between existed & connected
-    con.get(`SELECT pl.PersonID, pl.NickName, per.Email FROM Person per LEFT JOIN Player pl ON pl.PersonID = per.PersonID WHERE RoomID = ?;
+    let query = `SELECT pl.PersonID, pl.NickName, per.Email FROM Person per LEFT JOIN Player pl ON pl.PersonID = per.PersonID WHERE RoomID = '${roomList[game].roomId}';
+    SELECT PersonID, QuestionID, Score FROM Answer WHERE RoomID = '${roomList[game].roomId}';`;
+    console.log(query);
+    con.all(`SELECT pl.PersonID, pl.NickName, per.Email FROM Person per LEFT JOIN Player pl ON pl.PersonID = per.PersonID WHERE RoomID = ?;
       SELECT PersonID, QuestionID, Score FROM Answer WHERE RoomID = ?;`,
       [roomList[game].roomId, roomList[game].roomId], (err, result) => {
-
+console.log(result, err)
         //May not be any previous players
-        if (result[0] && !roomList[game].allScores) {
+        if (result && !roomList[game].allScores) {
           roomList[game].allScores = {};
           //Set up player dicts
           for (person of result[0]) {
@@ -778,18 +851,15 @@ function alterHalting(socket, open) {
 
 //Checks for a lack of room info, may be changed later
 function errorCheck(socket, needed, neededRL, state) {
-var array1 = ['a', 'b', 'c'];
 
-for (const element of array1) {
-  console.log(element);
-}
-  // for (item of array1) {
-  // //   if (!item) {
-  // //     io.to(socket.id).emit('serverMismatch', "Error: Server information does not reflect current client state", state);
-  // //     return false;
-  // //   }
-  // }
-  for (item of neededRL) {
+
+  for (let item of needed) {
+    if (!item) {
+      io.to(socket.id).emit('serverMismatch', "Error: Server information does not reflect current client state", state);
+      return false;
+    }
+  }
+  for (let item of neededRL) {
     if (!roomList[socket.room][item]) {
       io.to(socket.id).emit('serverMismatch', "Error: Server information does not reflect current client state", state);
       return false;
@@ -819,8 +889,9 @@ function sendAlert(socket, info) {
 //Parses a given JSON file. Since the file would be critiqued when it was made, there is no need to check its validity
 function parseJSON(socket, file) {
   //Server has been restarted
+  console.log(file);
   if (!roomList[socket.room]['questions']) {
-    rawdata = fs.readFileSync(file);
+    let rawdata = fs.readFileSync(file);
     roomList[socket.room]['questions'] = JSON.parse(rawdata);
   }
 }
@@ -838,7 +909,7 @@ function getMapAttr(dict, attrs) {
       });
   else {
     return Object.keys(dict).map((key) => {
-      items = [];
+      let items = [];
       for (attribute of attrs) {
         if (attribute == 'email')
           items.push(key);

@@ -1,8 +1,8 @@
 socket = io();
 socket.on('connect', () => {
   socket.emit('new user', socket.id);
-  console.log(lockInfo)
-  lockInfo.callback(lockInfo.lockId)
+  //console.log(lockInfo)
+ //lockInfo.callback(lockInfo.lockId)
 })
 
 socket.on('new connection', (state) => {
@@ -55,7 +55,7 @@ function changeDisplay(show, noShow) {
  //$('body').children().hide();
 
   for (item of noShow) {
-    $(item).show();
+    $(item).hide();
   }
   for (item of show) {
     $(item).show();
@@ -86,6 +86,7 @@ function resetDefaultTextbox(tagId, defaultText) {
 }
 
 function displayPrevGames(games) {
+  console.log(games)
   if (!games || games.length == 0) {
     $('#rejoin').html('No previous games');
   } else {
@@ -128,7 +129,7 @@ function changeState(newState, roomState) {
         //State after user has logged in and has not connected to a game
       case "MAIN_SCREEN":
         requestPrevGames();
-        if (isInstructor()||1) {
+        if (isInstructor()) {
           changeDisplay(['#signout', '#gameCreation', '#signout-button'], ["#authorize", '#gameManagement']);
         } else {
           console.log("cine gerere");

@@ -20,16 +20,14 @@ var scopes = 'profile';
 
 var authorizeButton = document.getElementById('authorize-button');
 var signoutButton = document.getElementById('signout-button');
-var name;
-var email;
-var firstName;
-var lastName;
+let  [name,email,firstName,lastName] =[,,,];
 var roomURL;
 $(function() {
   roomURL = location.hash.split('#')[1] || "yourClass";
   $('#authorize-button').on("click", handleAuthClick);
   $('#signout-button').on("click", handleSignoutClick);
-  handleClientLoad();
+  changeState("LOGIN");
+ // handleClientLoad();
 })
 
 function handleClientLoad() {
@@ -71,21 +69,21 @@ function handleSignoutClick(event) {
 
 function onSignIn(googleUser) {
   var BasicProfile = googleUser.getBasicProfile();
-  let profiles = [
-  BasicProfile.getId(),
-  BasicProfile.getName(),
-  BasicProfile.getGivenName(),
-  BasicProfile.getFamilyName(),
-  BasicProfile.getImageUrl(),
-  BasicProfile.getEmail()]
+  let profiles = {
+  Id:BasicProfile.getId(),
+  Name:BasicProfile.getName(),
+  GivenName:BasicProfile.getGivenName(),
+  FamilyName:BasicProfile.getFamilyName(),
+  ImageUrl:BasicProfile.getImageUrl(),
+  Email:BasicProfile.getEmail()}
   console.log(profiles);
 
-    name = BasicProfile.getName(); 
-    email = BasicProfile.getEmail();
+    // name = BasicProfile.getName(); 
+    // email = BasicProfile.getEmail();
     //Some users may not have a set 'first' or 'last' name
-  
+  [name,email,firstName,lastName]=[profiles.Name,profiles.Email,profiles.GivenName,profiles.FamilyName];
     $('#greeting').text('Hello, ' + name + '!');
-    socket.emit('getNickname', email, roomURL, (nickname, isOpen)=>{
+        socket.emit('getNickname', email, roomURL, (nickname, isOpen)=>{
       $("#nickname").val(nickname);
       if(isOpen){
         rejoinGame(roomURL);
@@ -102,7 +100,7 @@ function makeApiCall(googleUser) {
   //   'resourceName': 'people/me',
   //   'personFields': 'names,emailAddresses'
   // }).then(function(resp) {
-  //   var p = document.createElement('p');
+
   //   name = resp.result.names[0].displayName;
   //   email = resp.result.emailAddresses[0].value;
   //   firstName = resp.result.names[0].givenName;
